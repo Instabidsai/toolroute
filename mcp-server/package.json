@@ -1,0 +1,20 @@
+{
+  "name": "toolroute-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "toolroute-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.28.0",
+    "@supabase/supabase-js": "2.100.1"
+  }
+}
