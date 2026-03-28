@@ -1,0 +1,187 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ToolRoute API",
+    "description": "The OpenRouter for Tools — 53 curated best-in-class tools for AI agents. Search, discover, compose.",
+    "version": "1.0.0",
+    "contact": {
+      "url": "https://toolroute.ai"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://toolroute.ai",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/api/check": {
+      "post": {
+        "operationId": "checkBeforeBuild",
+        "summary": "Check ToolRoute before building anything",
+        "description": "The killer feature. Describe what you need to build, get back matching tools, installed inventory, category beliefs, and composites.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["task"],
+                "properties": {
+                  "task": {
+                    "type": "string",
+                    "description": "Describe what you need to build or accomplish"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching tools, beliefs, composites, and inventory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matching_tools": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tool" }
+                    },
+                    "installed": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/InventoryItem" }
+                    },
+                    "category_beliefs": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Belief" }
+                    },
+                    "composites": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Composite" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "operationId": "searchTools",
+        "summary": "Search the tool registry",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Search query"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Max results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tool" }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tools": {
+      "get": {
+        "operationId": "listTools",
+        "summary": "List all curated tools",
+        "responses": {
+          "200": {
+            "description": "All tools in the registry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tools": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tool" }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Tool": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "super_category": { "type": "string" },
+          "sub_category": { "type": "string" },
+          "protocols": { "type": "array", "items": { "type": "string" } },
+          "primary_type": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "cost": { "type": "string", "enum": ["free", "freemium", "paid", "usage-based", "enterprise"] },
+          "status": { "type": "string" }
+        }
+      },
+      "Belief": {
+        "type": "object",
+        "properties": {
+          "champion": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "super_category": { "type": "string" },
+          "sub_category": { "type": "string" },
+          "observation_count": { "type": "integer" }
+        }
+      },
+      "Composite": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "tool_slugs": { "type": "array", "items": { "type": "string" } },
+          "use_cases": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "InventoryItem": {
+        "type": "object",
+        "properties": {
+          "tool_slug": { "type": "string" },
+          "installed_location": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  }
+}
