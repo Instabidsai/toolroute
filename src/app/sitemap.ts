@@ -9,31 +9,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: new Date('2026-03-28'),
       changeFrequency: "daily",
       priority: 1,
     },
     {
       url: `${baseUrl}/tools`,
-      lastModified: new Date(),
+      lastModified: new Date('2026-03-28'),
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/categories`,
-      lastModified: new Date(),
+      lastModified: new Date('2026-03-15'),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/composites`,
-      lastModified: new Date(),
+      lastModified: new Date('2026-03-15'),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/discover`,
-      lastModified: new Date(),
+      lastModified: new Date('2026-03-20'),
       changeFrequency: "daily",
       priority: 0.7,
     },
@@ -56,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic category pages
   const categoryPages: MetadataRoute.Sitemap = SUPER_CATEGORIES.map((sc) => ({
     url: `${baseUrl}/categories/${sc.key}`,
-    lastModified: new Date(),
+    lastModified: new Date('2026-03-15'),
     changeFrequency: "weekly" as const,
     priority: 0.6,
   }));
