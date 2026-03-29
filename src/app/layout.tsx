@@ -17,20 +17,11 @@ export const metadata: Metadata = {
     url: "https://toolroute.ai",
     siteName: "ToolRoute",
     type: "website",
-    images: [
-      {
-        url: "https://toolroute.ai/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "ToolRoute — The OpenRouter for Tools",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "ToolRoute — The OpenRouter for Tools",
     description: "50 curated tools. Living beliefs. Intelligent composition.",
-    images: ["https://toolroute.ai/og-image.png"],
   },
 };
 
@@ -67,7 +58,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: "ToolRoute",
   url: "https://toolroute.ai",
-  logo: "https://toolroute.ai/og-image.png",
+  logo: "https://toolroute.ai/opengraph-image",
   description:
     "The OpenRouter for tools — MCP-native capability registry and intelligent librarian for AI agents",
   sameAs: ["https://github.com/toolroute"],
