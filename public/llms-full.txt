@@ -1,0 +1,85 @@
+# ToolRoute — Full Documentation
+> The OpenRouter for tools — MCP-native capability registry and intelligent librarian
+
+## Overview
+ToolRoute is an intelligent tool registry for AI agents. It curates 50+ best-in-class tools (rated 9/10 or higher), organizes them across 12 super-categories and 92 sub-categories, and provides an MCP-native API for tool discovery, search, and composition.
+
+The registry maintains living beliefs — confidence scores that evolve from real usage data across 17 companies — so recommendations improve over time.
+
+## Features
+- **Curated Registry**: 50+ tools, each rated 9/10 or higher, with detailed capability descriptions
+- **Living Beliefs**: Category champion beliefs that evolve from real usage data
+- **Intelligent Composition**: Multi-tool composites assembled for common workflows
+- **Check Before Build**: Describe what you need; get matching tools, installed inventory, beliefs, and composites
+- **MCP Server**: 7 tools for direct integration into AI agent workflows
+- **Inventory Tracking**: Know which tools are already installed in your fleet
+- **Usage Events**: Track tool usage across companies for belief evolution
+
+## Categories
+- Analytics & Tracking
+- Communication & Messaging
+- Content & Copywriting
+- CRM & Sales
+- DevOps & CI/CD
+- E-commerce & Inventory
+- Finance & Invoicing
+- Infrastructure
+- Marketing & Social Media
+- HR & Operations
+- Scheduling & Calendar
+- Security & Compliance
+
+## API Reference
+
+### Check Before Build
+```
+POST https://toolroute.ai/api/check
+Content-Type: application/json
+
+{
+  "task": "describe what you need to build or accomplish"
+}
+```
+Returns: matching tools, installed inventory, category beliefs, composites.
+
+### Search Tools
+```
+GET https://toolroute.ai/api/search?q=query&limit=10
+```
+Returns: matching tools with relevance scoring.
+
+### List All Tools
+```
+GET https://toolroute.ai/api/tools
+```
+Returns: complete tool registry with ratings, protocols, and capabilities.
+
+## MCP Server
+ToolRoute is available as an MCP server with 7 tools:
+- `check_before_build` — Describe what you need, get matching tools and recommendations
+- `search_tools` — Search the registry by keyword
+- `get_category_champion` — Get the current champion for a category
+- `record_usage` — Log tool usage for belief evolution
+- `challenge_tool` — Challenge a tool's position with evidence
+- `librarian_status` — Get current registry stats and top beliefs
+- `log_tool_request` — Log a tool request for discovery tracking
+
+## Pricing
+ToolRoute is free to use. The web registry, API, and MCP server are all available at no cost.
+
+## Integration
+1. **Web UI**: Browse and search at https://toolroute.ai
+2. **REST API**: Use the endpoints above for programmatic access
+3. **MCP Server**: Add to your Claude Code or AI agent configuration for inline tool discovery
+4. **OpenAPI**: Full spec available at https://toolroute.ai/openapi.json
+
+## Key Pages
+- https://toolroute.ai — Main registry and search
+- https://toolroute.ai/tools — Browse all curated tools
+- https://toolroute.ai/categories — Category map with champion beliefs
+- https://toolroute.ai/composites — Multi-tool composition solutions
+- https://toolroute.ai/discover — Tool discovery feed
+
+## Contact
+support@toolroute.ai
+https://toolroute.ai

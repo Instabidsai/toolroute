@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "ToolRoute",
+  "name_for_model": "toolroute",
+  "description_for_human": "The OpenRouter for tools — MCP-native capability registry and intelligent librarian. Query 50+ curated best-in-class tools before building anything.",
+  "description_for_model": "ToolRoute is a curated tool registry for AI agents. Use it to discover the best tool for any task before building custom solutions. It covers 12 categories with 50+ tools rated 9/10 or higher. Supports MCP, REST, and OpenAPI protocols. Has living beliefs that evolve from real usage across 17 companies.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://toolroute.ai/openapi.json"
+  },
+  "logo_url": "https://toolroute.ai/logo.png",
+  "contact_email": "support@toolroute.ai",
+  "legal_info_url": "https://toolroute.ai/terms"
+}

@@ -1,96 +1,15 @@
 # ToolRoute
-> The OpenRouter for Tools - 53 curated best-in-class tools for AI agents.
+> The OpenRouter for tools — MCP-native capability registry and intelligent librarian
 
-## About
-ToolRoute is a curated tool registry with living beliefs that evolve from real usage across 17 companies.
-Each tool is rated 9/10 or higher. The registry covers 12 categories and 92 sub-categories.
+## What this site does
+ToolRoute is the OpenRouter for tools. It provides an MCP-native capability registry and intelligent librarian that helps AI agents discover and use the right tools. Query 50+ curated best-in-class tools before building anything.
+
+## Key pages
+- https://toolroute.ai: Main tool registry and search
+- https://toolroute.ai/docs: Documentation
 
 ## API
-- check_before_build: POST https://toolroute.ai/api/check
-  Body: {"task": "describe what you need"}
-  Returns: matching tools, installed inventory, category beliefs, composites
-- search: GET https://toolroute.ai/api/search?q=query
-- tools: GET https://toolroute.ai/api/tools
+MCP-native API for tool discovery and routing
 
-## MCP Server
-ToolRoute is available as an MCP server with 7 tools:
-check_before_build, search_tools, get_category_champion, record_usage, challenge_tool, librarian_status, log_tool_request
-
-## Registry
-
-### Analytics
-- PostHog (9/10, rest, openapi) - Open-source product analytics. Web + product analytics + A/B testing in one. Self-hostable.
-- Sentry MCP (9/10, mcp) - Zero-install remote MCP. OAuth 2.0. Seer AI root cause analysis. Best error tracking.
-
-### Communication
-- ElevenLabs (10/10, rest, openapi) - Voice AI: text-to-speech, voice cloning, audio generation. Best quality TTS on market.
-- Twilio (10/10, rest, openapi, mcp) - SMS, voice, video, messaging automation. The undisputed standard for communication APIs.
-- Slack MCP (9/10, mcp) - Official Slack MCP. 47 tools. Post messages, read channels, manage workflows.
-- SendGrid (9/10, rest, openapi) - Transactional email. 99.95% deliverability. Part of Twilio — reseller program available.
-- Gmail MCP (9/10, mcp) - Official Gmail MCP via Composio. Read inbox, parse emails, auto-respond across accounts.
-
-### Content
-- Claude API (10/10, rest, openapi) - Anthropic Claude API. Best for long-form writing, analysis, code generation, reasoning.
-- HeyGen MCP (9/10, mcp, rest) - AI avatar/spokesperson videos. Talking head explainers. Official MCP.
-- Whisper (9/10, rest, openapi) - OpenAI Whisper. Audio/video transcription. Industry standard accuracy.
-- MoneyPrinterTurbo (9/10, cli, npm) - End-to-end automated video factory. Script → voice → footage → editing → output. 53K stars. Installed.
-- Midjourney (9/10, rest) - Image generation. Highest quality AI images for marketing and social.
-- Kling 3.0 (8/10, rest) - Video generation model specializing in image-to-video transitions. Takes start frame + end frame + prompt, generates smooth video transition between them. Used for scroll-stopping website hero animations.
-- Hicsfield.ai (Nano Banana 2) (8/10, rest) - Image + video generation platform. Nano Banana 2 model produces high-quality product shots with white backgrounds for website integration. Also does image-to-video transitions via Kling 3.0.
-
-### Crm Sales
-- HubSpot MCP (9/10, mcp, rest) - CRM management via MCP. Contacts, deals, pipeline, companies, notes.
-- Apollo.io (9/10, rest, openapi) - B2B contact + company data. Lead prospecting at scale. 200M+ contacts.
-- Smartlead (9/10, mcp, rest) - 116-tool MCP for cold email. Sequences, warmup, tracking, deliverability.
-
-### Devops
-- GitHub MCP (10/10, mcp) - Official GitHub MCP. Repos, PRs, issues, workflows — full integration. 27K stars.
-- Cloudflare MCP (9/10, mcp, rest) - Deploy/configure Workers, KV, R2, D1. Edge computing standard.
-- Docker MCP (9/10, mcp) - Container management via MCP. Build, run, manage Docker containers.
-- Vercel MCP (9/10, mcp, rest) - Official Vercel MCP. Access logs, docs, projects, deployments, domains.
-
-### Ecommerce
-- Shopify MCP (9/10, mcp, rest, graphql) - E-commerce management via MCP. Products, orders, collections, inventory.
-
-### Finance
-- Stripe MCP (10/10, mcp, rest, openapi) - Official Anthropic Stripe integration. Customers, invoices, subscriptions, products, refunds.
-
-### Infrastructure
-- Supabase MCP (10/10, mcp, rest, openapi) - Full Supabase backend in one MCP server: DB, storage, auth, edge functions, migrations, config.
-- Composio (10/10, mcp, rest, openapi) - OAuth for 850+ apps. 11K+ tools. Managed auth infrastructure for AI agents. MCP + REST + SDK.
-- Remotion (10/10, skill, npm) - Describe video in English → React code → rendered MP4. 126K+ installs. #1 non-corp skill. Programmable video.
-- Superpowers (10/10, skill) - Full SDLC pipeline: brainstorming to TDD to code review to debugging. 94.3K stars. Cross-platform.
-- Context7 (10/10, mcp) - Injects live, version-specific documentation into prompts. #1 MCP server. 50.1K GitHub stars. Eliminates doc hallucination.
-- frontend-design (10/10, skill) - Raises floor on ALL generated UI. 277K+ installs. Anthropic official skill.
-- Playwright MCP (10/10, mcp) - Official Anthropic Playwright MCP. Deterministic browser automation via accessibility snapshots. The standard.
-- react-best-practices (9/10, skill) - React/Next.js performance patterns. 185K installs. Vercel official.
-- Google Stitch (9/10, mcp, skill) - Voice/text → finished UI designs. DESIGN.md export. MCP server. Free 350 gen/mo. Ships CC skills.
-- Blender MCP (9/10, mcp) - Natural language → 3D scenes in real time. 17K+ stars. 1500 Blender operators simplified to chat.
-- Grafana MCP (9/10, mcp) - 40+ tools across 15 categories. Apache 2.0. 2.6K stars. Observability standard.
-- web-design-guidelines (9/10, skill) - Web Interface Guidelines compliance. WCAG + accessibility. 137K installs.
-- Glido (8/10, cli) - Speech-to-text service optimized for coding workflows. Press a key, speak, text appears in your editor. Saves significant time vs typing prompts.
-
-### Marketing
-- Meta Marketing API (9/10, rest, openapi) - Create/manage FB/IG ad campaigns. The standard for social advertising.
-- YouTube Data API (9/10, rest, openapi) - Upload, metadata, analytics, comments. Full YouTube management.
-- Google Ads API (9/10, rest, openapi) - Create/manage Google Ads campaigns. Search, display, video ads.
-- Ahrefs (9/10, rest) - SEO: keyword research, rank tracking, backlink analysis, site audit.
-- Postiz (9/10, rest, mcp) - Self-hosted social media management. 32 platforms. Free ULTIMATE tier.
-- Firecrawl (9/10, mcp, rest) - Fastest web scraping MCP (7s avg, 83% accuracy). Search + extract + crawl in one.
-
-### Operations
-- n8n (9/10, mcp, rest, npm) - Self-hostable workflow automation. 1084+ nodes, 2646+ configs. Open source alternative to Zapier.
-- Google Sheets MCP (9/10, mcp) - Spreadsheet operations via MCP. Create/edit/analyze spreadsheets.
-- Zapier MCP (9/10, mcp) - 30K actions, 8K apps. When nothing else covers it, Zapier does. Long-tail king.
-- Google Drive MCP (9/10, mcp) - File storage via MCP. Store/retrieve/share files across accounts.
-- Notion MCP (9/10, mcp, rest) - Official Notion MCP. Pages, databases, blocks. Internal documentation.
-- Linear MCP (9/10, mcp, rest, graphql) - Issue management and project tracking via MCP. Developer-focused. Clean API.
-
-### Scheduling
-- Cal.com (9/10, rest, openapi) - Open-source appointment booking. Public booking pages, customer scheduling.
-- Google Calendar MCP (9/10, mcp) - Official Google Calendar MCP. Create/edit/delete events, check availability.
-
-### Security
-- Supabase Auth (9/10, rest, openapi) - Authentication: login, OAuth, sessions, row-level security. Part of Supabase.
-- Semgrep MCP (9/10, mcp) - Code security scanning via MCP. Find vulnerabilities in code.
-- Cloudflare Turnstile (9/10, rest) - CAPTCHA alternative. Bot protection without user friction. Free.
+## Contact
+support@toolroute.ai
