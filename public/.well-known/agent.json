@@ -1,0 +1,13 @@
+{
+  "name": "ToolRoute",
+  "description": "The OpenRouter for tools — MCP-native capability registry and intelligent librarian for AI agents to discover and compose tools",
+  "url": "https://toolroute.ai",
+  "version": "1.0.0",
+  "provider": { "organization": "ToolRoute", "url": "https://toolroute.ai" },
+  "capabilities": { "streaming": false, "pushNotifications": false },
+  "skills": [
+    { "id": "tool-search", "name": "Tool Search", "description": "Search 50+ curated tools by capability, category, or use case", "inputModes": ["text"], "outputModes": ["text"] },
+    { "id": "tool-compose", "name": "Tool Composition", "description": "Compose multi-tool solutions for complex agent tasks", "inputModes": ["text"], "outputModes": ["text"] }
+  ],
+  "authentication": { "schemes": ["none"] }
+}

@@ -1,5 +1,20 @@
+import type { Metadata } from "next";
 import { getTools, getInventory } from "@/lib/api";
 import { ToolsClient } from "./ToolsClient";
+
+export const metadata: Metadata = {
+  title: "Tool Registry — ToolRoute",
+  description:
+    "Browse 50+ curated best-in-class tools for AI agents. Filter by category, protocol, or search. Every tool rated 9/10 or higher.",
+  alternates: {
+    canonical: "/tools",
+  },
+  openGraph: {
+    title: "Tool Registry — ToolRoute",
+    description: "Browse 50+ curated best-in-class tools for AI agents.",
+    url: "https://toolroute.ai/tools",
+  },
+};
 
 export const revalidate = 60;
 

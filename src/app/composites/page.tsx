@@ -1,6 +1,21 @@
+import type { Metadata } from "next";
 import { getComposites, getTools } from "@/lib/api";
 import Link from "next/link";
 import { Layers, ArrowRight } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Composites — ToolRoute",
+  description:
+    "Multi-tool solutions assembled from the curated registry. Each composite chains tools together for end-to-end AI agent workflows.",
+  alternates: {
+    canonical: "/composites",
+  },
+  openGraph: {
+    title: "Composites — ToolRoute",
+    description: "Multi-tool solutions for end-to-end AI agent workflows.",
+    url: "https://toolroute.ai/composites",
+  },
+};
 
 export const revalidate = 60;
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getCategories, getBeliefs, getTools } from "@/lib/api";
 import { SUPER_CATEGORIES } from "@/lib/types";
 import Link from "next/link";
@@ -5,6 +6,20 @@ import {
   MessageSquare, Target, Calendar, BarChart3, ShoppingCart,
   GitBranch, DollarSign, PenTool, Megaphone, Settings, Shield, Server,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Category Map — ToolRoute",
+  description:
+    "Explore 12 super-categories and 89 sub-categories of AI agent tools. Each category has a champion tool with a living belief based on real usage.",
+  alternates: {
+    canonical: "/categories",
+  },
+  openGraph: {
+    title: "Category Map — ToolRoute",
+    description: "Explore 12 super-categories of AI agent tools with champion beliefs.",
+    url: "https://toolroute.ai/categories",
+  },
+};
 
 export const revalidate = 60;
 

@@ -1,6 +1,21 @@
+import type { Metadata } from "next";
 import { getLibrarianState, getUsageEvents, getTools, getBeliefs } from "@/lib/api";
 import { StatCard } from "@/components/StatCard";
 import { Activity, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Discovery Dashboard — ToolRoute",
+  description:
+    "System health, usage events, and belief intelligence for the ToolRoute registry. Track tool usage across 17 companies in real time.",
+  alternates: {
+    canonical: "/discover",
+  },
+  openGraph: {
+    title: "Discovery Dashboard — ToolRoute",
+    description: "System health, usage events, and belief intelligence.",
+    url: "https://toolroute.ai/discover",
+  },
+};
 
 export const revalidate = 30;
 
