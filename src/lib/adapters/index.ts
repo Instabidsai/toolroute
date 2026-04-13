@@ -4,6 +4,9 @@ import { context7Adapter } from "./context7-adapter";
 import { firecrawlAdapter } from "./firecrawl-adapter";
 import { elevenlabsAdapter } from "./elevenlabs-adapter";
 import { sendgridAdapter } from "./sendgrid-adapter";
+import { playwrightAdapter } from "./playwright-adapter";
+import { claudeAdapter } from "./claude-adapter";
+import { githubAdapter } from "./github-adapter";
 
 const registry = new Map<string, ToolAdapter>();
 
@@ -31,3 +34,6 @@ registerAdapter(context7Adapter);
 registerAdapter(firecrawlAdapter);
 registerAdapter(elevenlabsAdapter);
 registerAdapter(sendgridAdapter);
+registerAdapter(playwrightAdapter);
+registerAdapter(claudeAdapter);
+registerAdapter(githubAdapter);

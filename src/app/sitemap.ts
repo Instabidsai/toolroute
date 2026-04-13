@@ -9,15 +9,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date('2026-03-28'),
+      lastModified: new Date('2026-04-13'),
       changeFrequency: "daily",
       priority: 1,
     },
     {
       url: `${baseUrl}/tools`,
-      lastModified: new Date('2026-03-28'),
+      lastModified: new Date('2026-04-13'),
       changeFrequency: "daily",
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/docs`,
+      lastModified: new Date('2026-04-13'),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/pricing`,
+      lastModified: new Date('2026-04-13'),
+      changeFrequency: "weekly",
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/categories`,
@@ -36,6 +48,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date('2026-03-20'),
       changeFrequency: "daily",
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/dashboard`,
+      lastModified: new Date('2026-04-13'),
+      changeFrequency: "weekly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/dashboard/keys`,
+      lastModified: new Date('2026-04-13'),
+      changeFrequency: "weekly",
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/dashboard/usage`,
+      lastModified: new Date('2026-04-13'),
+      changeFrequency: "weekly",
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/dashboard/billing`,
+      lastModified: new Date('2026-04-13'),
+      changeFrequency: "weekly",
+      priority: 0.4,
     },
   ];
 
