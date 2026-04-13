@@ -1,0 +1,197 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getUserFromSession,
+  generateApiKey,
+  supabaseAdmin,
+  CORS_HEADERS,
+} from "@/lib/gateway";
+import { GatewayError } from "@/lib/gateway-types";
+
+export async function POST(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const { userId } = await getUserFromSession(authHeader);
+
+    let body: { name?: string; allowed_tools?: string[]; expires_in_days?: number };
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
+    const keyName = body.name || "Default Key";
+    const { raw, hash, prefix } = generateApiKey();
+
+    const sb = supabaseAdmin();
+
+    let expiresAt: string | null = null;
+    if (body.expires_in_days && body.expires_in_days > 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + body.expires_in_days);
+      expiresAt = d.toISOString();
+    }
+
+    const { data: keyRow, error } = await sb
+      .from("api_keys")
+      .insert({
+        user_id: userId,
+        name: keyName,
+        key_hash: hash,
+        key_prefix: prefix,
+        allowed_tools: body.allowed_tools ?? null,
+        is_active: true,
+        expires_at: expiresAt,
+      })
+      .select("id, name, key_prefix, allowed_tools, is_active, created_at, expires_at")
+      .single();
+
+    if (error) {
+      console.error("API key creation error:", error);
+      return NextResponse.json(
+        { error: { message: "Failed to create API key", code: "key_creation_failed" } },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        key: raw,
+        id: keyRow.id,
+        name: keyRow.name,
+        prefix: keyRow.key_prefix,
+        allowed_tools: keyRow.allowed_tools,
+        expires_at: keyRow.expires_at,
+        created_at: keyRow.created_at,
+        warning: "Store this key securely. It cannot be retrieved again.",
+      },
+      { status: 201, headers: CORS_HEADERS }
+    );
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        { error: { message: err.message, code: err.code } },
+        { status: err.status, headers: CORS_HEADERS }
+      );
+    }
+
+    console.error("Key creation error:", err);
+    return NextResponse.json(
+      { error: { message: "Internal server error", code: "internal_error" } },
+      { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const { userId } = await getUserFromSession(authHeader);
+
+    const sb = supabaseAdmin();
+
+    const { data: keys, error } = await sb
+      .from("api_keys")
+      .select(
+        "id, name, key_prefix, allowed_tools, is_active, last_used_at, created_at, expires_at"
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return NextResponse.json(
+        { error: { message: "Failed to list API keys", code: "list_keys_failed" } },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
+    return NextResponse.json({ data: keys ?? [] }, { headers: CORS_HEADERS });
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        { error: { message: err.message, code: err.code } },
+        { status: err.status, headers: CORS_HEADERS }
+      );
+    }
+
+    console.error("Key list error:", err);
+    return NextResponse.json(
+      { error: { message: "Internal server error", code: "internal_error" } },
+      { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const { userId } = await getUserFromSession(authHeader);
+
+    let body: { key_id?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: { message: "Invalid JSON body", code: "invalid_json" } },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    if (!body.key_id) {
+      return NextResponse.json(
+        { error: { message: 'Missing required field: "key_id"', code: "missing_key_id" } },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    const sb = supabaseAdmin();
+
+    const { data: existing } = await sb
+      .from("api_keys")
+      .select("id")
+      .eq("id", body.key_id)
+      .eq("user_id", userId)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: { message: "API key not found", code: "key_not_found" } },
+        { status: 404, headers: CORS_HEADERS }
+      );
+    }
+
+    const { error } = await sb
+      .from("api_keys")
+      .update({ is_active: false })
+      .eq("id", body.key_id)
+      .eq("user_id", userId);
+
+    if (error) {
+      return NextResponse.json(
+        { error: { message: "Failed to revoke API key", code: "revoke_failed" } },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "API key revoked", key_id: body.key_id },
+      { headers: CORS_HEADERS }
+    );
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        { error: { message: err.message, code: err.code } },
+        { status: err.status, headers: CORS_HEADERS }
+      );
+    }
+
+    console.error("Key revoke error:", err);
+    return NextResponse.json(
+      { error: { message: "Internal server error", code: "internal_error" } },
+      { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}

@@ -1,13 +1,54 @@
 {
   "name": "ToolRoute",
-  "description": "The OpenRouter for tools — MCP-native capability registry and intelligent librarian for AI agents to discover and compose tools",
+  "description": "The OpenRouter for Tools — unified API gateway for 50+ AI agent tools. One API key, every tool.",
   "url": "https://toolroute.ai",
   "version": "1.0.0",
-  "provider": { "organization": "ToolRoute", "url": "https://toolroute.ai" },
-  "capabilities": { "streaming": false, "pushNotifications": false },
+  "provider": {
+    "organization": "ToolRoute",
+    "url": "https://toolroute.ai"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
   "skills": [
-    { "id": "tool-search", "name": "Tool Search", "description": "Search 50+ curated tools by capability, category, or use case", "inputModes": ["text"], "outputModes": ["text"] },
-    { "id": "tool-compose", "name": "Tool Composition", "description": "Compose multi-tool solutions for complex agent tasks", "inputModes": ["text"], "outputModes": ["text"] }
+    {
+      "id": "tool-execute",
+      "name": "Tool Execute",
+      "description": "Execute any tool via unified API. One endpoint, 50+ tools, structured input/output.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "tool-search",
+      "name": "Tool Search",
+      "description": "Search 50+ curated tools by capability, category, or use case.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "tool-compose",
+      "name": "Tool Compose",
+      "description": "Multi-tool workflows. Compose sequences of tools for complex agent tasks.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "check-before-build",
+      "name": "Check Before Build",
+      "description": "Check if a tool already exists before building one. Describe what you need, get matching tools, beliefs, and composites.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    }
   ],
-  "authentication": { "schemes": ["none"] }
+  "authentication": {
+    "schemes": ["bearer"],
+    "description": "API key in the format tr_live_xxx. Obtain from https://toolroute.ai/dashboard/keys"
+  },
+  "endpoints": {
+    "execute": "https://toolroute.ai/api/v1/execute",
+    "tools": "https://toolroute.ai/api/v1/tools",
+    "usage": "https://toolroute.ai/api/v1/usage",
+    "openapi": "https://toolroute.ai/openapi.json"
+  }
 }

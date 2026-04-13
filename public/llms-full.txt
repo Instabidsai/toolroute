@@ -1,61 +1,296 @@
-# ToolRoute — Full Documentation
-> The OpenRouter for tools — MCP-native capability registry and intelligent librarian
+# ToolRoute — Full API Documentation
+
+> The OpenRouter for Tools — unified API gateway for 50+ AI agent tools.
+> One API key. Every tool. Usage-based pricing.
 
 ## Overview
-ToolRoute is an intelligent tool registry for AI agents. It curates 50+ best-in-class tools (rated 9/10 or higher), organizes them across 12 super-categories and 92 sub-categories, and provides an MCP-native API for tool discovery, search, and composition.
 
-The registry maintains living beliefs — confidence scores that evolve from real usage data across 17 companies — so recommendations improve over time.
+ToolRoute is a unified API gateway that lets AI agents call 50+ curated tools through a single endpoint. Instead of managing dozens of API keys, SDKs, and auth flows, agents use one ToolRoute API key and call any tool with a consistent request/response format.
 
-## Features
-- **Curated Registry**: 50+ tools, each rated 9/10 or higher, with detailed capability descriptions
-- **Living Beliefs**: Category champion beliefs that evolve from real usage data
-- **Intelligent Composition**: Multi-tool composites assembled for common workflows
-- **Check Before Build**: Describe what you need; get matching tools, installed inventory, beliefs, and composites
-- **MCP Server**: 7 tools for direct integration into AI agent workflows
-- **Inventory Tracking**: Know which tools are already installed in your fleet
-- **Usage Events**: Track tool usage across companies for belief evolution
+The registry maintains living beliefs — confidence scores that evolve from real usage data — so recommendations improve over time.
 
-## Categories
+## Authentication
+
+Two auth schemes:
+
+1. **API Key** (for gateway calls): `Authorization: Bearer tr_live_xxx`
+   - Used for: /api/v1/execute, /api/v1/key, /api/v1/usage
+   - Obtain at: https://toolroute.ai/dashboard/keys
+
+2. **Session JWT** (for dashboard management): `Authorization: Bearer <supabase_jwt>`
+   - Used for: /api/v1/keys (CRUD), /api/v1/checkout, /api/v1/usage
+   - Obtained via dashboard login at https://toolroute.ai/dashboard
+
+## Endpoints
+
+### POST /api/v1/execute — Execute a Tool
+
+The core gateway endpoint. Send a tool identifier and input, get structured output.
+
+**Request:**
+```json
+{
+  "tool": "resend/send_email",
+  "input": {
+    "to": "user@example.com",
+    "subject": "Hello from ToolRoute",
+    "body": "<h1>It works!</h1>"
+  },
+  "provider": {
+    "prefer": "resend",
+    "allow_fallbacks": true
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": "req_abc123",
+  "tool": "resend/send_email",
+  "provider": "resend",
+  "data": {
+    "message_id": "msg_xyz",
+    "status": "sent"
+  },
+  "usage": {
+    "cost": 0.001,
+    "balance_remaining": 4.99,
+    "latency_ms": 234
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": {
+    "message": "Insufficient balance. Add credits at https://toolroute.ai/dashboard/billing",
+    "code": "insufficient_balance"
+  }
+}
+```
+
+**Error Codes:**
+- `invalid_request` — Missing required fields or bad input (400)
+- `authentication_required` — No API key provided (401)
+- `invalid_api_key` — API key not found or revoked (401)
+- `insufficient_balance` — Not enough credits (402)
+- `tool_not_found` — Tool identifier not in registry (404)
+- `rate_limit_exceeded` — Too many requests (429)
+- `provider_error` — Upstream provider failed (500)
+- `internal_error` — ToolRoute internal error (500)
+
+**Auth:** Bearer API key required.
+
+---
+
+### GET /api/v1/tools — List Available Tools
+
+Browse all tools with pricing and capability info. No auth required.
+
+**Query Parameters:**
+- `category` (string) — Filter by super_category slug
+- `q` (string) — Search query
+- `limit` (integer, default 50) — Max results
+
+**Response (200):**
+```json
+{
+  "tools": [
+    {
+      "id": "uuid",
+      "name": "Resend",
+      "slug": "resend",
+      "description": "Transactional email API",
+      "operations": [
+        {
+          "id": "resend/send_email",
+          "name": "Send Email",
+          "description": "Send a transactional email",
+          "price_per_call": 0.001
+        }
+      ],
+      "rating": 10,
+      "super_category": "Communication & Messaging",
+      "sub_category": "Email",
+      "protocols": ["rest", "sdk"],
+      "cost": "usage-based",
+      "status": "active"
+    }
+  ],
+  "count": 53
+}
+```
+
+**Auth:** None required.
+
+---
+
+### GET /api/v1/key — API Key Info + Balance
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "name": "My Agent Key",
+  "key_hint": "tr_live_...f456",
+  "balance": 9.85,
+  "rate_limit": {
+    "requests_per_minute": 60,
+    "requests_remaining": 58
+  },
+  "created_at": "2026-04-01T00:00:00Z",
+  "last_used_at": "2026-04-13T12:00:00Z",
+  "total_requests": 1542,
+  "total_spend": 15.23
+}
+```
+
+**Auth:** Bearer API key required.
+
+---
+
+### POST /api/v1/keys — Create API Key
+
+**Request:**
+```json
+{ "name": "My Agent Key" }
+```
+
+**Response (201):**
+```json
+{
+  "key": "tr_live_abc123def456",
+  "id": "uuid",
+  "name": "My Agent Key",
+  "created_at": "2026-04-13T00:00:00Z"
+}
+```
+
+The full key is only returned once. Store it securely.
+
+**Auth:** Session JWT required.
+
+---
+
+### GET /api/v1/keys — List API Keys
+
+Returns all keys for the authenticated user with masked values.
+
+**Auth:** Session JWT required.
+
+---
+
+### DELETE /api/v1/keys — Revoke API Key
+
+**Request:**
+```json
+{ "key_id": "uuid" }
+```
+
+Permanently revokes the key. Cannot be undone.
+
+**Auth:** Session JWT required.
+
+---
+
+### GET /api/v1/usage — Usage History
+
+**Query Parameters:**
+- `limit` (integer, default 50) — Max records
+- `offset` (integer, default 0) — Pagination offset
+- `tool` (string) — Filter by tool (e.g. resend/send_email)
+- `since` (datetime) — Only records after this timestamp
+
+**Response (200):**
+```json
+{
+  "usage": [
+    {
+      "id": "req_abc123",
+      "tool": "resend/send_email",
+      "provider": "resend",
+      "cost": 0.001,
+      "latency_ms": 234,
+      "status": "success",
+      "error_code": null,
+      "created_at": "2026-04-13T12:00:00Z"
+    }
+  ],
+  "total": 1542,
+  "total_cost": 15.23
+}
+```
+
+**Auth:** Bearer API key or session JWT.
+
+---
+
+### POST /api/v1/checkout — Add Credits
+
+**Request:**
+```json
+{ "amount": 10 }
+```
+
+**Response (200):**
+```json
+{
+  "url": "https://checkout.stripe.com/c/pay_xxx",
+  "session_id": "cs_xxx"
+}
+```
+
+Redirect the user to the returned URL to complete payment.
+
+**Auth:** Session JWT required.
+
+---
+
+## Legacy Endpoints
+
+These endpoints are maintained for backwards compatibility. Use v1 endpoints for new integrations.
+
+### POST /api/check — Check Before Build (legacy)
+Describe what you need, get matching tools, beliefs, composites.
+
+### GET /api/search?q=query — Search Tools (legacy)
+Keyword search across the registry.
+
+### GET /api/tools — List Tools (legacy)
+Returns all tools in the registry.
+
+---
+
+## Available Tool Categories
+
 - Analytics & Tracking
-- Communication & Messaging
+- Communication & Messaging (Email, SMS, Push, Chat)
 - Content & Copywriting
 - CRM & Sales
 - DevOps & CI/CD
 - E-commerce & Inventory
 - Finance & Invoicing
-- Infrastructure
+- Infrastructure (DNS, Hosting, Domains)
 - Marketing & Social Media
 - HR & Operations
 - Scheduling & Calendar
 - Security & Compliance
 
-## API Reference
+## Pricing
 
-### Check Before Build
-```
-POST https://toolroute.ai/api/check
-Content-Type: application/json
+ToolRoute uses prepaid credits with usage-based pricing.
 
-{
-  "task": "describe what you need to build or accomplish"
-}
-```
-Returns: matching tools, installed inventory, category beliefs, composites.
-
-### Search Tools
-```
-GET https://toolroute.ai/api/search?q=query&limit=10
-```
-Returns: matching tools with relevance scoring.
-
-### List All Tools
-```
-GET https://toolroute.ai/api/tools
-```
-Returns: complete tool registry with ratings, protocols, and capabilities.
+- **Free tier**: $0 — Browse tools, search, check-before-build
+- **Gateway calls**: Per-call pricing varies by tool ($0.001 — $0.10 per call)
+- **Minimum top-up**: $5
+- **No monthly fees**: Pay only for what you use
 
 ## MCP Server
-ToolRoute is available as an MCP server with 7 tools:
+
+ToolRoute is also available as an MCP server with 7 tools for direct integration into AI agent workflows:
+
 - `check_before_build` — Describe what you need, get matching tools and recommendations
 - `search_tools` — Search the registry by keyword
 - `get_category_champion` — Get the current champion for a category
@@ -64,22 +299,27 @@ ToolRoute is available as an MCP server with 7 tools:
 - `librarian_status` — Get current registry stats and top beliefs
 - `log_tool_request` — Log a tool request for discovery tracking
 
-## Pricing
-ToolRoute is free to use. The web registry, API, and MCP server are all available at no cost.
-
 ## Integration
-1. **Web UI**: Browse and search at https://toolroute.ai
-2. **REST API**: Use the endpoints above for programmatic access
-3. **MCP Server**: Add to your Claude Code or AI agent configuration for inline tool discovery
-4. **OpenAPI**: Full spec available at https://toolroute.ai/openapi.json
+
+1. **REST API**: Use the v1 endpoints above
+2. **MCP Server**: Add to your Claude Code or AI agent configuration
+3. **Web UI**: Browse and search at https://toolroute.ai
+4. **OpenAPI**: Full spec at https://toolroute.ai/openapi.json
 
 ## Key Pages
-- https://toolroute.ai — Main registry and search
+
+- https://toolroute.ai — Homepage
+- https://toolroute.ai/docs — API documentation
+- https://toolroute.ai/pricing — Pricing details
 - https://toolroute.ai/tools — Browse all curated tools
 - https://toolroute.ai/categories — Category map with champion beliefs
 - https://toolroute.ai/composites — Multi-tool composition solutions
-- https://toolroute.ai/discover — Tool discovery feed
+- https://toolroute.ai/dashboard — User dashboard
+- https://toolroute.ai/dashboard/keys — API key management
+- https://toolroute.ai/dashboard/usage — Usage history
+- https://toolroute.ai/dashboard/billing — Add credits
 
 ## Contact
+
 support@toolroute.ai
 https://toolroute.ai

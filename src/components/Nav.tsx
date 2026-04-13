@@ -12,6 +12,9 @@ import {
   Zap,
   LogIn,
   LogOut,
+  LayoutDashboard,
+  BookOpen,
+  CreditCard,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -22,6 +25,9 @@ const links = [
   { href: "/categories", label: "Categories", icon: Grid3X3 },
   { href: "/composites", label: "Composites", icon: Layers },
   { href: "/discover", label: "Discover", icon: Compass },
+  { href: "/docs", label: "Docs", icon: BookOpen },
+  { href: "/pricing", label: "Pricing", icon: CreditCard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, authOnly: true },
 ];
 
 export function Nav() {
@@ -56,24 +62,26 @@ export function Nav() {
         </Link>
 
         <div className="flex items-center gap-1">
-          {links.map(({ href, label, icon: Icon }) => {
-            const active =
-              href === "/" ? pathname === "/" : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition-colors ${
-                  active
-                    ? "bg-accent/15 text-accent"
-                    : "text-text-dim hover:text-text hover:bg-bg-surface"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{label}</span>
-              </Link>
-            );
-          })}
+          {links
+            .filter((link) => !("authOnly" in link && link.authOnly) || user)
+            .map(({ href, label, icon: Icon }) => {
+              const active =
+                href === "/" ? pathname === "/" : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition-colors ${
+                    active
+                      ? "bg-accent/15 text-accent"
+                      : "text-text-dim hover:text-text hover:bg-bg-surface"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{label}</span>
+                </Link>
+              );
+            })}
 
           {/* Auth */}
           {user ? (

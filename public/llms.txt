@@ -1,15 +1,40 @@
-# ToolRoute
-> The OpenRouter for tools — MCP-native capability registry and intelligent librarian
+# ToolRoute — The OpenRouter for Tools
 
-## What this site does
-ToolRoute is the OpenRouter for tools. It provides an MCP-native capability registry and intelligent librarian that helps AI agents discover and use the right tools. Query 50+ curated best-in-class tools before building anything.
-
-## Key pages
-- https://toolroute.ai: Main tool registry and search
-- https://toolroute.ai/docs: Documentation
+One API key. Every tool. Unified API gateway for 50+ AI agent tools.
 
 ## API
-MCP-native API for tool discovery and routing
 
-## Contact
-support@toolroute.ai
+POST https://toolroute.ai/api/v1/execute — Execute any tool
+GET  https://toolroute.ai/api/v1/tools  — Browse available tools with pricing
+
+## Authentication
+
+All /execute requests require a Bearer API key (tr_live_xxx).
+Obtain one at https://toolroute.ai/dashboard/keys
+
+## Quick Start
+
+```bash
+curl -X POST https://toolroute.ai/api/v1/execute \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"tool":"toolroute/check_before_build","input":{"task":"I need to send emails"}}'
+```
+
+## Response Format
+
+```json
+{
+  "id": "req_abc123",
+  "tool": "toolroute/check_before_build",
+  "provider": "toolroute",
+  "data": { ... },
+  "usage": { "cost": 0.0, "balance_remaining": 10.0, "latency_ms": 120 }
+}
+```
+
+## Links
+
+- Docs: https://toolroute.ai/docs
+- OpenAPI spec: https://toolroute.ai/openapi.json
+- Dashboard: https://toolroute.ai/dashboard

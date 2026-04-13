@@ -2,10 +2,14 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ToolRoute API",
-    "description": "The OpenRouter for Tools — 53 curated best-in-class tools for AI agents. Search, discover, compose.",
+    "description": "The OpenRouter for Tools — unified API gateway for 50+ AI agent tools. One API key, every tool.",
     "version": "1.0.0",
     "contact": {
-      "url": "https://toolroute.ai"
+      "url": "https://toolroute.ai",
+      "email": "support@toolroute.ai"
+    },
+    "license": {
+      "name": "Proprietary"
     }
   },
   "servers": [
@@ -14,12 +18,443 @@
       "description": "Production"
     }
   ],
+  "security": [],
   "paths": {
+    "/api/v1/execute": {
+      "post": {
+        "operationId": "executeTool",
+        "summary": "Execute a tool",
+        "description": "Execute any tool in the ToolRoute registry via the unified gateway. Requires an API key (tr_live_xxx). The gateway routes to the best available provider, handles auth, and returns structured output.",
+        "tags": ["Gateway"],
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExecuteRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool executed successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExecuteResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (missing tool, bad input)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error or upstream provider failure",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools": {
+      "get": {
+        "operationId": "listToolsV1",
+        "summary": "List available tools with pricing",
+        "description": "Returns all tools in the ToolRoute registry with pricing, capabilities, and provider information. No authentication required.",
+        "tags": ["Discovery"],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by super_category slug"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Search query to filter tools"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 },
+            "description": "Max results to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tools": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ToolListing" }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/key": {
+      "get": {
+        "operationId": "getApiKeyInfo",
+        "summary": "Get API key info and balance",
+        "description": "Returns information about the authenticated API key including current balance, rate limits, and usage summary.",
+        "tags": ["Keys"],
+        "security": [{ "apiKey": [] }],
+        "responses": {
+          "200": {
+            "description": "API key information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiKeyInfo" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/keys": {
+      "post": {
+        "operationId": "createApiKey",
+        "summary": "Create a new API key",
+        "description": "Creates a new API key for the authenticated user. Requires session authentication (logged in via dashboard).",
+        "tags": ["Keys"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Human-readable label for this key",
+                    "example": "My Agent Key"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API key created. The full key is only returned once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "The full API key (only shown once)",
+                      "example": "tr_live_abc123def456"
+                    },
+                    "id": { "type": "string", "format": "uuid" },
+                    "name": { "type": "string" },
+                    "created_at": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listApiKeys",
+        "summary": "List API keys",
+        "description": "Lists all API keys for the authenticated user. Keys are masked (only last 4 characters shown).",
+        "tags": ["Keys"],
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "name": { "type": "string" },
+                          "key_hint": {
+                            "type": "string",
+                            "description": "Masked key showing only last 4 chars",
+                            "example": "tr_live_...f456"
+                          },
+                          "created_at": { "type": "string", "format": "date-time" },
+                          "last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+                          "total_requests": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeApiKey",
+        "summary": "Revoke an API key",
+        "description": "Permanently revokes an API key. This cannot be undone.",
+        "tags": ["Keys"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["key_id"],
+                "properties": {
+                  "key_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the key to revoke"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": { "type": "boolean" },
+                    "key_id": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usage": {
+      "get": {
+        "operationId": "getUsageHistory",
+        "summary": "Get usage history",
+        "description": "Returns usage history for the authenticated API key or session. Includes per-request cost, tool used, latency, and timestamps.",
+        "tags": ["Usage"],
+        "security": [{ "apiKey": [] }, { "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 },
+            "description": "Max records to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 },
+            "description": "Offset for pagination"
+          },
+          {
+            "name": "tool",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by tool identifier (e.g. resend/send_email)"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Only return usage after this timestamp"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "usage": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/UsageRecord" }
+                    },
+                    "total": { "type": "integer" },
+                    "total_cost": { "type": "number", "description": "Sum of cost for all matching records" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/checkout": {
+      "post": {
+        "operationId": "createCheckoutSession",
+        "summary": "Create Stripe checkout session",
+        "description": "Creates a Stripe checkout session to add credits to the user's account. Redirects to Stripe for payment.",
+        "tags": ["Billing"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Amount in USD to add as credits",
+                    "minimum": 5,
+                    "example": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checkout session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Stripe checkout URL to redirect the user to"
+                    },
+                    "session_id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/check": {
       "post": {
         "operationId": "checkBeforeBuild",
-        "summary": "Check ToolRoute before building anything",
-        "description": "The killer feature. Describe what you need to build, get back matching tools, installed inventory, category beliefs, and composites.",
+        "summary": "Check ToolRoute before building anything (legacy)",
+        "description": "Legacy endpoint. Describe what you need to build, get back matching tools, installed inventory, category beliefs, and composites. Use /api/v1/execute with tool 'toolroute/check_before_build' for the v1 equivalent.",
+        "tags": ["Legacy"],
         "requestBody": {
           "required": true,
           "content": {
@@ -72,7 +507,9 @@
     "/api/search": {
       "get": {
         "operationId": "searchTools",
-        "summary": "Search the tool registry",
+        "summary": "Search the tool registry (legacy)",
+        "description": "Legacy endpoint. Search tools by keyword. Use /api/v1/tools?q=query for the v1 equivalent.",
+        "tags": ["Legacy"],
         "parameters": [
           {
             "name": "q",
@@ -111,8 +548,10 @@
     },
     "/api/tools": {
       "get": {
-        "operationId": "listTools",
-        "summary": "List all curated tools",
+        "operationId": "listToolsLegacy",
+        "summary": "List all curated tools (legacy)",
+        "description": "Legacy endpoint. Returns all tools. Use /api/v1/tools for the v1 equivalent.",
+        "tags": ["Legacy"],
         "responses": {
           "200": {
             "description": "All tools in the registry",
@@ -136,7 +575,204 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key in the format tr_live_xxx. Pass as Bearer token in Authorization header."
+      },
+      "sessionAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Supabase JWT session token from dashboard login. Pass as Bearer token in Authorization header."
+      }
+    },
     "schemas": {
+      "ExecuteRequest": {
+        "type": "object",
+        "required": ["tool", "input"],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Tool identifier in provider/operation format",
+            "example": "resend/send_email"
+          },
+          "input": {
+            "type": "object",
+            "description": "Tool-specific input parameters",
+            "additionalProperties": true,
+            "example": {
+              "to": "user@example.com",
+              "subject": "Hello",
+              "body": "World"
+            }
+          },
+          "provider": {
+            "type": "object",
+            "description": "Optional provider routing preferences",
+            "properties": {
+              "prefer": {
+                "type": "string",
+                "description": "Preferred provider name"
+              },
+              "allow_fallbacks": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to fall back to alternative providers on failure"
+              }
+            }
+          }
+        }
+      },
+      "ExecuteResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique request ID for this execution",
+            "example": "req_abc123"
+          },
+          "tool": {
+            "type": "string",
+            "description": "Tool that was executed",
+            "example": "resend/send_email"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that handled the request",
+            "example": "resend"
+          },
+          "data": {
+            "type": "object",
+            "description": "Tool output data (structure varies by tool)",
+            "additionalProperties": true
+          },
+          "usage": {
+            "$ref": "#/components/schemas/UsageInfo"
+          }
+        }
+      },
+      "UsageInfo": {
+        "type": "object",
+        "properties": {
+          "cost": {
+            "type": "number",
+            "description": "Cost of this request in USD",
+            "example": 0.001
+          },
+          "balance_remaining": {
+            "type": "number",
+            "description": "Remaining account balance in USD",
+            "example": 4.99
+          },
+          "latency_ms": {
+            "type": "integer",
+            "description": "End-to-end latency in milliseconds",
+            "example": 234
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message",
+                "example": "Insufficient balance. Add credits at https://toolroute.ai/dashboard/billing"
+              },
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code",
+                "enum": [
+                  "invalid_request",
+                  "authentication_required",
+                  "invalid_api_key",
+                  "insufficient_balance",
+                  "tool_not_found",
+                  "rate_limit_exceeded",
+                  "provider_error",
+                  "internal_error"
+                ],
+                "example": "insufficient_balance"
+              }
+            }
+          }
+        }
+      },
+      "ToolListing": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string", "example": "Resend" },
+          "slug": { "type": "string", "example": "resend" },
+          "description": { "type": "string" },
+          "operations": {
+            "type": "array",
+            "description": "Available operations for this tool",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "example": "resend/send_email" },
+                "name": { "type": "string", "example": "Send Email" },
+                "description": { "type": "string" },
+                "price_per_call": { "type": "number", "example": 0.001 }
+              }
+            }
+          },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "super_category": { "type": "string" },
+          "sub_category": { "type": "string" },
+          "protocols": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["rest", "mcp", "graphql", "grpc", "sdk"] }
+          },
+          "cost": {
+            "type": "string",
+            "enum": ["free", "freemium", "paid", "usage-based", "enterprise"]
+          },
+          "status": { "type": "string", "enum": ["active", "beta", "deprecated"] }
+        }
+      },
+      "ApiKeyInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "key_hint": { "type": "string", "example": "tr_live_...f456" },
+          "balance": {
+            "type": "number",
+            "description": "Current account balance in USD",
+            "example": 9.85
+          },
+          "rate_limit": {
+            "type": "object",
+            "properties": {
+              "requests_per_minute": { "type": "integer", "example": 60 },
+              "requests_remaining": { "type": "integer", "example": 58 }
+            }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+          "total_requests": { "type": "integer" },
+          "total_spend": { "type": "number", "description": "Total amount spent in USD" }
+        }
+      },
+      "UsageRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "tool": { "type": "string", "example": "resend/send_email" },
+          "provider": { "type": "string", "example": "resend" },
+          "cost": { "type": "number", "example": 0.001 },
+          "latency_ms": { "type": "integer", "example": 234 },
+          "status": { "type": "string", "enum": ["success", "error"] },
+          "error_code": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
       "Tool": {
         "type": "object",
         "properties": {
@@ -183,5 +819,31 @@
         }
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Gateway",
+      "description": "Core gateway endpoints for executing tools"
+    },
+    {
+      "name": "Discovery",
+      "description": "Browse and search available tools"
+    },
+    {
+      "name": "Keys",
+      "description": "API key management"
+    },
+    {
+      "name": "Usage",
+      "description": "Usage tracking and history"
+    },
+    {
+      "name": "Billing",
+      "description": "Credits and payment"
+    },
+    {
+      "name": "Legacy",
+      "description": "Backwards-compatible endpoints from v0. Use v1 endpoints for new integrations."
+    }
+  ]
 }
