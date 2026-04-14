@@ -1,0 +1,44 @@
+{
+  "name": "ToolRoute",
+  "description": "The OpenRouter for Tools — unified API gateway with 51 adapters and 150+ operations for AI agents",
+  "url": "https://toolroute.ai",
+  "provider": {
+    "organization": "ToolRoute",
+    "url": "https://toolroute.ai"
+  },
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "authentication": {
+    "schemes": ["bearer"],
+    "credentials": "API key from https://toolroute.ai/dashboard/keys (format: tr_live_xxx)"
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "tool-execute",
+      "name": "Execute Tool",
+      "description": "Execute any of 51 tools via unified API. Supports AI/LLM, search, voice, email, social media, image, video, business, data, code, productivity, and more.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "auto-route",
+      "name": "Auto Route",
+      "description": "Describe what you need in natural language. ToolRoute picks the best tool and executes it automatically.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "tool-search",
+      "name": "Tool Search",
+      "description": "Search 87+ curated tools by capability, category, or use case.",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    }
+  ]
+}

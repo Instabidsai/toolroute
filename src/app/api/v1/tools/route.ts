@@ -1,8 +1,47 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { listAdapters } from "@/lib/adapters/index";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const format = request.nextUrl.searchParams.get("format");
+
+    // OpenAI function-calling format: generate from adapter registry
+    if (format === "openai") {
+      const adapters = listAdapters();
+      const functions = [];
+
+      for (const adapter of adapters) {
+        for (const op of adapter.operations) {
+          const funcName = `toolroute_${adapter.slug}_${op}`.replace(
+            /[^a-zA-Z0-9_]/g,
+            "_"
+          );
+
+          functions.push({
+            type: "function" as const,
+            function: {
+              name: funcName,
+              description: `${adapter.name}: ${op} — ${adapter.description}`,
+              parameters: {
+                type: "object" as const,
+                properties: {
+                  input: {
+                    type: "object" as const,
+                    description: `Input parameters for ${adapter.slug}/${op}`,
+                  },
+                },
+                required: ["input"],
+              },
+            },
+          });
+        }
+      }
+
+      return NextResponse.json(functions, { headers: CORS_HEADERS });
+    }
+
+    // Default: Supabase catalog format
     const sb = supabaseAdmin();
 
     const { data: tools, error } = await sb.rpc("get_tool_catalog");
