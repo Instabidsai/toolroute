@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ToolRoute API",
-    "description": "The OpenRouter for Tools -- unified API gateway for AI agent tools. One API key, 8 adapters, 18 operations. Includes web scraping, TTS, email, LLM, GitHub, browser automation, documentation lookup, and capability registry search.",
-    "version": "1.1.0",
+    "description": "The OpenRouter for Tools -- unified API gateway for AI agent tools. One API key, 40 adapters, 107 operations. Covers web scraping, TTS, email, LLMs, GitHub, browser automation, documentation lookup, image generation, translation, video production, voice AI, SEO, shipping, payments, databases, social media, and more.\n\n## Adapter Registry (40 adapters)\n\n| # | Slug | Name | Operations |\n|---|------|------|------------|\n| 1 | toolroute | ToolRoute | check_before_build, search |\n| 2 | context7 | Context7 | search, query-docs |\n| 3 | firecrawl | Firecrawl | scrape, crawl, map |\n| 4 | elevenlabs | ElevenLabs | text-to-speech, voices |\n| 5 | sendgrid | SendGrid | send-email |\n| 6 | playwright | Playwright | screenshot, scrape-text, pdf |\n| 7 | claude | Claude | chat, complete |\n| 8 | github | GitHub | search-repos, get-readme, list-issues |\n| 9 | supabase | Supabase | execute-sql, list-tables, insert, select |\n| 10 | stripe | Stripe | list-customers, create-payment-link, list-products, get-balance |\n| 11 | twilio | Twilio | send-sms, make-call, list-messages |\n| 12 | whisper | Whisper | transcribe |\n| 13 | resend | Resend | send-email, list-emails |\n| 14 | search | Web Search | web, news, images |\n| 15 | image | Image Generation | generate, upscale |\n| 16 | translate | DeepL Translation | text, detect-language |\n| 17 | screenshot | Screenshot Capture | capture, fullpage |\n| 18 | pdf | PDF Generation | from-html, from-url |\n| 19 | calendar | Google Calendar | list-events, create-event, check-availability |\n| 20 | drive | Google Drive | list-files, search, get-content, upload-text |\n| 21 | openai | OpenAI | chat, image, embeddings, moderation |\n| 22 | pexels | Pexels | search-photos, search-videos, curated |\n| 23 | unsplash | Unsplash | search, random, get-photo |\n| 24 | removebg | Remove.bg | remove |\n| 25 | vapi | Vapi | create-call, list-calls, get-call, list-assistants |\n| 26 | creatify | Creatify | create-ad, list-ads, get-ad |\n| 27 | apollo | Apollo.io | search-people, enrich, search-companies |\n| 28 | shippo | Shippo | create-shipment, get-rates, create-label, track |\n| 29 | replicate | Replicate | run, list-models |\n| 30 | sentry | Sentry | list-issues, get-issue, list-events |\n| 31 | outscraper | Outscraper | google-maps, google-reviews, emails-and-contacts |\n| 32 | textbelt | Textbelt | send-sms, check-status |\n| 33 | deepgram | Deepgram | transcribe, transcribe-url |\n| 34 | heygen | HeyGen | create-video, list-avatars, get-video |\n| 35 | mux | Mux | create-asset, get-asset, list-assets, create-playback |\n| 36 | dataforseo | DataForSEO | serp, keywords, backlinks |\n| 37 | postiz | Postiz | create-post, list-posts, get-integrations |\n| 38 | creatomate | Creatomate | render, list-templates, get-render |\n| 39 | shotstack | Shotstack | render, get-render, probe |\n| 40 | auto | ToolRoute Auto | route |",
+    "version": "1.2.0",
     "contact": {
       "url": "https://toolroute.ai",
       "email": "support@toolroute.ai"
@@ -24,7 +24,7 @@
       "post": {
         "operationId": "executeTool",
         "summary": "Execute a tool",
-        "description": "Execute any tool in the ToolRoute registry via the unified gateway. Requires an API key (tr_live_xxx). The gateway routes to the best available provider, handles auth, and returns structured output.\n\nAvailable tools:\n- toolroute/check_before_build, toolroute/search\n- context7/resolve-library, context7/query-docs\n- elevenlabs/text-to-speech, elevenlabs/voices\n- firecrawl/scrape, firecrawl/crawl, firecrawl/map\n- sendgrid/send-email\n- playwright/screenshot, playwright/scrape-text, playwright/pdf\n- claude/chat, claude/complete\n- github/search-repos, github/get-readme, github/list-issues",
+        "description": "Execute any tool in the ToolRoute registry via the unified gateway. Requires an API key (tr_live_xxx). The gateway routes to the best available provider, handles auth, and returns structured output.\n\n40 adapters available. Use {slug}/{operation} format. Full adapter list in info.description.",
         "tags": ["Gateway"],
         "security": [{ "apiKey": [] }],
         "requestBody": {
@@ -33,11 +33,28 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/ExecuteRequest" },
               "examples": {
-                "firecrawl-scrape": {
-                  "summary": "Scrape a webpage",
+                "toolroute-check": {
+                  "summary": "Check before building",
                   "value": {
-                    "tool": "firecrawl/scrape",
-                    "input": { "url": "https://example.com" }
+                    "tool": "toolroute/check_before_build",
+                    "input": { "task": "I need to send transactional emails" }
+                  }
+                },
+                "search-web": {
+                  "summary": "Web search",
+                  "value": {
+                    "tool": "search/web",
+                    "input": { "query": "best MCP servers 2026", "limit": 10 }
+                  }
+                },
+                "claude-chat": {
+                  "summary": "Chat with Claude",
+                  "value": {
+                    "tool": "claude/chat",
+                    "input": {
+                      "messages": [{ "role": "user", "content": "Explain REST in 2 sentences." }],
+                      "max_tokens": 256
+                    }
                   }
                 },
                 "elevenlabs-tts": {
@@ -45,6 +62,41 @@
                   "value": {
                     "tool": "elevenlabs/text-to-speech",
                     "input": { "text": "Hello world", "voice_id": "21m00Tcm4TlvDq8ikWAM" }
+                  }
+                },
+                "firecrawl-scrape": {
+                  "summary": "Scrape a webpage",
+                  "value": {
+                    "tool": "firecrawl/scrape",
+                    "input": { "url": "https://example.com" }
+                  }
+                },
+                "image-generate": {
+                  "summary": "Generate an image",
+                  "value": {
+                    "tool": "image/generate",
+                    "input": { "prompt": "A futuristic city skyline at sunset", "size": "1024x1024" }
+                  }
+                },
+                "translate-text": {
+                  "summary": "Translate text",
+                  "value": {
+                    "tool": "translate/text",
+                    "input": { "text": "Hello, how are you?", "target_lang": "DE" }
+                  }
+                },
+                "auto-route": {
+                  "summary": "Auto-route a task to the best tool",
+                  "value": {
+                    "tool": "auto/route",
+                    "input": { "task": "I need to remove the background from a product photo" }
+                  }
+                },
+                "github-search": {
+                  "summary": "Search GitHub repos",
+                  "value": {
+                    "tool": "github/search-repos",
+                    "input": { "query": "mcp server typescript", "per_page": 5 }
                   }
                 },
                 "sendgrid-email": {
@@ -59,23 +111,6 @@
                     }
                   }
                 },
-                "claude-chat": {
-                  "summary": "Chat with Claude",
-                  "value": {
-                    "tool": "claude/chat",
-                    "input": {
-                      "messages": [{ "role": "user", "content": "Explain REST in 2 sentences." }],
-                      "max_tokens": 256
-                    }
-                  }
-                },
-                "github-search": {
-                  "summary": "Search GitHub repos",
-                  "value": {
-                    "tool": "github/search-repos",
-                    "input": { "query": "mcp server typescript", "per_page": 5 }
-                  }
-                },
                 "context7-docs": {
                   "summary": "Query library docs",
                   "value": {
@@ -88,13 +123,6 @@
                   "value": {
                     "tool": "playwright/screenshot",
                     "input": { "url": "https://example.com", "width": 1920, "height": 1080 }
-                  }
-                },
-                "toolroute-check": {
-                  "summary": "Check before building",
-                  "value": {
-                    "tool": "toolroute/check_before_build",
-                    "input": { "task": "I need to send transactional emails" }
                   }
                 }
               }
@@ -515,12 +543,350 @@
         }
       }
     },
+    "/api/v1/byok": {
+      "post": {
+        "operationId": "registerByokKey",
+        "summary": "Register a BYOK provider key",
+        "description": "Register your own API key for a supported provider. Requests will be routed through your key with zero markup. Keys are encrypted at rest with AES-256. Requires session authentication.",
+        "tags": ["BYOK"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["provider", "api_key"],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "The provider slug to register the key for (any of the 40 adapter slugs)",
+                    "example": "elevenlabs"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "description": "Your API key for the provider"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Optional human-readable label for this key",
+                    "example": "My ElevenLabs key"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "provider": { "type": "string" },
+                    "label": { "type": "string" },
+                    "status": { "type": "string", "example": "registered" },
+                    "created_at": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid provider or missing key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listByokKeys",
+        "summary": "List registered BYOK provider keys",
+        "description": "Lists all BYOK provider keys for the authenticated user. Keys are masked. Requires session authentication.",
+        "tags": ["BYOK"],
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of BYOK keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "provider": { "type": "string", "example": "elevenlabs" },
+                          "label": { "type": "string" },
+                          "key_hint": {
+                            "type": "string",
+                            "description": "Masked key showing only last 4 chars",
+                            "example": "...xK7m"
+                          },
+                          "created_at": { "type": "string", "format": "date-time" },
+                          "last_used_at": { "type": "string", "format": "date-time", "nullable": true }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteByokKey",
+        "summary": "Remove a BYOK provider key",
+        "description": "Permanently removes a BYOK provider key. Future requests for this provider will use the platform key. Requires session authentication.",
+        "tags": ["BYOK"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["key_id"],
+                "properties": {
+                  "key_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the BYOK key to remove"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": { "type": "boolean" },
+                    "key_id": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/providers": {
+      "post": {
+        "operationId": "registerMasterProviderKey",
+        "summary": "Register master provider key (admin only)",
+        "description": "Register or update a master API key for a provider. This key is used for all platform-routed requests when users do not have a BYOK key. Requires admin authentication.",
+        "tags": ["Admin"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["provider", "api_key"],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "Provider slug (e.g. elevenlabs, firecrawl, claude)",
+                    "example": "elevenlabs"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "description": "Master API key for the provider"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether this provider is enabled for platform routing"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider key registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": { "type": "string" },
+                    "status": { "type": "string", "example": "registered" },
+                    "enabled": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized (admin only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listProviders",
+        "summary": "List providers with redacted keys (admin only)",
+        "description": "Lists all registered providers with key hints (redacted). Requires admin authentication.",
+        "tags": ["Admin"],
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "provider": { "type": "string", "example": "elevenlabs" },
+                          "key_hint": { "type": "string", "example": "...xK7m" },
+                          "enabled": { "type": "boolean" },
+                          "total_requests": { "type": "integer" },
+                          "total_cost": { "type": "number" },
+                          "updated_at": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized (admin only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "operationId": "getAdminStats",
+        "summary": "Get revenue, COGS, and margin stats (admin only)",
+        "description": "Returns platform-wide statistics including total revenue, cost of goods sold (upstream API costs), gross margin, active users, and per-adapter breakdowns. Requires admin authentication.",
+        "tags": ["Admin"],
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["day", "week", "month", "all"], "default": "month" },
+            "description": "Time period for stats aggregation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platform stats",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdminStats" }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized (admin only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/provider-keys": {
       "post": {
         "operationId": "registerProviderKey",
-        "summary": "Register a BYOK provider key",
-        "description": "Register your own API key for a supported provider (elevenlabs, firecrawl, sendgrid, claude, github). Requests will be routed through your key with zero markup. Keys are encrypted at rest with AES-256.",
-        "tags": ["BYOK"],
+        "summary": "Register a BYOK provider key (legacy)",
+        "description": "Legacy endpoint. Register your own API key for a supported provider. Use /api/v1/byok for the v1 equivalent.",
+        "tags": ["Legacy"],
         "security": [{ "apiKey": [] }],
         "requestBody": {
           "required": true,
@@ -723,7 +1089,7 @@
         "properties": {
           "tool": {
             "type": "string",
-            "description": "Tool identifier in provider/operation format. Available tools: toolroute/check_before_build, toolroute/search, context7/resolve-library, context7/query-docs, elevenlabs/text-to-speech, elevenlabs/voices, firecrawl/scrape, firecrawl/crawl, firecrawl/map, sendgrid/send-email, playwright/screenshot, playwright/scrape-text, playwright/pdf, claude/chat, claude/complete, github/search-repos, github/get-readme, github/list-issues",
+            "description": "Tool identifier in {adapter_slug}/{operation} format. 40 adapters with 107 operations available. Examples: firecrawl/scrape, claude/chat, search/web, image/generate, translate/text, auto/route.",
             "example": "firecrawl/scrape"
           },
           "input": {
@@ -839,6 +1205,86 @@
               }
             }
           }
+        }
+      },
+      "AdapterInfo": {
+        "type": "object",
+        "description": "Information about a gateway adapter",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Adapter slug used in tool identifiers",
+            "example": "firecrawl"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable adapter name",
+            "example": "Firecrawl"
+          },
+          "operations": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Available operations for this adapter",
+            "example": ["scrape", "crawl", "map"]
+          }
+        }
+      },
+      "AdapterRegistry": {
+        "type": "object",
+        "description": "Complete registry of all 40 gateway adapters and their 107 operations",
+        "properties": {
+          "adapters": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdapterInfo" }
+          },
+          "total_adapters": { "type": "integer", "example": 40 },
+          "total_operations": { "type": "integer", "example": 107 }
+        },
+        "example": {
+          "adapters": [
+            { "slug": "toolroute", "name": "ToolRoute", "operations": ["check_before_build", "search"] },
+            { "slug": "context7", "name": "Context7", "operations": ["search", "query-docs"] },
+            { "slug": "firecrawl", "name": "Firecrawl", "operations": ["scrape", "crawl", "map"] },
+            { "slug": "elevenlabs", "name": "ElevenLabs", "operations": ["text-to-speech", "voices"] },
+            { "slug": "sendgrid", "name": "SendGrid", "operations": ["send-email"] },
+            { "slug": "playwright", "name": "Playwright", "operations": ["screenshot", "scrape-text", "pdf"] },
+            { "slug": "claude", "name": "Claude", "operations": ["chat", "complete"] },
+            { "slug": "github", "name": "GitHub", "operations": ["search-repos", "get-readme", "list-issues"] },
+            { "slug": "supabase", "name": "Supabase", "operations": ["execute-sql", "list-tables", "insert", "select"] },
+            { "slug": "stripe", "name": "Stripe", "operations": ["list-customers", "create-payment-link", "list-products", "get-balance"] },
+            { "slug": "twilio", "name": "Twilio", "operations": ["send-sms", "make-call", "list-messages"] },
+            { "slug": "whisper", "name": "Whisper", "operations": ["transcribe"] },
+            { "slug": "resend", "name": "Resend", "operations": ["send-email", "list-emails"] },
+            { "slug": "search", "name": "Web Search", "operations": ["web", "news", "images"] },
+            { "slug": "image", "name": "Image Generation", "operations": ["generate", "upscale"] },
+            { "slug": "translate", "name": "DeepL Translation", "operations": ["text", "detect-language"] },
+            { "slug": "screenshot", "name": "Screenshot Capture", "operations": ["capture", "fullpage"] },
+            { "slug": "pdf", "name": "PDF Generation", "operations": ["from-html", "from-url"] },
+            { "slug": "calendar", "name": "Google Calendar", "operations": ["list-events", "create-event", "check-availability"] },
+            { "slug": "drive", "name": "Google Drive", "operations": ["list-files", "search", "get-content", "upload-text"] },
+            { "slug": "openai", "name": "OpenAI", "operations": ["chat", "image", "embeddings", "moderation"] },
+            { "slug": "pexels", "name": "Pexels", "operations": ["search-photos", "search-videos", "curated"] },
+            { "slug": "unsplash", "name": "Unsplash", "operations": ["search", "random", "get-photo"] },
+            { "slug": "removebg", "name": "Remove.bg", "operations": ["remove"] },
+            { "slug": "vapi", "name": "Vapi", "operations": ["create-call", "list-calls", "get-call", "list-assistants"] },
+            { "slug": "creatify", "name": "Creatify", "operations": ["create-ad", "list-ads", "get-ad"] },
+            { "slug": "apollo", "name": "Apollo.io", "operations": ["search-people", "enrich", "search-companies"] },
+            { "slug": "shippo", "name": "Shippo", "operations": ["create-shipment", "get-rates", "create-label", "track"] },
+            { "slug": "replicate", "name": "Replicate", "operations": ["run", "list-models"] },
+            { "slug": "sentry", "name": "Sentry", "operations": ["list-issues", "get-issue", "list-events"] },
+            { "slug": "outscraper", "name": "Outscraper", "operations": ["google-maps", "google-reviews", "emails-and-contacts"] },
+            { "slug": "textbelt", "name": "Textbelt", "operations": ["send-sms", "check-status"] },
+            { "slug": "deepgram", "name": "Deepgram", "operations": ["transcribe", "transcribe-url"] },
+            { "slug": "heygen", "name": "HeyGen", "operations": ["create-video", "list-avatars", "get-video"] },
+            { "slug": "mux", "name": "Mux", "operations": ["create-asset", "get-asset", "list-assets", "create-playback"] },
+            { "slug": "dataforseo", "name": "DataForSEO", "operations": ["serp", "keywords", "backlinks"] },
+            { "slug": "postiz", "name": "Postiz", "operations": ["create-post", "list-posts", "get-integrations"] },
+            { "slug": "creatomate", "name": "Creatomate", "operations": ["render", "list-templates", "get-render"] },
+            { "slug": "shotstack", "name": "Shotstack", "operations": ["render", "get-render", "probe"] },
+            { "slug": "auto", "name": "ToolRoute Auto", "operations": ["route"] }
+          ],
+          "total_adapters": 40,
+          "total_operations": 107
         }
       },
       "ToolrouteCheckInput": {
@@ -1007,6 +1453,43 @@
           "per_page": { "type": "integer", "default": 10, "description": "Results per page" }
         }
       },
+      "SearchWebInput": {
+        "type": "object",
+        "required": ["query"],
+        "description": "Input for search/web, search/news, search/images",
+        "properties": {
+          "query": { "type": "string", "description": "Search query" },
+          "limit": { "type": "integer", "default": 10, "description": "Max results to return" }
+        }
+      },
+      "ImageGenerateInput": {
+        "type": "object",
+        "required": ["prompt"],
+        "description": "Input for image/generate",
+        "properties": {
+          "prompt": { "type": "string", "description": "Text description of the image to generate" },
+          "size": { "type": "string", "default": "1024x1024", "description": "Image dimensions (e.g. 1024x1024, 512x512)" },
+          "model": { "type": "string", "description": "Model to use (optional, defaults to best available)" }
+        }
+      },
+      "TranslateTextInput": {
+        "type": "object",
+        "required": ["text", "target_lang"],
+        "description": "Input for translate/text",
+        "properties": {
+          "text": { "type": "string", "description": "Text to translate" },
+          "target_lang": { "type": "string", "description": "Target language code (e.g. DE, FR, ES, JA)" },
+          "source_lang": { "type": "string", "description": "Source language code (auto-detected if omitted)" }
+        }
+      },
+      "AutoRouteInput": {
+        "type": "object",
+        "required": ["task"],
+        "description": "Input for auto/route. Describes a task in natural language and the system picks the best tool and executes it.",
+        "properties": {
+          "task": { "type": "string", "description": "Natural language description of what you need done" }
+        }
+      },
       "ToolListing": {
         "type": "object",
         "properties": {
@@ -1027,6 +1510,22 @@
               }
             }
           },
+          "price_per_call": {
+            "type": "number",
+            "description": "Default price per call in USD (may vary by operation)",
+            "example": 0.005
+          },
+          "gateway_enabled": {
+            "type": "boolean",
+            "description": "Whether this tool is available through the gateway (has an active adapter)",
+            "example": true
+          },
+          "health_status": {
+            "type": "string",
+            "description": "Current health status of the tool's upstream provider",
+            "enum": ["healthy", "degraded", "down", "unknown"],
+            "example": "healthy"
+          },
           "rating": { "type": "integer", "minimum": 1, "maximum": 10 },
           "super_category": { "type": "string" },
           "sub_category": { "type": "string" },
@@ -1039,6 +1538,51 @@
             "enum": ["free", "freemium", "paid", "usage-based", "enterprise"]
           },
           "status": { "type": "string", "enum": ["active", "beta", "deprecated"] }
+        }
+      },
+      "AdminStats": {
+        "type": "object",
+        "description": "Platform-wide revenue, COGS, and margin statistics",
+        "properties": {
+          "period": { "type": "string", "example": "month" },
+          "revenue": {
+            "type": "number",
+            "description": "Total revenue from credit purchases and subscriptions in USD",
+            "example": 1250.00
+          },
+          "cogs": {
+            "type": "number",
+            "description": "Total cost of goods sold (upstream API costs) in USD",
+            "example": 340.50
+          },
+          "gross_margin": {
+            "type": "number",
+            "description": "Gross margin percentage",
+            "example": 72.76
+          },
+          "total_requests": {
+            "type": "integer",
+            "description": "Total API requests in period",
+            "example": 15420
+          },
+          "active_users": {
+            "type": "integer",
+            "description": "Unique users with at least one request in period",
+            "example": 42
+          },
+          "top_adapters": {
+            "type": "array",
+            "description": "Top adapters by request volume",
+            "items": {
+              "type": "object",
+              "properties": {
+                "adapter": { "type": "string", "example": "claude" },
+                "requests": { "type": "integer", "example": 5200 },
+                "revenue": { "type": "number", "example": 520.00 },
+                "cogs": { "type": "number", "example": 156.00 }
+              }
+            }
+          }
         }
       },
       "ApiKeyInfo": {
@@ -1128,7 +1672,7 @@
   "tags": [
     {
       "name": "Gateway",
-      "description": "Core gateway endpoints for executing tools. Supports 8 adapters: toolroute, context7, elevenlabs, firecrawl, sendgrid, playwright, claude, github."
+      "description": "Core gateway endpoints for executing tools. Supports 40 adapters with 107 operations across web scraping, TTS, email, LLMs, image generation, translation, video, voice AI, SEO, shipping, payments, databases, social media, and more."
     },
     {
       "name": "Discovery",
@@ -1149,6 +1693,10 @@
     {
       "name": "BYOK",
       "description": "Bring Your Own Key -- register provider API keys for zero-markup routing"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints for platform operators. Require admin-level session authentication."
     },
     {
       "name": "Legacy",
