@@ -1,6 +1,6 @@
 # ToolRoute — The OpenRouter for Tools
 
-One API key. 8 adapters. 18 operations. Unified API gateway for AI agent tools.
+One API key. 40 adapters. 120+ operations. Unified API gateway for AI agent tools.
 
 ## API
 
@@ -24,22 +24,107 @@ curl -X POST https://toolroute.ai/api/v1/execute \
   -d '{"tool":"firecrawl/scrape","input":{"url":"https://example.com"}}'
 ```
 
-## Available Gateway Adapters (8 adapters, 18 operations)
+## Available Gateway Adapters (40 adapters, 120+ operations)
 
+### AI & LLM (4)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| claude | chat, complete | Yes | $0.003/1K chars |
+| openai | chat, image, embeddings, moderation | Yes | $0-$0.04/call |
+| replicate | run, list-models | Yes | $0.01/run |
+| whisper | transcribe | Yes | $0.01/call |
+
+### Search & Web (3)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| search | web, news, images | Yes | $0.003/call |
+| context7 | search, query-docs | No | $0.001/call |
+| firecrawl | scrape, crawl, map | Yes | $0.003-$0.01/call |
+
+### Voice & Audio (4)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| elevenlabs | text-to-speech, voices | Yes | $0.0003/char |
+| deepgram | transcribe, transcribe-url | Yes | $0.005/call |
+| vapi | create-call, list-calls, get-call, list-assistants | Yes | $0.001-$0.05 |
+| twilio | send-sms, make-call, list-messages | Yes | $0.001-$0.02 |
+
+### Email (2)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| sendgrid | send-email | Yes | $0.001/call |
+| resend | send-email, list-emails | Yes | $0.001/call |
+
+### Image & Media (5)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| image | generate, upscale | Yes | $0.02-$0.03/call |
+| pexels | search-photos, search-videos, curated | Yes | $0.001/call |
+| unsplash | search, random, get-photo | Yes | $0.001/call |
+| removebg | remove | Yes | $0.10/call |
+| screenshot | capture, fullpage | Yes | $0.005/call |
+
+### Video (4)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| heygen | create-video, list-avatars, get-video | Yes | $0.001-$0.50 |
+| creatomate | render, list-templates, get-render | Yes | $0.001-$0.50 |
+| shotstack | render, get-render, probe | Yes | $0.001-$0.30 |
+| mux | create-asset, get-asset, list-assets, create-playback | Yes | $0.001-$0.02 |
+
+### Content (3)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| translate | text, detect-language | Yes | $0.00005/char |
+| pdf | from-html, from-url | Yes | $0.005/call |
+| playwright | screenshot, scrape-text, pdf | No | $0.002-$0.005 |
+
+### Business (4)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| stripe | list-customers, create-payment-link, list-products, get-balance | Yes | $0.002/call |
+| apollo | search-people, enrich, search-companies | Yes | $0.01-$0.03 |
+| creatify | create-ad, list-ads, get-ad | Yes | $0.001-$2.00 |
+| shippo | create-shipment, get-rates, create-label, track | Yes | $0.001-$0.05 |
+
+### Data & Analytics (3)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| supabase | execute-sql, list-tables, insert, select | Yes | $0.001/call |
+| sentry | list-issues, get-issue, list-events | Yes | $0.001/call |
+| dataforseo | serp, keywords, backlinks | Yes | $0.002/call |
+
+### Social & Outreach (2)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| postiz | create-post, list-posts, get-integrations | Yes | $0.001-$0.002 |
+| outscraper | google-maps, google-reviews, emails-and-contacts | Yes | $0.005-$0.01 |
+
+### Code & DevOps (1)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| github | search-repos, get-readme, list-issues | Yes | $0.001/call |
+
+### Productivity (2)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| calendar | list-events, create-event, check-availability | BYOK-only | $0.001/call |
+| drive | list-files, search, get-content, upload-text | BYOK-only | $0.001/call |
+
+### SMS (1)
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| textbelt | send-sms, check-status | Yes | $0-$0.005 |
+
+### Meta (2)
 | Adapter | Operations | BYOK | Pricing |
 |---------|-----------|------|---------|
 | toolroute | check_before_build, search | N/A | $0.0005-$0.001 |
-| context7 | resolve-library, query-docs | No | $0.001 |
-| elevenlabs | text-to-speech, voices | Yes | $0.0001-$0.0003/char |
-| firecrawl | scrape, crawl, map | Yes | $0.003-$0.01 |
-| sendgrid | send-email | Yes | $0.001 |
-| playwright | screenshot, scrape-text, pdf | No | $0.002-$0.005 |
-| claude | chat, complete | Yes | $0.003/1K chars |
-| github | search-repos, get-readme, list-issues | Yes | $0.001 |
+| auto | route | N/A | Varies |
 
 ## Tool ID Format
 
-`provider/operation` — e.g. `firecrawl/scrape`, `claude/chat`, `github/search-repos`
+`provider/operation` — e.g. `firecrawl/scrape`, `claude/chat`, `elevenlabs/text-to-speech`
 
 ## Response Format
 
@@ -55,7 +140,12 @@ curl -X POST https://toolroute.ai/api/v1/execute \
 
 ## Auto-Routing
 
-Describe your task, get matching tools:
+Describe your task, auto-pick and execute:
+```json
+{"tool": "auto/route", "input": {"task": "scrape example.com and get the text"}}
+```
+
+Or search without executing:
 ```json
 {"tool": "toolroute/check_before_build", "input": {"task": "I need to send emails"}}
 ```
@@ -75,6 +165,6 @@ Describe your task, get matching tools:
 ## Links
 
 - Docs: https://toolroute.ai/docs
-- OpenAPI spec: https://toolroute.ai/openapi.json
 - Full reference: https://toolroute.ai/llms-full.txt
 - Dashboard: https://toolroute.ai/dashboard
+- Tools: https://toolroute.ai/tools
