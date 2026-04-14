@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Route,
   Search,
+  Sparkles,
   Layers,
   Grid3X3,
   Compass,
@@ -24,6 +25,7 @@ import type { User } from "@supabase/supabase-js";
 const links = [
   { href: "/", label: "Home", icon: Route },
   { href: "/tools", label: "Tools", icon: Search },
+  { href: "/skills", label: "Skills", icon: Sparkles },
   { href: "/categories", label: "Categories", icon: Grid3X3 },
   { href: "/composites", label: "Composites", icon: Layers },
   { href: "/discover", label: "Discover", icon: Compass },

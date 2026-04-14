@@ -88,6 +88,27 @@ export interface LibrarianState {
   pending_conversations: unknown[];
 }
 
+export interface Skill {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: string;
+  sub_category?: string;
+  source_type: string;
+  source_repo?: string;
+  source_url?: string;
+  tags: string[];
+  status: string;
+  when_to_use?: string;
+  when_not_to_use?: string;
+  effectiveness_score?: number;
+  times_used?: number;
+  tested?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CheckResult {
   matching_tools: Tool[];
   installed: InventoryItem[];

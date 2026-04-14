@@ -12,6 +12,7 @@ import {
   Globe,
   Cpu,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 export const revalidate = 60;
@@ -234,6 +235,33 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Skills Section */}
+      <section className="border border-border rounded-lg bg-bg-card p-8">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-accent" />
+            <span className="text-xs text-accent font-medium">New</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-3">
+            Not just APIs &mdash; discover agent skills too
+          </h2>
+          <p className="text-text-dim text-sm max-w-2xl mx-auto leading-relaxed mb-6">
+            Browse 40+ curated skills for design, development, security, and
+            more. Skills are procedures your agent installs to learn new
+            capabilities &mdash; they run locally in your agent&apos;s context,
+            not through an API.
+          </p>
+          <Link
+            href="/skills"
+            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-5 py-2.5 rounded-lg transition-colors text-sm"
+          >
+            <Sparkles className="w-4 h-4" />
+            Browse Skills
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
 
       {/* Pricing Preview */}
       <section>
@@ -511,6 +539,11 @@ export default async function HomePage() {
               <li>
                 <Link href="/tools" className="text-sm text-text-dim hover:text-accent transition-colors">
                   Tools
+                </Link>
+              </li>
+              <li>
+                <Link href="/skills" className="text-sm text-text-dim hover:text-accent transition-colors">
+                  Skills
                 </Link>
               </li>
               <li>

@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type {
   Tool,
+  Skill,
   Category,
   CategoryBelief,
   Composite,
@@ -115,6 +116,17 @@ export async function getToolsByCategory(
     .select("*")
     .eq("super_category", superCategory)
     .order("rating", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getSkills(): Promise<Skill[]> {
+  const { data, error } = await supabase
+    .from("skills")
+    .select("*")
+    .eq("status", "active")
+    .order("source_type")
+    .order("name");
   if (error) throw error;
   return data ?? [];
 }
