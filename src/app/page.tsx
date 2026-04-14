@@ -48,7 +48,7 @@ export default async function HomePage() {
           <span className="text-accent">Every tool.</span>
         </h1>
         <p className="text-text-dim max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mb-10">
-          ToolRoute is the OpenRouter for tools. One unified API to access 50+
+          ToolRoute is the OpenRouter for tools. One unified API to access 70+
           best-in-class tools for AI agents. No more managing dozens of API keys,
           accounts, and integrations.
         </p>
@@ -124,7 +124,7 @@ export default async function HomePage() {
             <div className="text-xs text-accent font-mono mb-2">02</div>
             <h3 className="font-semibold text-base mb-2">Pick a tool</h3>
             <p className="text-sm text-text-dim leading-relaxed">
-              Browse 50+ curated tools across 12 categories. Or let us
+              Browse 70+ curated tools across 12 categories. Or let us
               pick&mdash;describe your task, we&apos;ll route it.
             </p>
           </div>
@@ -145,17 +145,23 @@ export default async function HomePage() {
       {state && (
         <section>
           <div className="border border-border rounded-lg bg-bg-card p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 text-center">
               <div>
                 <p className="text-3xl font-bold text-accent">{state.tool_count}</p>
                 <p className="text-xs text-text-muted mt-1 uppercase tracking-wider">
-                  Tools
+                  Tools in Registry
                 </p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-text">12</p>
+                <p className="text-3xl font-bold text-green">40</p>
                 <p className="text-xs text-text-muted mt-1 uppercase tracking-wider">
-                  Categories
+                  API Adapters
+                </p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-text">80+</p>
+                <p className="text-xs text-text-muted mt-1 uppercase tracking-wider">
+                  Operations
                 </p>
               </div>
               <div>
