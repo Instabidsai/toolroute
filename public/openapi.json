@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ToolRoute API",
-    "description": "The OpenRouter for Tools — unified API gateway for 50+ AI agent tools. One API key, every tool.",
-    "version": "1.0.0",
+    "description": "The OpenRouter for Tools -- unified API gateway for AI agent tools. One API key, 8 adapters, 18 operations. Includes web scraping, TTS, email, LLM, GitHub, browser automation, documentation lookup, and capability registry search.",
+    "version": "1.1.0",
     "contact": {
       "url": "https://toolroute.ai",
       "email": "support@toolroute.ai"
@@ -24,14 +24,80 @@
       "post": {
         "operationId": "executeTool",
         "summary": "Execute a tool",
-        "description": "Execute any tool in the ToolRoute registry via the unified gateway. Requires an API key (tr_live_xxx). The gateway routes to the best available provider, handles auth, and returns structured output.",
+        "description": "Execute any tool in the ToolRoute registry via the unified gateway. Requires an API key (tr_live_xxx). The gateway routes to the best available provider, handles auth, and returns structured output.\n\nAvailable tools:\n- toolroute/check_before_build, toolroute/search\n- context7/resolve-library, context7/query-docs\n- elevenlabs/text-to-speech, elevenlabs/voices\n- firecrawl/scrape, firecrawl/crawl, firecrawl/map\n- sendgrid/send-email\n- playwright/screenshot, playwright/scrape-text, playwright/pdf\n- claude/chat, claude/complete\n- github/search-repos, github/get-readme, github/list-issues",
         "tags": ["Gateway"],
         "security": [{ "apiKey": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ExecuteRequest" }
+              "schema": { "$ref": "#/components/schemas/ExecuteRequest" },
+              "examples": {
+                "firecrawl-scrape": {
+                  "summary": "Scrape a webpage",
+                  "value": {
+                    "tool": "firecrawl/scrape",
+                    "input": { "url": "https://example.com" }
+                  }
+                },
+                "elevenlabs-tts": {
+                  "summary": "Text to speech",
+                  "value": {
+                    "tool": "elevenlabs/text-to-speech",
+                    "input": { "text": "Hello world", "voice_id": "21m00Tcm4TlvDq8ikWAM" }
+                  }
+                },
+                "sendgrid-email": {
+                  "summary": "Send an email",
+                  "value": {
+                    "tool": "sendgrid/send-email",
+                    "input": {
+                      "to": "user@example.com",
+                      "from": "noreply@yourapp.com",
+                      "subject": "Hello",
+                      "html": "<h1>It works!</h1>"
+                    }
+                  }
+                },
+                "claude-chat": {
+                  "summary": "Chat with Claude",
+                  "value": {
+                    "tool": "claude/chat",
+                    "input": {
+                      "messages": [{ "role": "user", "content": "Explain REST in 2 sentences." }],
+                      "max_tokens": 256
+                    }
+                  }
+                },
+                "github-search": {
+                  "summary": "Search GitHub repos",
+                  "value": {
+                    "tool": "github/search-repos",
+                    "input": { "query": "mcp server typescript", "per_page": 5 }
+                  }
+                },
+                "context7-docs": {
+                  "summary": "Query library docs",
+                  "value": {
+                    "tool": "context7/query-docs",
+                    "input": { "library_id": "vercel/next.js", "query": "how to use server actions" }
+                  }
+                },
+                "playwright-screenshot": {
+                  "summary": "Screenshot a webpage",
+                  "value": {
+                    "tool": "playwright/screenshot",
+                    "input": { "url": "https://example.com", "width": 1920, "height": 1080 }
+                  }
+                },
+                "toolroute-check": {
+                  "summary": "Check before building",
+                  "value": {
+                    "tool": "toolroute/check_before_build",
+                    "input": { "task": "I need to send transactional emails" }
+                  }
+                }
+              }
             }
           }
         },
@@ -354,7 +420,7 @@
             "name": "tool",
             "in": "query",
             "schema": { "type": "string" },
-            "description": "Filter by tool identifier (e.g. resend/send_email)"
+            "description": "Filter by tool identifier (e.g. firecrawl/scrape)"
           },
           {
             "name": "since",
@@ -440,6 +506,69 @@
           },
           "401": {
             "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provider-keys": {
+      "post": {
+        "operationId": "registerProviderKey",
+        "summary": "Register a BYOK provider key",
+        "description": "Register your own API key for a supported provider (elevenlabs, firecrawl, sendgrid, claude, github). Requests will be routed through your key with zero markup. Keys are encrypted at rest with AES-256.",
+        "tags": ["BYOK"],
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["provider", "api_key"],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": ["elevenlabs", "firecrawl", "sendgrid", "claude", "github"],
+                    "description": "The provider slug to register the key for"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "description": "Your API key for the provider"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": { "type": "string" },
+                    "status": { "type": "string", "example": "registered" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid provider or missing key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -594,17 +723,15 @@
         "properties": {
           "tool": {
             "type": "string",
-            "description": "Tool identifier in provider/operation format",
-            "example": "resend/send_email"
+            "description": "Tool identifier in provider/operation format. Available tools: toolroute/check_before_build, toolroute/search, context7/resolve-library, context7/query-docs, elevenlabs/text-to-speech, elevenlabs/voices, firecrawl/scrape, firecrawl/crawl, firecrawl/map, sendgrid/send-email, playwright/screenshot, playwright/scrape-text, playwright/pdf, claude/chat, claude/complete, github/search-repos, github/get-readme, github/list-issues",
+            "example": "firecrawl/scrape"
           },
           "input": {
             "type": "object",
-            "description": "Tool-specific input parameters",
+            "description": "Tool-specific input parameters (see tool operation schemas below)",
             "additionalProperties": true,
             "example": {
-              "to": "user@example.com",
-              "subject": "Hello",
-              "body": "World"
+              "url": "https://example.com"
             }
           },
           "provider": {
@@ -619,6 +746,14 @@
                 "type": "boolean",
                 "default": true,
                 "description": "Whether to fall back to alternative providers on failure"
+              },
+              "max_price": {
+                "type": "number",
+                "description": "Maximum price per call in USD"
+              },
+              "max_latency_ms": {
+                "type": "number",
+                "description": "Maximum acceptable latency in milliseconds"
               }
             }
           }
@@ -635,12 +770,12 @@
           "tool": {
             "type": "string",
             "description": "Tool that was executed",
-            "example": "resend/send_email"
+            "example": "firecrawl/scrape"
           },
           "provider": {
             "type": "string",
             "description": "Provider that handled the request",
-            "example": "resend"
+            "example": "firecrawl"
           },
           "data": {
             "type": "object",
@@ -688,11 +823,15 @@
                 "description": "Machine-readable error code",
                 "enum": [
                   "invalid_request",
+                  "invalid_json",
+                  "missing_tool",
+                  "missing_input",
                   "authentication_required",
                   "invalid_api_key",
                   "insufficient_balance",
                   "tool_not_found",
                   "rate_limit_exceeded",
+                  "adapter_error",
                   "provider_error",
                   "internal_error"
                 ],
@@ -702,12 +841,178 @@
           }
         }
       },
+      "ToolrouteCheckInput": {
+        "type": "object",
+        "required": ["task"],
+        "description": "Input for toolroute/check_before_build",
+        "properties": {
+          "task": { "type": "string", "description": "Natural language description of what you want to build" }
+        }
+      },
+      "ToolrouteSearchInput": {
+        "type": "object",
+        "required": ["query"],
+        "description": "Input for toolroute/search",
+        "properties": {
+          "query": { "type": "string", "description": "Search keyword or phrase" },
+          "limit": { "type": "integer", "default": 10, "description": "Max results to return" }
+        }
+      },
+      "Context7ResolveInput": {
+        "type": "object",
+        "required": ["library"],
+        "description": "Input for context7/resolve-library",
+        "properties": {
+          "library": { "type": "string", "description": "Library or framework name (e.g. 'react', 'tailwindcss')" }
+        }
+      },
+      "Context7QueryInput": {
+        "type": "object",
+        "required": ["library_id", "query"],
+        "description": "Input for context7/query-docs",
+        "properties": {
+          "library_id": { "type": "string", "description": "Library ID from resolve-library (e.g. 'vercel/next.js')" },
+          "query": { "type": "string", "description": "Natural language question about the library" },
+          "tokens": { "type": "integer", "description": "Max tokens in response (optional)" }
+        }
+      },
+      "ElevenlabsTtsInput": {
+        "type": "object",
+        "required": ["text"],
+        "description": "Input for elevenlabs/text-to-speech",
+        "properties": {
+          "text": { "type": "string", "description": "Text to convert to speech" },
+          "voice_id": { "type": "string", "description": "ElevenLabs voice ID. Default: Rachel (21m00Tcm4TlvDq8ikWAM)" },
+          "model_id": { "type": "string", "description": "Model ID. Default: eleven_monolingual_v1" }
+        }
+      },
+      "ElevenlabsVoicesInput": {
+        "type": "object",
+        "description": "Input for elevenlabs/voices (no parameters required)",
+        "properties": {}
+      },
+      "FirecrawlScrapeInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for firecrawl/scrape",
+        "properties": {
+          "url": { "type": "string", "description": "URL to scrape" },
+          "formats": { "type": "array", "items": { "type": "string" }, "description": "Output formats (e.g. ['markdown', 'html'])" }
+        }
+      },
+      "FirecrawlCrawlInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for firecrawl/crawl",
+        "properties": {
+          "url": { "type": "string", "description": "Starting URL to crawl" },
+          "limit": { "type": "integer", "default": 10, "description": "Max pages to crawl" }
+        }
+      },
+      "FirecrawlMapInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for firecrawl/map",
+        "properties": {
+          "url": { "type": "string", "description": "Website URL to map" }
+        }
+      },
+      "SendgridSendInput": {
+        "type": "object",
+        "required": ["to", "from", "subject"],
+        "description": "Input for sendgrid/send-email. At least one of text or html required.",
+        "properties": {
+          "to": { "type": "string", "description": "Recipient email address" },
+          "from": { "type": "string", "description": "Sender email address (must be verified in SendGrid)" },
+          "subject": { "type": "string", "description": "Email subject line" },
+          "text": { "type": "string", "description": "Plain text body" },
+          "html": { "type": "string", "description": "HTML body" }
+        }
+      },
+      "PlaywrightScreenshotInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for playwright/screenshot",
+        "properties": {
+          "url": { "type": "string", "description": "URL to screenshot" },
+          "width": { "type": "integer", "default": 1280, "description": "Viewport width in pixels" },
+          "height": { "type": "integer", "default": 720, "description": "Viewport height in pixels" }
+        }
+      },
+      "PlaywrightScrapeTextInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for playwright/scrape-text",
+        "properties": {
+          "url": { "type": "string", "description": "URL to extract text from" }
+        }
+      },
+      "PlaywrightPdfInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for playwright/pdf",
+        "properties": {
+          "url": { "type": "string", "description": "URL to render as PDF" }
+        }
+      },
+      "ClaudeChatInput": {
+        "type": "object",
+        "required": ["messages"],
+        "description": "Input for claude/chat and claude/complete",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["role", "content"],
+              "properties": {
+                "role": { "type": "string", "enum": ["user", "assistant"] },
+                "content": { "type": "string" }
+              }
+            },
+            "description": "Array of message objects"
+          },
+          "model": { "type": "string", "default": "claude-sonnet-4-20250514", "description": "Model ID" },
+          "max_tokens": { "type": "integer", "default": 1024, "description": "Max tokens in response" },
+          "system": { "type": "string", "description": "System prompt" },
+          "temperature": { "type": "number", "minimum": 0, "maximum": 1, "description": "Sampling temperature" }
+        }
+      },
+      "GithubSearchReposInput": {
+        "type": "object",
+        "required": ["query"],
+        "description": "Input for github/search-repos",
+        "properties": {
+          "query": { "type": "string", "description": "Search query (GitHub search syntax)" },
+          "per_page": { "type": "integer", "default": 10, "description": "Results per page (max 100)" }
+        }
+      },
+      "GithubGetReadmeInput": {
+        "type": "object",
+        "required": ["owner", "repo"],
+        "description": "Input for github/get-readme",
+        "properties": {
+          "owner": { "type": "string", "description": "Repository owner (user or org)" },
+          "repo": { "type": "string", "description": "Repository name" }
+        }
+      },
+      "GithubListIssuesInput": {
+        "type": "object",
+        "required": ["owner", "repo"],
+        "description": "Input for github/list-issues",
+        "properties": {
+          "owner": { "type": "string", "description": "Repository owner" },
+          "repo": { "type": "string", "description": "Repository name" },
+          "state": { "type": "string", "default": "open", "enum": ["open", "closed", "all"], "description": "Filter by issue state" },
+          "per_page": { "type": "integer", "default": 10, "description": "Results per page" }
+        }
+      },
       "ToolListing": {
         "type": "object",
         "properties": {
           "id": { "type": "string" },
-          "name": { "type": "string", "example": "Resend" },
-          "slug": { "type": "string", "example": "resend" },
+          "name": { "type": "string", "example": "Firecrawl" },
+          "slug": { "type": "string", "example": "firecrawl" },
           "description": { "type": "string" },
           "operations": {
             "type": "array",
@@ -715,10 +1020,10 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": { "type": "string", "example": "resend/send_email" },
-                "name": { "type": "string", "example": "Send Email" },
+                "id": { "type": "string", "example": "firecrawl/scrape" },
+                "name": { "type": "string", "example": "Scrape" },
                 "description": { "type": "string" },
-                "price_per_call": { "type": "number", "example": 0.001 }
+                "price_per_call": { "type": "number", "example": 0.005 }
               }
             }
           },
@@ -764,10 +1069,10 @@
         "type": "object",
         "properties": {
           "id": { "type": "string" },
-          "tool": { "type": "string", "example": "resend/send_email" },
-          "provider": { "type": "string", "example": "resend" },
-          "cost": { "type": "number", "example": 0.001 },
-          "latency_ms": { "type": "integer", "example": 234 },
+          "tool": { "type": "string", "example": "firecrawl/scrape" },
+          "provider": { "type": "string", "example": "firecrawl" },
+          "cost": { "type": "number", "example": 0.005 },
+          "latency_ms": { "type": "integer", "example": 1200 },
           "status": { "type": "string", "enum": ["success", "error"] },
           "error_code": { "type": "string", "nullable": true },
           "created_at": { "type": "string", "format": "date-time" }
@@ -823,7 +1128,7 @@
   "tags": [
     {
       "name": "Gateway",
-      "description": "Core gateway endpoints for executing tools"
+      "description": "Core gateway endpoints for executing tools. Supports 8 adapters: toolroute, context7, elevenlabs, firecrawl, sendgrid, playwright, claude, github."
     },
     {
       "name": "Discovery",
@@ -840,6 +1145,10 @@
     {
       "name": "Billing",
       "description": "Credits and payment"
+    },
+    {
+      "name": "BYOK",
+      "description": "Bring Your Own Key -- register provider API keys for zero-markup routing"
     },
     {
       "name": "Legacy",

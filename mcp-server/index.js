@@ -196,6 +196,81 @@ server.tool(
   }
 );
 
+// ── execute ─────────────────────────────────────────────────────────
+server.tool(
+  "execute",
+  "Execute any tool through the ToolRoute gateway. Supports all registered adapters (firecrawl, playwright, claude, elevenlabs, sendgrid, resend, twilio, github, context7, supabase, stripe, whisper, toolroute, auto). Use 'auto/route' with a task description for auto-routing.",
+  {
+    tool: z
+      .string()
+      .describe(
+        'Tool path: "provider/operation" (e.g. "firecrawl/scrape", "auto/route", "claude/chat")'
+      ),
+    input: z
+      .record(z.unknown())
+      .describe(
+        "Input object for the tool. For auto/route, include { task: \"description\" }. For firecrawl/scrape, include { url: \"...\" }."
+      ),
+    api_key: z
+      .string()
+      .optional()
+      .describe(
+        "ToolRoute API key (tr_live_... or tr_test_...). Falls back to TOOLROUTE_API_KEY env var."
+      ),
+  },
+  async ({ tool, input, api_key }) => {
+    const key = api_key || process.env.TOOLROUTE_API_KEY;
+    if (!key) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: No API key provided. Pass api_key or set TOOLROUTE_API_KEY environment variable.",
+          },
+        ],
+      };
+    }
+
+    try {
+      const res = await fetch("https://toolroute.ai/api/v1/execute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({ tool, input }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const errorMsg = data?.error?.message || `HTTP ${res.status}`;
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error (${res.status}): ${errorMsg}\n\n${JSON.stringify(data, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+      };
+    } catch (err) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 // ── Start ────────────────────────────────────────────────────────────
 const transport = new StdioServerTransport();
 await server.connect(transport);

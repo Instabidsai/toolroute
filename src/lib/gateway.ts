@@ -6,6 +6,7 @@ import {
   ToolResult,
 } from "./gateway-types";
 import { toolrouteAdapter } from "./adapters/toolroute-adapter";
+import { autoAdapter } from "./adapters/auto-adapter";
 import type { ToolAdapter } from "./gateway-types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -17,6 +18,7 @@ export function supabaseAdmin() {
 
 const adapters: Record<string, ToolAdapter> = {
   toolroute: toolrouteAdapter,
+  auto: autoAdapter,
 };
 
 export function registerAdapter(adapter: ToolAdapter) {

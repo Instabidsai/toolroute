@@ -1,11 +1,14 @@
 # ToolRoute — The OpenRouter for Tools
 
-One API key. Every tool. Unified API gateway for 50+ AI agent tools.
+One API key. 8 adapters. 18 operations. Unified API gateway for AI agent tools.
 
 ## API
 
 POST https://toolroute.ai/api/v1/execute — Execute any tool
 GET  https://toolroute.ai/api/v1/tools  — Browse available tools with pricing
+GET  https://toolroute.ai/api/v1/key    — Check API key balance
+GET  https://toolroute.ai/api/v1/usage  — Usage history
+POST https://toolroute.ai/api/v1/provider-keys — Register BYOK key
 
 ## Authentication
 
@@ -18,18 +21,54 @@ Obtain one at https://toolroute.ai/dashboard/keys
 curl -X POST https://toolroute.ai/api/v1/execute \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"tool":"toolroute/check_before_build","input":{"task":"I need to send emails"}}'
+  -d '{"tool":"firecrawl/scrape","input":{"url":"https://example.com"}}'
 ```
+
+## Available Gateway Adapters (8 adapters, 18 operations)
+
+| Adapter | Operations | BYOK | Pricing |
+|---------|-----------|------|---------|
+| toolroute | check_before_build, search | N/A | $0.0005-$0.001 |
+| context7 | resolve-library, query-docs | No | $0.001 |
+| elevenlabs | text-to-speech, voices | Yes | $0.0001-$0.0003/char |
+| firecrawl | scrape, crawl, map | Yes | $0.003-$0.01 |
+| sendgrid | send-email | Yes | $0.001 |
+| playwright | screenshot, scrape-text, pdf | No | $0.002-$0.005 |
+| claude | chat, complete | Yes | $0.003/1K chars |
+| github | search-repos, get-readme, list-issues | Yes | $0.001 |
+
+## Tool ID Format
+
+`provider/operation` — e.g. `firecrawl/scrape`, `claude/chat`, `github/search-repos`
 
 ## Response Format
 
 ```json
 {
   "id": "req_abc123",
-  "tool": "toolroute/check_before_build",
-  "provider": "toolroute",
+  "tool": "firecrawl/scrape",
+  "provider": "firecrawl",
   "data": { ... },
-  "usage": { "cost": 0.0, "balance_remaining": 10.0, "latency_ms": 120 }
+  "usage": { "cost": 0.005, "balance_remaining": 9.95, "latency_ms": 1200 }
+}
+```
+
+## Auto-Routing
+
+Describe your task, get matching tools:
+```json
+{"tool": "toolroute/check_before_build", "input": {"task": "I need to send emails"}}
+```
+
+## MCP Integration
+
+```json
+{
+  "toolroute": {
+    "type": "http",
+    "url": "https://toolroute.ai/mcp",
+    "headers": { "Authorization": "Bearer tr_live_xxx" }
+  }
 }
 ```
 
@@ -37,4 +76,5 @@ curl -X POST https://toolroute.ai/api/v1/execute \
 
 - Docs: https://toolroute.ai/docs
 - OpenAPI spec: https://toolroute.ai/openapi.json
+- Full reference: https://toolroute.ai/llms-full.txt
 - Dashboard: https://toolroute.ai/dashboard

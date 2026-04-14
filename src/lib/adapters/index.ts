@@ -7,6 +7,12 @@ import { sendgridAdapter } from "./sendgrid-adapter";
 import { playwrightAdapter } from "./playwright-adapter";
 import { claudeAdapter } from "./claude-adapter";
 import { githubAdapter } from "./github-adapter";
+import { supabaseAdapter } from "./supabase-adapter";
+import { stripeAdapter } from "./stripe-adapter";
+import { twilioAdapter } from "./twilio-adapter";
+import { whisperAdapter } from "./whisper-adapter";
+import { resendAdapter } from "./resend-adapter";
+import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
 
@@ -37,3 +43,11 @@ registerAdapter(sendgridAdapter);
 registerAdapter(playwrightAdapter);
 registerAdapter(claudeAdapter);
 registerAdapter(githubAdapter);
+registerAdapter(supabaseAdapter);
+registerAdapter(stripeAdapter);
+registerAdapter(twilioAdapter);
+registerAdapter(whisperAdapter);
+registerAdapter(resendAdapter);
+
+// Auto adapter MUST be registered last so it can discover all other adapters
+registerAdapter(autoAdapter);

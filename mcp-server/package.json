@@ -12,7 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "ToolRoute MCP Server — The OpenRouter for Tools. Query 50+ curated tools, auto-route tasks, and execute any tool through one unified gateway.",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.28.0",
     "@supabase/supabase-js": "2.100.1"

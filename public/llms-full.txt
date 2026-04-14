@@ -1,11 +1,11 @@
 # ToolRoute — Full API Documentation
 
-> The OpenRouter for Tools — unified API gateway for 50+ AI agent tools.
-> One API key. Every tool. Usage-based pricing.
+> The OpenRouter for Tools — unified API gateway for AI agent tools.
+> One API key. 8 adapters. 18 operations. Usage-based pricing.
 
 ## Overview
 
-ToolRoute is a unified API gateway that lets AI agents call 50+ curated tools through a single endpoint. Instead of managing dozens of API keys, SDKs, and auth flows, agents use one ToolRoute API key and call any tool with a consistent request/response format.
+ToolRoute is a unified API gateway that lets AI agents call curated tools through a single endpoint. Instead of managing dozens of API keys, SDKs, and auth flows, agents use one ToolRoute API key and call any tool with a consistent request/response format.
 
 The registry maintains living beliefs — confidence scores that evolve from real usage data — so recommendations improve over time.
 
@@ -30,15 +30,15 @@ The core gateway endpoint. Send a tool identifier and input, get structured outp
 **Request:**
 ```json
 {
-  "tool": "resend/send_email",
+  "tool": "firecrawl/scrape",
   "input": {
-    "to": "user@example.com",
-    "subject": "Hello from ToolRoute",
-    "body": "<h1>It works!</h1>"
+    "url": "https://example.com"
   },
   "provider": {
-    "prefer": "resend",
-    "allow_fallbacks": true
+    "prefer": "firecrawl",
+    "allow_fallbacks": true,
+    "max_price": 0.01,
+    "max_latency_ms": 5000
   }
 }
 ```
@@ -47,16 +47,16 @@ The core gateway endpoint. Send a tool identifier and input, get structured outp
 ```json
 {
   "id": "req_abc123",
-  "tool": "resend/send_email",
-  "provider": "resend",
+  "tool": "firecrawl/scrape",
+  "provider": "firecrawl",
   "data": {
-    "message_id": "msg_xyz",
-    "status": "sent"
+    "success": true,
+    "data": { "markdown": "# Example Domain\n..." }
   },
   "usage": {
-    "cost": 0.001,
+    "cost": 0.005,
     "balance_remaining": 4.99,
-    "latency_ms": 234
+    "latency_ms": 1200
   }
 }
 ```
@@ -73,12 +73,16 @@ The core gateway endpoint. Send a tool identifier and input, get structured outp
 
 **Error Codes:**
 - `invalid_request` — Missing required fields or bad input (400)
+- `invalid_json` — Request body is not valid JSON (400)
+- `missing_tool` — The 'tool' field is missing (400)
+- `missing_input` — The 'input' field is missing or not an object (400)
 - `authentication_required` — No API key provided (401)
 - `invalid_api_key` — API key not found or revoked (401)
 - `insufficient_balance` — Not enough credits (402)
 - `tool_not_found` — Tool identifier not in registry (404)
 - `rate_limit_exceeded` — Too many requests (429)
-- `provider_error` — Upstream provider failed (500)
+- `adapter_error` — Upstream provider returned an error (500)
+- `provider_error` — Upstream provider is down (500)
 - `internal_error` — ToolRoute internal error (500)
 
 **Auth:** Bearer API key required.
@@ -93,35 +97,6 @@ Browse all tools with pricing and capability info. No auth required.
 - `category` (string) — Filter by super_category slug
 - `q` (string) — Search query
 - `limit` (integer, default 50) — Max results
-
-**Response (200):**
-```json
-{
-  "tools": [
-    {
-      "id": "uuid",
-      "name": "Resend",
-      "slug": "resend",
-      "description": "Transactional email API",
-      "operations": [
-        {
-          "id": "resend/send_email",
-          "name": "Send Email",
-          "description": "Send a transactional email",
-          "price_per_call": 0.001
-        }
-      ],
-      "rating": 10,
-      "super_category": "Communication & Messaging",
-      "sub_category": "Email",
-      "protocols": ["rest", "sdk"],
-      "cost": "usage-based",
-      "status": "active"
-    }
-  ],
-  "count": 53
-}
-```
 
 **Auth:** None required.
 
@@ -200,28 +175,8 @@ Permanently revokes the key. Cannot be undone.
 **Query Parameters:**
 - `limit` (integer, default 50) — Max records
 - `offset` (integer, default 0) — Pagination offset
-- `tool` (string) — Filter by tool (e.g. resend/send_email)
+- `tool` (string) — Filter by tool (e.g. firecrawl/scrape)
 - `since` (datetime) — Only records after this timestamp
-
-**Response (200):**
-```json
-{
-  "usage": [
-    {
-      "id": "req_abc123",
-      "tool": "resend/send_email",
-      "provider": "resend",
-      "cost": 0.001,
-      "latency_ms": 234,
-      "status": "success",
-      "error_code": null,
-      "created_at": "2026-04-13T12:00:00Z"
-    }
-  ],
-  "total": 1542,
-  "total_cost": 15.23
-}
-```
 
 **Auth:** Bearer API key or session JWT.
 
@@ -234,17 +189,28 @@ Permanently revokes the key. Cannot be undone.
 { "amount": 10 }
 ```
 
-**Response (200):**
+Redirect the user to the returned Stripe checkout URL to complete payment. Minimum $5.
+
+**Auth:** Session JWT required.
+
+---
+
+### POST /api/v1/provider-keys — Register BYOK Key
+
+Register your own API key for a supported provider. Requests route through your key with zero markup.
+
+**Request:**
 ```json
 {
-  "url": "https://checkout.stripe.com/c/pay_xxx",
-  "session_id": "cs_xxx"
+  "provider": "elevenlabs",
+  "api_key": "your-elevenlabs-key-here"
 }
 ```
 
-Redirect the user to the returned URL to complete payment.
+Supported providers: elevenlabs, firecrawl, sendgrid, claude, github.
+Keys are encrypted at rest with AES-256.
 
-**Auth:** Session JWT required.
+**Auth:** Bearer API key required.
 
 ---
 
@@ -253,58 +219,516 @@ Redirect the user to the returned URL to complete payment.
 These endpoints are maintained for backwards compatibility. Use v1 endpoints for new integrations.
 
 ### POST /api/check — Check Before Build (legacy)
-Describe what you need, get matching tools, beliefs, composites.
-
 ### GET /api/search?q=query — Search Tools (legacy)
-Keyword search across the registry.
-
 ### GET /api/tools — List Tools (legacy)
-Returns all tools in the registry.
 
 ---
 
-## Available Tool Categories
+## Gateway Adapters — Complete Reference
 
-- Analytics & Tracking
-- Communication & Messaging (Email, SMS, Push, Chat)
-- Content & Copywriting
-- CRM & Sales
-- DevOps & CI/CD
-- E-commerce & Inventory
-- Finance & Invoicing
-- Infrastructure (DNS, Hosting, Domains)
-- Marketing & Social Media
-- HR & Operations
-- Scheduling & Calendar
-- Security & Compliance
+ToolRoute provides 8 gateway adapters with 18 total operations. All operations are called via `POST /api/v1/execute` with the tool ID in `provider/operation` format.
+
+### 1. toolroute — Capability Registry
+
+Query the ToolRoute registry. Check what tools exist before building anything.
+
+#### toolroute/check_before_build
+Describe what you need and get matching tools, composites, category beliefs, and installed inventory.
+
+**Input:**
+- `task` (string, REQUIRED) — Natural language description of what you want to build
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "toolroute/check_before_build", "input": {"task": "I need to send transactional emails"}}
+```
+
+#### toolroute/search
+Full-text search across the tool registry.
+
+**Input:**
+- `query` (string, REQUIRED) — Search keyword or phrase
+- `limit` (number, optional, default 10) — Max results
+
+**Pricing:** $0.0005/call
+
+**Example:**
+```json
+{"tool": "toolroute/search", "input": {"query": "email", "limit": 5}}
+```
+
+---
+
+### 2. context7 — Library Documentation Lookup
+
+Resolve library names and query up-to-date documentation for any framework, SDK, or API.
+
+#### context7/resolve-library
+Resolve a library name to a Context7 library ID.
+
+**Input:**
+- `library` (string, REQUIRED) — Library or framework name (e.g. "react", "tailwindcss")
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "context7/resolve-library", "input": {"library": "next.js"}}
+```
+
+#### context7/query-docs
+Query documentation for a resolved library.
+
+**Input:**
+- `library_id` (string, REQUIRED) — Library ID from resolve-library (e.g. "vercel/next.js")
+- `query` (string, REQUIRED) — Natural language question about the library
+- `tokens` (number, optional) — Max tokens in response
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "context7/query-docs", "input": {"library_id": "vercel/next.js", "query": "how to use server actions"}}
+```
+
+---
+
+### 3. elevenlabs — Text-to-Speech
+
+Generate natural-sounding audio or list voices. BYOK supported.
+
+#### elevenlabs/text-to-speech
+Convert text to speech. Returns base64-encoded MP3.
+
+**Input:**
+- `text` (string, REQUIRED) — Text to convert
+- `voice_id` (string, optional) — ElevenLabs voice ID. Default: Rachel (21m00Tcm4TlvDq8ikWAM)
+- `model_id` (string, optional) — Model ID. Default: eleven_monolingual_v1
+
+**Pricing:** $0.0003 per character
+
+**Example:**
+```json
+{"tool": "elevenlabs/text-to-speech", "input": {"text": "Hello from ToolRoute!", "voice_id": "21m00Tcm4TlvDq8ikWAM"}}
+```
+
+**Response data:**
+```json
+{
+  "audio_base64": "SUQzBAAAAAAAI1RTU0UAAAA...",
+  "content_type": "audio/mpeg",
+  "char_count": 21
+}
+```
+
+#### elevenlabs/voices
+List all available voices.
+
+**Input:** (none required)
+
+**Pricing:** $0.0001/call
+
+**Example:**
+```json
+{"tool": "elevenlabs/voices", "input": {}}
+```
+
+---
+
+### 4. firecrawl — Web Scraping & Crawling
+
+Scrape, crawl, or map websites. BYOK supported.
+
+#### firecrawl/scrape
+Scrape a single URL and extract content as markdown, HTML, or structured data.
+
+**Input:**
+- `url` (string, REQUIRED) — URL to scrape
+- `formats` (string[], optional) — Output formats (e.g. ["markdown", "html"])
+
+**Pricing:** $0.005/call
+
+**Example:**
+```json
+{"tool": "firecrawl/scrape", "input": {"url": "https://example.com"}}
+```
+
+#### firecrawl/crawl
+Crawl an entire website starting from a URL.
+
+**Input:**
+- `url` (string, REQUIRED) — Starting URL
+- `limit` (number, optional, default 10) — Max pages to crawl
+
+**Pricing:** $0.01/call
+
+**Example:**
+```json
+{"tool": "firecrawl/crawl", "input": {"url": "https://docs.example.com", "limit": 5}}
+```
+
+#### firecrawl/map
+Generate a site map of all URLs on a website.
+
+**Input:**
+- `url` (string, REQUIRED) — Website URL
+
+**Pricing:** $0.003/call
+
+**Example:**
+```json
+{"tool": "firecrawl/map", "input": {"url": "https://example.com"}}
+```
+
+---
+
+### 5. sendgrid — Email Sending
+
+Send transactional and marketing emails. BYOK supported.
+
+#### sendgrid/send-email
+Send an email with text and/or HTML content.
+
+**Input:**
+- `to` (string, REQUIRED) — Recipient email address
+- `from` (string, REQUIRED) — Sender email (must be verified in SendGrid)
+- `subject` (string, REQUIRED) — Subject line
+- `text` (string, optional) — Plain text body (at least one of text/html required)
+- `html` (string, optional) — HTML body (at least one of text/html required)
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "sendgrid/send-email", "input": {
+  "to": "user@example.com",
+  "from": "noreply@yourapp.com",
+  "subject": "Welcome!",
+  "html": "<h1>Welcome</h1><p>Thanks for signing up.</p>"
+}}
+```
+
+---
+
+### 6. playwright — Browser Automation
+
+Screenshots, text scraping, and PDF generation via remote rendering.
+
+#### playwright/screenshot
+Capture a screenshot of a webpage.
+
+**Input:**
+- `url` (string, REQUIRED) — URL to screenshot
+- `width` (number, optional, default 1280) — Viewport width
+- `height` (number, optional, default 720) — Viewport height
+
+**Pricing:** $0.005/call
+
+**Example:**
+```json
+{"tool": "playwright/screenshot", "input": {"url": "https://example.com", "width": 1920, "height": 1080}}
+```
+
+**Response data:**
+```json
+{
+  "image_url": "https://image.thum.io/get/width/1920/crop/1080/https://example.com",
+  "width": 1920,
+  "height": 1080,
+  "source_url": "https://example.com"
+}
+```
+
+#### playwright/scrape-text
+Extract visible text from a webpage (strips scripts, styles, HTML tags).
+
+**Input:**
+- `url` (string, REQUIRED) — URL to extract text from
+
+**Pricing:** $0.002/call
+
+**Example:**
+```json
+{"tool": "playwright/scrape-text", "input": {"url": "https://example.com"}}
+```
+
+**Response data:**
+```json
+{
+  "text": "Example Domain This domain is for use...",
+  "length": 1256,
+  "truncated": false,
+  "source_url": "https://example.com"
+}
+```
+
+#### playwright/pdf
+Generate a PDF of a webpage.
+
+**Input:**
+- `url` (string, REQUIRED) — URL to render as PDF
+
+**Pricing:** $0.005/call
+
+**Example:**
+```json
+{"tool": "playwright/pdf", "input": {"url": "https://example.com"}}
+```
+
+---
+
+### 7. claude — Anthropic Claude LLM
+
+Chat and completion via the Anthropic API. BYOK supported.
+
+#### claude/chat
+Send a multi-turn conversation to Claude.
+
+**Input:**
+- `messages` (array, REQUIRED) — Array of {role, content} objects
+- `model` (string, optional) — Model ID. Default: claude-sonnet-4-20250514
+- `max_tokens` (number, optional, default 1024) — Max tokens in response
+- `system` (string, optional) — System prompt
+- `temperature` (number, optional) — Sampling temperature (0-1)
+
+**Pricing:** $0.003 per 1K input+output characters
+
+**Example:**
+```json
+{"tool": "claude/chat", "input": {
+  "messages": [{"role": "user", "content": "Explain REST APIs in 2 sentences."}],
+  "max_tokens": 256
+}}
+```
+
+**Response data:**
+```json
+{
+  "content": [{"type": "text", "text": "REST APIs use HTTP methods..."}],
+  "model": "claude-sonnet-4-20250514",
+  "usage": {"input_tokens": 15, "output_tokens": 48},
+  "stop_reason": "end_turn"
+}
+```
+
+#### claude/complete
+Alias for claude/chat. Same input and output format.
+
+**Pricing:** $0.003 per 1K input+output characters
+
+---
+
+### 8. github — GitHub API
+
+Search repos, read READMEs, list issues. BYOK token optional for higher rate limits.
+
+#### github/search-repos
+Search GitHub repositories by keyword.
+
+**Input:**
+- `query` (string, REQUIRED) — Search query (GitHub search syntax)
+- `per_page` (number, optional, default 10, max 100) — Results per page
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "github/search-repos", "input": {"query": "mcp server typescript", "per_page": 5}}
+```
+
+**Response data:**
+```json
+{
+  "total_count": 342,
+  "items": [
+    {
+      "full_name": "anthropics/mcp-server",
+      "description": "Model Context Protocol server",
+      "html_url": "https://github.com/anthropics/mcp-server",
+      "stargazers_count": 1200,
+      "language": "TypeScript",
+      "updated_at": "2026-04-10T00:00:00Z",
+      "topics": ["mcp", "ai"]
+    }
+  ]
+}
+```
+
+#### github/get-readme
+Fetch and decode the README for a repository.
+
+**Input:**
+- `owner` (string, REQUIRED) — Repository owner (user or org)
+- `repo` (string, REQUIRED) — Repository name
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "github/get-readme", "input": {"owner": "vercel", "repo": "next.js"}}
+```
+
+#### github/list-issues
+List issues for a repository.
+
+**Input:**
+- `owner` (string, REQUIRED) — Repository owner
+- `repo` (string, REQUIRED) — Repository name
+- `state` (string, optional, default "open") — "open", "closed", or "all"
+- `per_page` (number, optional, default 10) — Results per page
+
+**Pricing:** $0.001/call
+
+**Example:**
+```json
+{"tool": "github/list-issues", "input": {"owner": "facebook", "repo": "react", "state": "open", "per_page": 3}}
+```
+
+---
+
+## BYOK (Bring Your Own Key)
+
+Register your own API key for supported providers to get zero-markup routing.
+
+**Supported providers:** elevenlabs, firecrawl, sendgrid, claude, github
+
+**Register:**
+```
+POST /api/v1/provider-keys
+{"provider": "elevenlabs", "api_key": "your-key-here"}
+```
+
+Keys are encrypted at rest with AES-256. ToolRoute still handles routing, logging, and fallbacks.
+
+---
+
+## Auto-Routing
+
+Use `toolroute/check_before_build` to describe your task in natural language. ToolRoute returns matching tools, composites, and category beliefs ranked by confidence.
+
+```json
+{"tool": "toolroute/check_before_build", "input": {"task": "scrape a website and send the content via email"}}
+```
+
+---
+
+## Rate Limits
+
+| Plan | RPM | Daily / Monthly |
+|------|-----|-----------------|
+| Free | 10 | 100/day |
+| Pro | 60 | 10,000/month |
+| Enterprise | 300 | 100,000/month |
+
+Rate-limited requests return 429 with a Retry-After header.
+
+---
 
 ## Pricing
 
-ToolRoute uses prepaid credits with usage-based pricing.
+- Free tier: Browse tools, search, check-before-build
+- Gateway calls: Per-call pricing varies by tool ($0.0001 - $0.01 per call)
+- Minimum top-up: $5
+- No monthly fees: Pay only for what you use
 
-- **Free tier**: $0 — Browse tools, search, check-before-build
-- **Gateway calls**: Per-call pricing varies by tool ($0.001 — $0.10 per call)
-- **Minimum top-up**: $5
-- **No monthly fees**: Pay only for what you use
+---
 
 ## MCP Server
 
-ToolRoute is also available as an MCP server with 7 tools for direct integration into AI agent workflows:
+ToolRoute is available as an MCP server with 7 tools:
 
-- `check_before_build` — Describe what you need, get matching tools and recommendations
+- `check_before_build` — Describe what you need, get matching tools
 - `search_tools` — Search the registry by keyword
-- `get_category_champion` — Get the current champion for a category
+- `get_category_champion` — Get the champion for a category
 - `record_usage` — Log tool usage for belief evolution
 - `challenge_tool` — Challenge a tool's position with evidence
-- `librarian_status` — Get current registry stats and top beliefs
+- `librarian_status` — Registry stats and top beliefs
 - `log_tool_request` — Log a tool request for discovery tracking
 
-## Integration
+### Add to Claude Code (HTTP):
+```json
+{
+  "toolroute": {
+    "type": "http",
+    "url": "https://toolroute.ai/mcp",
+    "headers": { "Authorization": "Bearer tr_live_xxx" }
+  }
+}
+```
 
-1. **REST API**: Use the v1 endpoints above
-2. **MCP Server**: Add to your Claude Code or AI agent configuration
-3. **Web UI**: Browse and search at https://toolroute.ai
-4. **OpenAPI**: Full spec at https://toolroute.ai/openapi.json
+### Add to Claude Code (stdio):
+```json
+{
+  "toolroute": {
+    "command": "node",
+    "args": ["path/to/toolroute/mcp-server/index.js"],
+    "env": { "TOOLROUTE_API_KEY": "tr_live_xxx" }
+  }
+}
+```
+
+---
+
+## SDK Examples
+
+### Python
+```python
+import requests
+
+def toolroute(tool: str, input: dict) -> dict:
+    r = requests.post(
+        "https://toolroute.ai/api/v1/execute",
+        headers={"Authorization": "Bearer tr_live_xxx"},
+        json={"tool": tool, "input": input},
+    )
+    r.raise_for_status()
+    return r.json()
+
+# Scrape a page
+result = toolroute("firecrawl/scrape", {"url": "https://example.com"})
+
+# Check what tools exist
+matches = toolroute("toolroute/check_before_build", {"task": "send emails"})
+
+# Text to speech
+audio = toolroute("elevenlabs/text-to-speech", {"text": "Hello!"})
+```
+
+### JavaScript / TypeScript
+```javascript
+async function toolroute(tool, input) {
+  const res = await fetch("https://toolroute.ai/api/v1/execute", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tr_live_xxx",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ tool, input }),
+  });
+  if (!res.ok) throw new Error(`ToolRoute error: ${res.status}`);
+  return res.json();
+}
+
+// Chat with Claude
+const chat = await toolroute("claude/chat", {
+  messages: [{ role: "user", content: "Hello!" }],
+});
+
+// Search GitHub
+const repos = await toolroute("github/search-repos", { query: "mcp tools" });
+```
+
+### curl
+```bash
+curl -X POST https://toolroute.ai/api/v1/execute \
+  -H "Authorization: Bearer tr_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "firecrawl/scrape", "input": {"url": "https://example.com"}}'
+```
+
+---
 
 ## Key Pages
 
@@ -315,9 +739,7 @@ ToolRoute is also available as an MCP server with 7 tools for direct integration
 - https://toolroute.ai/categories — Category map with champion beliefs
 - https://toolroute.ai/composites — Multi-tool composition solutions
 - https://toolroute.ai/dashboard — User dashboard
-- https://toolroute.ai/dashboard/keys — API key management
-- https://toolroute.ai/dashboard/usage — Usage history
-- https://toolroute.ai/dashboard/billing — Add credits
+- https://toolroute.ai/openapi.json — OpenAPI spec
 
 ## Contact
 
