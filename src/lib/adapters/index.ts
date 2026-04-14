@@ -12,6 +12,13 @@ import { stripeAdapter } from "./stripe-adapter";
 import { twilioAdapter } from "./twilio-adapter";
 import { whisperAdapter } from "./whisper-adapter";
 import { resendAdapter } from "./resend-adapter";
+import { searchAdapter } from "./search-adapter";
+import { imageGenAdapter } from "./image-gen-adapter";
+import { deeplAdapter } from "./deepl-adapter";
+import { screenshotAdapter } from "./screenshot-adapter";
+import { pdfAdapter } from "./pdf-adapter";
+import { calendarAdapter } from "./calendar-adapter";
+import { driveAdapter } from "./drive-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -48,6 +55,13 @@ registerAdapter(stripeAdapter);
 registerAdapter(twilioAdapter);
 registerAdapter(whisperAdapter);
 registerAdapter(resendAdapter);
+registerAdapter(searchAdapter);
+registerAdapter(imageGenAdapter);
+registerAdapter(deeplAdapter);
+registerAdapter(screenshotAdapter);
+registerAdapter(pdfAdapter);
+registerAdapter(calendarAdapter);
+registerAdapter(driveAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
