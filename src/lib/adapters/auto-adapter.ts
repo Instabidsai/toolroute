@@ -190,14 +190,383 @@ function heuristicRoute(
     }
   }
 
-  // SMS / text message -> twilio
+  // SMS / text message -> twilio (preferred) or textbelt (cheap)
   if (t.includes("sms") || t.includes("text message")) {
+    // Cheap SMS preference
+    if ((t.includes("cheap") || t.includes("textbelt")) && availableSlugs.has("textbelt")) {
+      return {
+        adapterSlug: "textbelt",
+        operation: "send-sms",
+        confidence: 0.9,
+        reason: "Task mentions cheap SMS/textbelt -- routing to Textbelt",
+      };
+    }
     if (availableSlugs.has("twilio")) {
       return {
         adapterSlug: "twilio",
         operation: "send-sms",
         confidence: 0.9,
         reason: "Task mentions SMS -- routing to Twilio",
+      };
+    }
+    if (availableSlugs.has("textbelt")) {
+      return {
+        adapterSlug: "textbelt",
+        operation: "send-sms",
+        confidence: 0.85,
+        reason: "Task mentions SMS -- Twilio unavailable, routing to Textbelt",
+      };
+    }
+  }
+
+  // Stock photo / image search -> pexels or unsplash
+  if (
+    t.includes("stock photo") ||
+    t.includes("stock image") ||
+    (t.includes("photo") && (t.includes("find") || t.includes("search"))) ||
+    t.includes("image of") ||
+    t.includes("picture of") ||
+    t.includes("stock video")
+  ) {
+    if (t.includes("stock video") || t.includes("video clip")) {
+      if (availableSlugs.has("pexels")) {
+        return {
+          adapterSlug: "pexels",
+          operation: "search-videos",
+          confidence: 0.9,
+          reason: "Task mentions stock video -- routing to Pexels video search",
+        };
+      }
+    }
+    if (availableSlugs.has("pexels")) {
+      return {
+        adapterSlug: "pexels",
+        operation: "search-photos",
+        confidence: 0.9,
+        reason: "Task mentions stock photos/images -- routing to Pexels",
+      };
+    }
+    if (availableSlugs.has("unsplash")) {
+      return {
+        adapterSlug: "unsplash",
+        operation: "search",
+        confidence: 0.85,
+        reason: "Task mentions stock photos/images -- routing to Unsplash",
+      };
+    }
+  }
+
+  // Background removal -> removebg
+  if (
+    (t.includes("background") && (t.includes("remove") || t.includes("transparent"))) ||
+    t.includes("cutout") ||
+    t.includes("remove bg") ||
+    t.includes("removebg")
+  ) {
+    if (availableSlugs.has("removebg")) {
+      return {
+        adapterSlug: "removebg",
+        operation: "remove",
+        confidence: 0.95,
+        reason: "Task mentions background removal -- routing to RemoveBG",
+      };
+    }
+  }
+
+  // Phone call / voice call / AI call -> vapi
+  if (
+    t.includes("phone call") ||
+    t.includes("voice call") ||
+    t.includes("ai call") ||
+    t.includes("call someone") ||
+    t.includes("make a call") ||
+    t.includes("vapi")
+  ) {
+    if (availableSlugs.has("vapi")) {
+      return {
+        adapterSlug: "vapi",
+        operation: "create-call",
+        confidence: 0.9,
+        reason: "Task mentions phone/voice/AI call -- routing to Vapi",
+      };
+    }
+  }
+
+  // Create ad / video ad / UGC -> creatify
+  if (
+    t.includes("create ad") ||
+    t.includes("video ad") ||
+    t.includes("ugc") ||
+    t.includes("advertisement") ||
+    t.includes("creatify")
+  ) {
+    if (availableSlugs.has("creatify")) {
+      return {
+        adapterSlug: "creatify",
+        operation: "create-ad",
+        confidence: 0.9,
+        reason: "Task mentions ad creation/UGC -- routing to Creatify",
+      };
+    }
+  }
+
+  // Find people / contacts / enrichment / prospects / leads -> apollo
+  if (
+    t.includes("find people") ||
+    t.includes("contact") ||
+    t.includes("enrichment") ||
+    t.includes("prospect") ||
+    t.includes("leads") ||
+    t.includes("email lookup") ||
+    t.includes("apollo")
+  ) {
+    if (availableSlugs.has("apollo")) {
+      return {
+        adapterSlug: "apollo",
+        operation: "search-people",
+        confidence: 0.9,
+        reason: "Task mentions people/contact/lead search -- routing to Apollo",
+      };
+    }
+  }
+
+  // Shipping / labels / tracking -> shippo
+  if (
+    t.includes("shipping") ||
+    t.includes("ship ") ||
+    t.includes("label") ||
+    t.includes("tracking") ||
+    t.includes("package") ||
+    t.includes("shippo")
+  ) {
+    const op = t.includes("track") ? "track" : "create-shipment";
+    if (availableSlugs.has("shippo")) {
+      return {
+        adapterSlug: "shippo",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions shipping/tracking -- routing to Shippo",
+      };
+    }
+  }
+
+  // GPT / OpenAI / DALL-E -> openai
+  if (
+    t.includes("gpt") ||
+    t.includes("openai") ||
+    t.includes("dalle") ||
+    t.includes("dall-e")
+  ) {
+    const op = (t.includes("dalle") || t.includes("dall-e") || t.includes("generate image")) ? "image" : "chat";
+    if (availableSlugs.has("openai")) {
+      return {
+        adapterSlug: "openai",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions GPT/OpenAI/DALL-E -- routing to OpenAI",
+      };
+    }
+  }
+
+  // Replicate / ML model / Stable Diffusion -> replicate
+  if (
+    t.includes("replicate") ||
+    t.includes("ml model") ||
+    t.includes("stable diffusion") ||
+    t.includes("sdxl")
+  ) {
+    if (availableSlugs.has("replicate")) {
+      return {
+        adapterSlug: "replicate",
+        operation: "run",
+        confidence: 0.9,
+        reason: "Task mentions Replicate/ML model -- routing to Replicate",
+      };
+    }
+  }
+
+  // Error tracking / Sentry / bugs / crashes -> sentry
+  if (
+    t.includes("error") ||
+    t.includes("sentry") ||
+    t.includes("bugs") ||
+    t.includes("crash") ||
+    t.includes("issue tracker")
+  ) {
+    if (availableSlugs.has("sentry")) {
+      return {
+        adapterSlug: "sentry",
+        operation: "list-issues",
+        confidence: 0.85,
+        reason: "Task mentions errors/bugs/crashes -- routing to Sentry",
+      };
+    }
+  }
+
+  // Google Maps / business listing / local business / reviews -> outscraper
+  if (
+    t.includes("google maps") ||
+    t.includes("business listing") ||
+    t.includes("local business") ||
+    t.includes("reviews") ||
+    t.includes("outscraper")
+  ) {
+    if (availableSlugs.has("outscraper")) {
+      return {
+        adapterSlug: "outscraper",
+        operation: "google-maps",
+        confidence: 0.9,
+        reason: "Task mentions Google Maps/business listing -- routing to Outscraper",
+      };
+    }
+  }
+
+  // Deepgram / fast transcription -> deepgram
+  if (t.includes("deepgram") || t.includes("fast transcri")) {
+    if (availableSlugs.has("deepgram")) {
+      return {
+        adapterSlug: "deepgram",
+        operation: "transcribe-url",
+        confidence: 0.9,
+        reason: "Task mentions Deepgram/fast transcription -- routing to Deepgram",
+      };
+    }
+  }
+
+  // Avatar video / talking head / HeyGen -> heygen
+  if (
+    t.includes("avatar video") ||
+    t.includes("talking head") ||
+    t.includes("heygen") ||
+    t.includes("presenter video")
+  ) {
+    if (availableSlugs.has("heygen")) {
+      return {
+        adapterSlug: "heygen",
+        operation: "create-video",
+        confidence: 0.9,
+        reason: "Task mentions avatar/talking head video -- routing to HeyGen",
+      };
+    }
+  }
+
+  // PDF generation -> pdf
+  if (
+    t.includes("pdf") ||
+    t.includes("generate pdf") ||
+    t.includes("report pdf")
+  ) {
+    const op = (t.includes("url") || t.includes("website")) ? "from-url" : "from-html";
+    if (availableSlugs.has("pdf")) {
+      return {
+        adapterSlug: "pdf",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions PDF generation -- routing to PDF adapter",
+      };
+    }
+  }
+
+  // Translation -> translate (deepl)
+  if (
+    t.includes("translate") ||
+    t.includes("translation") ||
+    t.includes("in spanish") ||
+    t.includes("in french") ||
+    t.includes("in german") ||
+    t.includes("in japanese") ||
+    t.includes("in chinese") ||
+    t.includes("in portuguese")
+  ) {
+    if (availableSlugs.has("translate")) {
+      return {
+        adapterSlug: "translate",
+        operation: "text",
+        confidence: 0.9,
+        reason: "Task mentions translation -- routing to DeepL translate",
+      };
+    }
+  }
+
+  // Calendar / schedule / meeting -> calendar
+  if (
+    t.includes("calendar") ||
+    t.includes("schedule") ||
+    t.includes("meeting") ||
+    t.includes("availability")
+  ) {
+    const op = (t.includes("create") || t.includes("add") || t.includes("schedule"))
+      ? "create-event"
+      : "list-events";
+    if (availableSlugs.has("calendar")) {
+      return {
+        adapterSlug: "calendar",
+        operation: op,
+        confidence: 0.85,
+        reason: "Task mentions calendar/schedule/meeting -- routing to Calendar",
+      };
+    }
+  }
+
+  // Google Drive / upload file / find file -> drive
+  if (
+    t.includes("drive") ||
+    t.includes("google drive") ||
+    t.includes("upload file") ||
+    t.includes("find file")
+  ) {
+    const op = (t.includes("search") || t.includes("find")) ? "search" : "list-files";
+    if (availableSlugs.has("drive")) {
+      return {
+        adapterSlug: "drive",
+        operation: op,
+        confidence: 0.85,
+        reason: "Task mentions Google Drive/file management -- routing to Drive",
+      };
+    }
+  }
+
+  // Web search -> search
+  if (
+    (t.includes("search") && (t.includes("web") || t.includes("google") || t.includes("bing"))) ||
+    t.includes("search the web") ||
+    t.includes("look up")
+  ) {
+    if (availableSlugs.has("search")) {
+      return {
+        adapterSlug: "search",
+        operation: "web",
+        confidence: 0.8,
+        reason: "Task mentions web search -- routing to Search adapter",
+      };
+    }
+  }
+
+  // Image generation (generic) -> image
+  if (
+    (t.includes("generate") && t.includes("image")) ||
+    t.includes("create image") ||
+    t.includes("ai image") ||
+    t.includes("image generation")
+  ) {
+    if (availableSlugs.has("image")) {
+      return {
+        adapterSlug: "image",
+        operation: "generate",
+        confidence: 0.85,
+        reason: "Task mentions image generation -- routing to Image adapter",
+      };
+    }
+  }
+
+  // Screenshot (without URL already matched above) -> screenshot
+  if (t.includes("screenshot") || t.includes("capture page")) {
+    if (availableSlugs.has("screenshot")) {
+      return {
+        adapterSlug: "screenshot",
+        operation: "capture",
+        confidence: 0.8,
+        reason: "Task mentions screenshot -- routing to Screenshot adapter",
       };
     }
   }
@@ -282,6 +651,68 @@ function mapInput(
   if (adapterSlug === "github" && operation === "search-repos") {
     if (!mapped.query && !mapped.q) {
       mapped.query = input.search || task;
+    }
+  }
+
+  // For pexels/unsplash photo search, ensure query
+  if ((adapterSlug === "pexels" || adapterSlug === "unsplash") && !mapped.query) {
+    mapped.query = input.search || input.topic || task;
+  }
+
+  // For translate, ensure text and target_lang
+  if (adapterSlug === "translate" && operation === "text") {
+    if (!mapped.text) {
+      mapped.text = input.content || input.prompt || task;
+    }
+  }
+
+  // For openai chat, ensure messages exist
+  if (adapterSlug === "openai" && operation === "chat") {
+    if (!mapped.messages) {
+      mapped.messages = [{ role: "user", content: input.prompt || task }];
+    }
+  }
+
+  // For openai image, ensure prompt
+  if (adapterSlug === "openai" && operation === "image") {
+    if (!mapped.prompt) {
+      mapped.prompt = input.description || task;
+    }
+  }
+
+  // For apollo search-people, ensure query
+  if (adapterSlug === "apollo" && operation === "search-people") {
+    if (!mapped.query && !mapped.q) {
+      mapped.query = input.search || input.name || task;
+    }
+  }
+
+  // For pdf, ensure html or url
+  if (adapterSlug === "pdf") {
+    if (operation === "from-html" && !mapped.html) {
+      mapped.html = input.content || input.body || task;
+    }
+    if (operation === "from-url" && !mapped.url) {
+      const pdfUrl = extractUrl(task, input);
+      if (pdfUrl) mapped.url = pdfUrl;
+    }
+  }
+
+  // For textbelt, ensure phone and message
+  if (adapterSlug === "textbelt" && operation === "send-sms") {
+    if (!mapped.message) {
+      mapped.message = input.body || input.text || task;
+    }
+  }
+
+  // For shippo, ensure address/parcel fields passthrough
+  // (complex inputs -- let user provide structured data)
+
+  // For removebg, ensure image_url
+  if (adapterSlug === "removebg" && operation === "remove") {
+    if (!mapped.image_url && !mapped.image) {
+      const imgUrl = extractUrl(task, input);
+      if (imgUrl) mapped.image_url = imgUrl;
     }
   }
 

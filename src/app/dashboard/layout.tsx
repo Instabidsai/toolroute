@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Key,
+  KeyRound,
   BarChart3,
   CreditCard,
   LogOut,
@@ -19,6 +20,7 @@ const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/keys", label: "API Keys", icon: Key },
   { href: "/dashboard/usage", label: "Usage", icon: BarChart3 },
+  { href: "/dashboard/providers", label: "Provider Keys", icon: KeyRound },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
 ];
 

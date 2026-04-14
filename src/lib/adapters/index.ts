@@ -33,6 +33,11 @@ import { outscraperAdapter } from "./outscraper-adapter";
 import { textbeltAdapter } from "./textbelt-adapter";
 import { deepgramAdapter } from "./deepgram-adapter";
 import { heygenAdapter } from "./heygen-adapter";
+import { muxAdapter } from "./mux-adapter";
+import { dataforseoAdapter } from "./dataforseo-adapter";
+import { postizAdapter } from "./postiz-adapter";
+import { creatomateAdapter } from "./creatomate-adapter";
+import { shotstackAdapter } from "./shotstack-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -90,6 +95,11 @@ registerAdapter(outscraperAdapter);
 registerAdapter(textbeltAdapter);
 registerAdapter(deepgramAdapter);
 registerAdapter(heygenAdapter);
+registerAdapter(muxAdapter);
+registerAdapter(dataforseoAdapter);
+registerAdapter(postizAdapter);
+registerAdapter(creatomateAdapter);
+registerAdapter(shotstackAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
