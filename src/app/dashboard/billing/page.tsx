@@ -9,12 +9,17 @@ import {
   AlertTriangle,
   Zap,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface UserInfo {
   credit_balance: number;
   plan_slug: string;
+  auto_topup_enabled: boolean;
+  auto_topup_threshold: number;
+  auto_topup_amount_cents: number;
+  stripe_customer_id: string | null;
 }
 
 interface Transaction {
@@ -101,6 +106,8 @@ export default function BillingPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [topupSaving, setTopupSaving] = useState(false);
+  const [topupSuccess, setTopupSuccess] = useState(false);
 
   const handlePurchaseCredits = async (amount: number) => {
     setCheckoutLoading(true);
@@ -158,6 +165,47 @@ export default function BillingPage() {
     }
   };
 
+  const updateAutoTopup = async (updates: Record<string, unknown>) => {
+    setTopupSaving(true);
+    setTopupSuccess(false);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/v1/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setUserInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                auto_topup_enabled: data.auto_topup_enabled,
+                auto_topup_threshold: data.auto_topup_threshold,
+                auto_topup_amount_cents: data.auto_topup_amount_cents,
+                stripe_customer_id: data.has_payment_method ? "exists" : null,
+              }
+            : prev
+        );
+        setTopupSuccess(true);
+        setTimeout(() => setTopupSuccess(false), 2000);
+      } else {
+        setError(data.error?.message || "Failed to update settings");
+      }
+    } catch {
+      setError("Failed to update auto top-up settings");
+    } finally {
+      setTopupSaving(false);
+    }
+  };
+
   const fetchBilling = useCallback(async () => {
     try {
       const {
@@ -168,7 +216,7 @@ export default function BillingPage() {
       const [gwRes, txRes] = await Promise.all([
         supabase
           .from("gateway_users")
-          .select("credit_balance, plan_slug")
+          .select("credit_balance, plan_slug, auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, stripe_customer_id")
           .eq("id", session.user.id)
           .single(),
         supabase
@@ -179,7 +227,14 @@ export default function BillingPage() {
           .limit(50),
       ]);
 
-      setUserInfo(gwRes.data ?? { credit_balance: 0, plan_slug: "free" });
+      setUserInfo(gwRes.data ?? {
+        credit_balance: 0,
+        plan_slug: "free",
+        auto_topup_enabled: false,
+        auto_topup_threshold: 1.0,
+        auto_topup_amount_cents: 1000,
+        stripe_customer_id: null,
+      });
       setTransactions(txRes.data ?? []);
     } catch (err) {
       setError(
@@ -272,6 +327,134 @@ export default function BillingPage() {
             {checkoutLoading ? "Redirecting to Stripe..." : `Purchase $${selectedAmount} Credits`}
           </button>
         )}
+      </section>
+
+      {/* Auto Top-Up */}
+      <section>
+        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 text-cyan" />
+          Auto Top-Up
+        </h2>
+        <div className="border border-border rounded-lg bg-bg-card p-5 space-y-4">
+          {!userInfo?.stripe_customer_id && (
+            <div className="border border-amber/20 rounded-lg bg-amber/5 px-4 py-3 text-xs text-amber flex items-center gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              No payment method on file. Purchase credits first to enable auto top-up.
+            </div>
+          )}
+
+          {/* Enable/Disable toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Enable Auto Top-Up</p>
+              <p className="text-[10px] text-text-dim mt-0.5">
+                Automatically add credits when your balance drops below the threshold
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                updateAutoTopup({
+                  auto_topup_enabled: !userInfo?.auto_topup_enabled,
+                })
+              }
+              disabled={topupSaving || !userInfo?.stripe_customer_id}
+              className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                userInfo?.auto_topup_enabled
+                  ? "bg-green"
+                  : "bg-text-muted/20"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                  userInfo?.auto_topup_enabled ? "translate-x-5" : ""
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Threshold selector */}
+          <div>
+            <label className="text-xs text-text-muted block mb-1.5">
+              When balance drops below
+            </label>
+            <div className="flex gap-2">
+              {[1, 5, 10].map((val) => (
+                <button
+                  key={val}
+                  onClick={() =>
+                    updateAutoTopup({ auto_topup_threshold: val })
+                  }
+                  disabled={topupSaving}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                    (userInfo?.auto_topup_threshold ?? 1) === val
+                      ? "border-cyan bg-cyan/10 text-cyan"
+                      : "border-border bg-bg-card text-text hover:border-cyan/30"
+                  }`}
+                >
+                  ${val.toFixed(2)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Amount selector */}
+          <div>
+            <label className="text-xs text-text-muted block mb-1.5">
+              Top up amount
+            </label>
+            <div className="flex gap-2">
+              {[
+                { cents: 1000, label: "$10" },
+                { cents: 2500, label: "$25" },
+                { cents: 5000, label: "$50" },
+                { cents: 10000, label: "$100" },
+              ].map(({ cents, label }) => (
+                <button
+                  key={cents}
+                  onClick={() =>
+                    updateAutoTopup({ auto_topup_amount_cents: cents })
+                  }
+                  disabled={topupSaving}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                    (userInfo?.auto_topup_amount_cents ?? 1000) === cents
+                      ? "border-cyan bg-cyan/10 text-cyan"
+                      : "border-border bg-bg-card text-text hover:border-cyan/30"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                userInfo?.auto_topup_enabled && userInfo?.stripe_customer_id
+                  ? "bg-green"
+                  : !userInfo?.stripe_customer_id
+                    ? "bg-amber"
+                    : "bg-text-muted/30"
+              }`}
+            />
+            <span className="text-[10px] text-text-dim">
+              {userInfo?.auto_topup_enabled && userInfo?.stripe_customer_id
+                ? `Active — will add $${((userInfo?.auto_topup_amount_cents ?? 1000) / 100).toFixed(0)} when balance drops below $${(userInfo?.auto_topup_threshold ?? 1).toFixed(2)}`
+                : !userInfo?.stripe_customer_id
+                  ? "No payment method"
+                  : "Inactive"}
+            </span>
+            {topupSuccess && (
+              <span className="text-[10px] text-green ml-auto flex items-center gap-1">
+                <Check className="w-3 h-3" /> Saved
+              </span>
+            )}
+            {topupSaving && (
+              <span className="text-[10px] text-text-dim ml-auto">Saving...</span>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* Plans */}

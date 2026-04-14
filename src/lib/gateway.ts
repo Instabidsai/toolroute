@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createHash, randomBytes } from "crypto";
+import Stripe from "stripe";
 import {
   GatewayError,
   GatewayContext,
@@ -160,6 +161,54 @@ function resolveAdapter(
   return { adapter, operation };
 }
 
+async function triggerAutoTopup(
+  userId: string,
+  stripeCustomerId: string,
+  amountCents: number
+): Promise<void> {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey || stripeKey.startsWith("placeholder")) return;
+
+  // Check if there's already a pending top-up in the last 5 minutes (prevent spam)
+  const sb = supabaseAdmin();
+  const { data: recent } = await sb
+    .from("credit_transactions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("type", "purchase")
+    .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+    .limit(1);
+
+  if (recent && recent.length > 0) return; // Already topped up recently
+
+  // Create a Stripe PaymentIntent for the auto-top-up amount
+  const stripe = new Stripe(stripeKey);
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amountCents,
+    currency: "usd",
+    customer: stripeCustomerId,
+    off_session: true,
+    confirm: true,
+    metadata: {
+      user_id: userId,
+      type: "auto_topup",
+      credit_amount: String(amountCents / 100),
+    },
+  });
+
+  if (paymentIntent.status === "succeeded") {
+    // Add credits
+    await sb.rpc("add_credits", {
+      p_user_id: userId,
+      p_amount: amountCents / 100,
+      p_type: "purchase",
+      p_stripe_payment_id: paymentIntent.id,
+      p_description: `Auto top-up $${(amountCents / 100).toFixed(2)}`,
+    });
+  }
+}
+
 export async function executeToolRequest(
   ctx: GatewayContext,
   toolPath: string,
@@ -318,6 +367,20 @@ export async function executeToolRequest(
 
     if (deductResult && !(deductResult as Record<string, unknown>).success) {
       console.error("Credit deduction failed:", deductResult);
+    }
+
+    // Check if auto-top-up should fire (fire and forget — don't block the response)
+    const { data: userRow } = await sb
+      .from("gateway_users")
+      .select("credit_balance, auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, stripe_customer_id")
+      .eq("id", ctx.userId)
+      .single();
+
+    if (userRow && userRow.auto_topup_enabled && userRow.stripe_customer_id) {
+      if (userRow.credit_balance <= (userRow.auto_topup_threshold ?? 1.00)) {
+        triggerAutoTopup(ctx.userId, userRow.stripe_customer_id, userRow.auto_topup_amount_cents ?? 1000)
+          .catch(err => console.error("Auto-top-up failed:", err));
+      }
     }
   }
 

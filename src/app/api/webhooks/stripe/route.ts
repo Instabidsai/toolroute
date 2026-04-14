@@ -71,6 +71,19 @@ export async function POST(request: NextRequest) {
               p_stripe_payment_id: session.payment_intent as string,
               p_description: `$${creditAmount} credit purchase`,
             });
+
+            // Save stripe_customer_id if not already set (enables auto-top-up later)
+            if (session.customer) {
+              await sb
+                .from("gateway_users")
+                .update({
+                  stripe_customer_id: session.customer as string,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", userId)
+                .is("stripe_customer_id", null);
+            }
+
             console.log(`Added $${creditAmount} credits for user ${userId}`);
           }
         }
@@ -135,6 +148,36 @@ export async function POST(request: NextRequest) {
               p_description: `${user.plan_slug} plan monthly credits (renewal)`,
             });
             console.log(`Added $${planCredits} renewal credits for user ${user.id}`);
+          }
+        }
+        break;
+      }
+
+      case "payment_intent.succeeded": {
+        // Handle auto-top-up payments (created off-session by triggerAutoTopup)
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.type === "auto_topup") {
+          const userId = pi.metadata.user_id;
+          const creditAmount = parseFloat(pi.metadata.credit_amount ?? "0");
+
+          if (userId && creditAmount > 0) {
+            // Idempotency check
+            const { data: existing } = await sb
+              .from("credit_transactions")
+              .select("id")
+              .eq("stripe_payment_id", pi.id)
+              .single();
+
+            if (!existing) {
+              await sb.rpc("add_credits", {
+                p_user_id: userId,
+                p_amount: creditAmount,
+                p_type: "purchase",
+                p_stripe_payment_id: pi.id,
+                p_description: `Auto top-up $${creditAmount.toFixed(2)}`,
+              });
+              console.log(`Auto-top-up: added $${creditAmount} credits for user ${userId}`);
+            }
           }
         }
         break;
