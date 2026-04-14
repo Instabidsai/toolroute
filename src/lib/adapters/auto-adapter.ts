@@ -728,6 +728,91 @@ function heuristicRoute(
     }
   }
 
+  // Notion / notes / wiki / workspace -> notion
+  if (
+    t.includes("notion") ||
+    t.includes("wiki") ||
+    (t.includes("workspace") && (t.includes("search") || t.includes("page") || t.includes("create"))) ||
+    (t.includes("notes") && (t.includes("search") || t.includes("create") || t.includes("database")))
+  ) {
+    if (availableSlugs.has("notion")) {
+      const op = (t.includes("create") || t.includes("add") || t.includes("new"))
+        ? "create-page"
+        : (t.includes("database") || t.includes("query")) ? "query-database"
+        : "search";
+      return {
+        adapterSlug: "notion",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions Notion/wiki/workspace/notes -- routing to Notion",
+      };
+    }
+  }
+
+  // HubSpot / CRM / deal / pipeline / sales contact -> hubspot
+  if (
+    t.includes("hubspot") ||
+    (t.includes("crm") && !t.includes("jarviscrm")) ||
+    t.includes("deal") ||
+    t.includes("pipeline") ||
+    (t.includes("sales") && t.includes("contact"))
+  ) {
+    if (availableSlugs.has("hubspot")) {
+      const op = t.includes("deal") ? "create-deal" :
+        t.includes("search") || t.includes("find") ? "search-contacts" :
+        t.includes("note") ? "create-note" :
+        t.includes("list") ? "list-deals" :
+        "create-contact";
+      return {
+        adapterSlug: "hubspot",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions HubSpot/CRM/deal/pipeline -- routing to HubSpot",
+      };
+    }
+  }
+
+  // Google Sheets / spreadsheet / csv data -> sheets
+  if (
+    t.includes("spreadsheet") ||
+    t.includes("sheets") ||
+    t.includes("google sheets") ||
+    t.includes("csv data")
+  ) {
+    if (availableSlugs.has("sheets")) {
+      const op = (t.includes("write") || t.includes("update")) ? "write-range" :
+        (t.includes("append") || t.includes("add row")) ? "append-row" :
+        "read-range";
+      return {
+        adapterSlug: "sheets",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions spreadsheet/sheets/csv -- routing to Google Sheets",
+      };
+    }
+  }
+
+  // Linear / ticket / issue / project management / sprint -> linear
+  if (
+    t.includes("linear") ||
+    t.includes("ticket") ||
+    (t.includes("issue") && !t.includes("github")) ||
+    (t.includes("project management") || t.includes("sprint") || t.includes("backlog"))
+  ) {
+    if (availableSlugs.has("linear")) {
+      const op = (t.includes("create") || t.includes("new") || t.includes("add")) ? "create-issue" :
+        (t.includes("update") || t.includes("move") || t.includes("assign")) ? "update-issue" :
+        (t.includes("project") && (t.includes("list") || t.includes("show"))) ? "list-projects" :
+        "list-issues";
+      return {
+        adapterSlug: "linear",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions Linear/ticket/issue/sprint -- routing to Linear",
+      };
+    }
+  }
+
   // Database / SQL / query -> supabase
   if (
     t.includes("database") ||

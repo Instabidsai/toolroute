@@ -45,6 +45,10 @@ import { twitterAdapter } from "./twitter-adapter";
 import { linkedinAdapter } from "./linkedin-adapter";
 import { youtubeAdapter } from "./youtube-adapter";
 import { slackAdapter } from "./slack-adapter";
+import { notionAdapter } from "./notion-adapter";
+import { hubspotAdapter } from "./hubspot-adapter";
+import { sheetsAdapter } from "./sheets-adapter";
+import { linearAdapter } from "./linear-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -114,6 +118,10 @@ registerAdapter(twitterAdapter);
 registerAdapter(linkedinAdapter);
 registerAdapter(youtubeAdapter);
 registerAdapter(slackAdapter);
+registerAdapter(notionAdapter);
+registerAdapter(hubspotAdapter);
+registerAdapter(sheetsAdapter);
+registerAdapter(linearAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
