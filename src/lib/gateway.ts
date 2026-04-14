@@ -175,9 +175,18 @@ export async function executeToolRequest(
     );
   }
 
-  // Check for BYOK key
-  let byokKey: string | undefined;
+  // --- Key resolution: BYOK > Master > Env var ---
+  let resolvedKey: string | undefined;
+  let keySource: "byok" | "master" | "env_var" = "env_var";
+  let costToUs = 0;
+  let masterCostPerCall = 0;
+  let masterCostModel: string | null = null;
+  // markup_percent is stored per-provider for future dynamic pricing
+  let _masterMarkupPercent = 0;
+
   const sb0 = supabaseAdmin();
+
+  // 1. Check for user's BYOK key (highest priority)
   const { data: byokRow } = await sb0
     .from("user_provider_keys")
     .select("api_key_encrypted")
@@ -186,17 +195,41 @@ export async function executeToolRequest(
     .eq("is_active", true)
     .eq("prefer_own_key", true)
     .single();
+
   if (byokRow) {
-    byokKey = byokRow.api_key_encrypted;
+    resolvedKey = byokRow.api_key_encrypted;
+    keySource = "byok";
   }
+
+  // 2. If no BYOK, check for master key in tool_providers
+  if (!resolvedKey) {
+    const { data: providerRow } = await sb0
+      .from("tool_providers")
+      .select(
+        "auth_key_encrypted, cost_per_call, cost_model, markup_percent"
+      )
+      .eq("tool_slug", adapter.slug)
+      .eq("is_active", true)
+      .single();
+
+    if (providerRow?.auth_key_encrypted) {
+      resolvedKey = providerRow.auth_key_encrypted;
+      keySource = "master";
+      masterCostPerCall = Number(providerRow.cost_per_call) || 0;
+      masterCostModel = providerRow.cost_model;
+      _masterMarkupPercent = Number(providerRow.markup_percent) || 0;
+    }
+  }
+
+  // 3. If neither BYOK nor master, adapter falls back to its own env var
+  //    (resolvedKey stays undefined, adapter uses process.env internally)
 
   const requestId = randomBytes(16).toString("hex");
   const start = Date.now();
-  const usedByok = !!byokKey;
 
   let result;
   try {
-    result = await adapter.execute(operation, input, byokKey);
+    result = await adapter.execute(operation, input, resolvedKey);
   } catch (err) {
     const latencyMs = Date.now() - start;
     const errMsg = err instanceof Error ? err.message : String(err);
@@ -212,8 +245,9 @@ export async function executeToolRequest(
       p_cost_to_us: 0,
       p_cost_to_user: 0,
       p_latency_ms: latencyMs,
-      p_used_byok: usedByok,
+      p_used_byok: keySource === "byok",
       p_error: errMsg,
+      p_key_source: keySource,
     });
 
     return {
@@ -233,20 +267,30 @@ export async function executeToolRequest(
     : estimatedCost;
   const finalCost = result.success ? actualCost : 0;
 
+  // Calculate COGS when using master key
+  if (keySource === "master" && result.success) {
+    if (masterCostModel === "per_unit" && result.units_consumed) {
+      costToUs = masterCostPerCall * result.units_consumed;
+    } else {
+      costToUs = masterCostPerCall;
+    }
+  }
+
   const sb = supabaseAdmin();
 
-  // Log the request
+  // Log the request with key source and COGS
   await sb.rpc("log_gateway_request", {
     p_user_id: ctx.userId,
     p_key_id: ctx.keyId,
     p_tool_slug: adapter.slug,
     p_provider: result.provider,
     p_status: result.success ? 200 : 500,
-    p_cost_to_us: 0, // TODO: track our actual costs
+    p_cost_to_us: costToUs,
     p_cost_to_user: finalCost,
     p_latency_ms: latencyMs,
-    p_used_byok: usedByok,
+    p_used_byok: keySource === "byok",
     p_error: result.error ?? null,
+    p_key_source: keySource,
   });
 
   // Deduct credits for successful requests

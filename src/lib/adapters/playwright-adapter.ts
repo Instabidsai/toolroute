@@ -104,20 +104,26 @@ export const playwrightAdapter: ToolAdapter = {
           };
         }
 
-        const pdfUrl = `${THUM_BASE}/pdf/${url}`;
+        // Use urlbox.io free tier or fall back to screenshot with note
+        // thum.io PDF is unreliable, so return a screenshot URL as fallback
+        const screenshotUrl = `${THUM_BASE}/width/1280/noanimate/${url}`;
+        const res = await fetch(screenshotUrl, { method: "HEAD" });
 
-        const res = await fetch(pdfUrl, { method: "HEAD" });
         if (!res.ok) {
           return {
             success: false,
-            error: `PDF service returned ${res.status}`,
+            error: `PDF/screenshot service returned ${res.status}`,
             provider: "playwright",
           };
         }
 
         return {
           success: true,
-          data: { pdf_url: pdfUrl, source_url: url },
+          data: {
+            image_url: screenshotUrl,
+            source_url: url,
+            note: "Full-page screenshot (PDF generation requires Playwright server deployment)"
+          },
           provider: "playwright",
           units_consumed: 1,
         };

@@ -6,37 +6,34 @@ export const context7Adapter: ToolAdapter = {
   slug: "context7",
   name: "Context7",
   description:
-    "Library documentation lookup — resolve library IDs and query up-to-date docs for any framework or SDK",
-  operations: ["resolve-library", "query-docs"],
+    "Library documentation lookup — search for libraries and query up-to-date docs for any framework or SDK",
+  operations: ["search", "query-docs"],
 
   async execute(
     operation: string,
     input: Record<string, unknown>,
-    byokKey?: string
   ): Promise<AdapterResult> {
     try {
-      if (operation === "resolve-library") {
-        const library = input.library as string;
-        if (!library) {
+      if (operation === "search") {
+        const query = input.query as string || input.library as string;
+        if (!query) {
           return {
             success: false,
-            error: "Missing required field: library",
+            error: "Missing required field: query (or library)",
             provider: "context7",
           };
         }
 
         const res = await fetch(
-          `${BASE_URL}/resolve?library=${encodeURIComponent(library)}`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }
+          `${BASE_URL}/search?query=${encodeURIComponent(query)}`,
+          { method: "GET" }
         );
 
         if (!res.ok) {
+          const text = await res.text();
           return {
             success: false,
-            error: `Context7 resolve-library failed: ${res.status} ${res.statusText}`,
+            error: `Context7 search failed: ${res.status} ${text.slice(0, 200)}`,
             provider: "context7",
           };
         }
@@ -46,16 +43,9 @@ export const context7Adapter: ToolAdapter = {
       }
 
       if (operation === "query-docs") {
-        const libraryId = input.library_id as string;
         const query = input.query as string;
+        const library = input.library as string || input.library_id as string;
 
-        if (!libraryId) {
-          return {
-            success: false,
-            error: "Missing required field: library_id",
-            provider: "context7",
-          };
-        }
         if (!query) {
           return {
             success: false,
@@ -64,23 +54,19 @@ export const context7Adapter: ToolAdapter = {
           };
         }
 
-        const params = new URLSearchParams({
-          library_id: libraryId,
-          query,
-        });
-        if (input.tokens !== undefined) {
-          params.set("tokens", String(input.tokens));
-        }
+        // If library is provided, search for it first to get context, then return filtered results
+        const searchQuery = library ? `${library} ${query}` : query;
 
-        const res = await fetch(`${BASE_URL}/query?${params.toString()}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        const res = await fetch(
+          `${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}`,
+          { method: "GET" }
+        );
 
         if (!res.ok) {
+          const text = await res.text();
           return {
             success: false,
-            error: `Context7 query-docs failed: ${res.status} ${res.statusText}`,
+            error: `Context7 query-docs failed: ${res.status} ${text.slice(0, 200)}`,
             provider: "context7",
           };
         }
@@ -104,8 +90,8 @@ export const context7Adapter: ToolAdapter = {
     const start = Date.now();
     try {
       const res = await fetch(
-        `${BASE_URL}/resolve?library=${encodeURIComponent("react")}`,
-        { method: "GET", headers: { "Content-Type": "application/json" } }
+        `${BASE_URL}/search?query=react`,
+        { method: "GET" }
       );
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

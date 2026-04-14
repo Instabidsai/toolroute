@@ -105,6 +105,18 @@ export interface AdapterResult {
   units_consumed?: number;
 }
 
+/**
+ * Tool adapter interface for gateway providers.
+ *
+ * Key resolution priority (handled by gateway.ts, NOT the adapter):
+ *   1. User's BYOK key (from user_provider_keys table)
+ *   2. Master pooled key (from tool_providers table)
+ *   3. Adapter env var fallback (e.g., process.env.ELEVENLABS_API_KEY)
+ *
+ * The `resolvedKey` parameter in execute() is the winner of steps 1-2.
+ * If provided, the adapter MUST use it instead of its own env var.
+ * If undefined, the adapter should fall back to its own env var.
+ */
 export interface ToolAdapter {
   slug: string;
   name: string;
@@ -113,7 +125,7 @@ export interface ToolAdapter {
   execute(
     operation: string,
     input: Record<string, unknown>,
-    byokKey?: string
+    resolvedKey?: string
   ): Promise<AdapterResult>;
   healthCheck(): Promise<{ healthy: boolean; latency_ms: number }>;
   estimateCost(operation: string, input: Record<string, unknown>): number;
