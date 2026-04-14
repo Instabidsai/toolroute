@@ -114,7 +114,7 @@ export default function PricingPage() {
         </h1>
         <p className="text-text-dim max-w-lg mx-auto text-sm leading-relaxed">
           Start free. Pay only for what you use. Every plan includes credits
-          that work across all 50+ tools.
+          that work across all 70+ tools.
         </p>
       </section>
 

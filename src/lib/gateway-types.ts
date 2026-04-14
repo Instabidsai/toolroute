@@ -103,6 +103,8 @@ export interface AdapterResult {
   error?: string;
   provider: string;
   units_consumed?: number;
+  /** If set, overrides the estimateCost calculation with the actual cost */
+  actual_cost?: number;
 }
 
 /**

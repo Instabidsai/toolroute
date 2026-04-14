@@ -99,7 +99,6 @@ export const deeplAdapter: ToolAdapter = {
             })),
           },
           provider: "deepl",
-          units_consumed: text.length,
         };
       }
 
@@ -142,7 +141,6 @@ export const deeplAdapter: ToolAdapter = {
           success: true,
           data: { detected_language: detected },
           provider: "deepl",
-          units_consumed: text.length,
         };
       }
 

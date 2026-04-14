@@ -5,13 +5,13 @@ import { ToolsClient } from "./ToolsClient";
 export const metadata: Metadata = {
   title: "Tool Registry — ToolRoute",
   description:
-    "Browse 50+ curated best-in-class tools for AI agents. Filter by category, protocol, or search. Every tool rated 9/10 or higher.",
+    "Browse 70+ curated best-in-class tools for AI agents. Filter by category, protocol, or search. Every tool rated 9/10 or higher.",
   alternates: {
     canonical: "/tools",
   },
   openGraph: {
     title: "Tool Registry — ToolRoute",
-    description: "Browse 50+ curated best-in-class tools for AI agents.",
+    description: "Browse 70+ curated best-in-class tools for AI agents.",
     url: "https://toolroute.ai/tools",
   },
 };

@@ -63,7 +63,6 @@ export const outscraperAdapter: ToolAdapter = {
           success: true,
           data,
           provider: "outscraper",
-          units_consumed: limit,
         };
       }
 
@@ -97,7 +96,6 @@ export const outscraperAdapter: ToolAdapter = {
           success: true,
           data,
           provider: "outscraper",
-          units_consumed: limit,
         };
       }
 

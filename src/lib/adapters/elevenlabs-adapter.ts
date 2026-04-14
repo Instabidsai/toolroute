@@ -76,7 +76,6 @@ export const elevenlabsAdapter: ToolAdapter = {
             char_count: text.length,
           },
           provider: "elevenlabs",
-          units_consumed: text.length,
         };
       }
 

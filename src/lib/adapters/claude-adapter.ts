@@ -84,14 +84,6 @@ export const claudeAdapter: ToolAdapter = {
 
         const data = await res.json();
 
-        // Estimate tokens consumed for cost tracking
-        const inputChars = messages.reduce(
-          (sum: number, m: ChatMessage) => sum + (m.content?.length ?? 0),
-          0
-        );
-        const outputChars =
-          data.content?.[0]?.text?.length ?? 0;
-
         return {
           success: true,
           data: {
@@ -101,7 +93,6 @@ export const claudeAdapter: ToolAdapter = {
             stop_reason: data.stop_reason,
           },
           provider: "claude",
-          units_consumed: Math.ceil((inputChars + outputChars) / 1000),
         };
       }
 

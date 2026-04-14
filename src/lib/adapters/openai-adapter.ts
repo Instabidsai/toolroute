@@ -77,7 +77,6 @@ export const openaiAdapter: ToolAdapter = {
             usage: data.usage,
           },
           provider: "openai",
-          units_consumed: data.usage?.total_tokens ?? 1,
         };
       }
 
@@ -122,7 +121,6 @@ export const openaiAdapter: ToolAdapter = {
             ),
           },
           provider: "openai",
-          units_consumed: n,
         };
       }
 
@@ -162,7 +160,6 @@ export const openaiAdapter: ToolAdapter = {
             usage: data.usage,
           },
           provider: "openai",
-          units_consumed: data.usage?.total_tokens ?? 1,
         };
       }
 
@@ -200,7 +197,6 @@ export const openaiAdapter: ToolAdapter = {
             category_scores: data.results?.[0]?.category_scores,
           },
           provider: "openai",
-          units_consumed: 1,
         };
       }
 

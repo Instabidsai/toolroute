@@ -1431,7 +1431,7 @@ export default function DocsPage() {
           <strong className="text-text">BYOK-only adapters</strong> (no pooled key): calendar (Google Calendar), drive (Google Drive).
         </p>
         <CodeBlock title="Register a BYOK key">
-          {`curl -X POST https://toolroute.ai/api/v1/provider-keys \\
+          {`curl -X POST https://toolroute.ai/api/v1/byok \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
   -d '{"provider": "elevenlabs", "api_key": "your-elevenlabs-key-here"}'`}

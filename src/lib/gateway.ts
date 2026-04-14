@@ -5,9 +5,8 @@ import {
   GatewayContext,
   ToolResult,
 } from "./gateway-types";
-import { toolrouteAdapter } from "./adapters/toolroute-adapter";
-import { autoAdapter } from "./adapters/auto-adapter";
-import type { ToolAdapter } from "./gateway-types";
+import type { ToolAdapter } from "./gateway-types";  // Used by resolveAdapter return type
+import { getAdapter, listAdapters } from "./adapters/index";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -16,17 +15,8 @@ export function supabaseAdmin() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-const adapters: Record<string, ToolAdapter> = {
-  toolroute: toolrouteAdapter,
-  auto: autoAdapter,
-};
-
-export function registerAdapter(adapter: ToolAdapter) {
-  adapters[adapter.slug] = adapter;
-}
-
 export function listRegisteredAdapters() {
-  return Object.values(adapters);
+  return listAdapters();
 }
 
 function hashKey(raw: string): string {
@@ -70,6 +60,28 @@ export async function validateRequest(
     );
   }
 
+  // The validate_api_key RPC doesn't check expires_at, so check it here.
+  // Check both the RPC result and the DB directly to be safe.
+  const keyId = result.key_id as string;
+  if (keyId) {
+    const { data: keyRow } = await sb
+      .from("api_keys")
+      .select("expires_at")
+      .eq("id", keyId)
+      .single();
+
+    if (keyRow?.expires_at) {
+      const expiresAt = new Date(keyRow.expires_at);
+      if (expiresAt < new Date()) {
+        throw new GatewayError(
+          "API key has expired",
+          401,
+          "key_expired"
+        );
+      }
+    }
+  }
+
   return {
     userId: result.user_id as string,
     keyId: result.key_id as string,
@@ -93,7 +105,7 @@ export async function checkRateLimit(ctx: GatewayContext): Promise<void> {
 
   if (error) {
     console.error("Rate limit check failed:", error.message);
-    return; // fail open — don't block requests if rate limiting is broken
+    throw new GatewayError("Rate limiting temporarily unavailable", 503, "rate_limit_unavailable");
   }
 
   const result = data as Record<string, unknown>;
@@ -125,12 +137,12 @@ function resolveAdapter(
 
   const [providerSlug, ...rest] = parts;
   const operation = rest.join("/");
-  const adapter = adapters[providerSlug];
+  const adapter = getAdapter(providerSlug);
 
   if (!adapter) {
+    const available = listAdapters().map((a) => a.slug).join(", ");
     throw new GatewayError(
-      'Unknown provider: "' + providerSlug + '". Available: ' +
-        Object.keys(adapters).join(", "),
+      'Unknown provider: "' + providerSlug + '". Available: ' + available,
       404,
       "unknown_provider"
     );
@@ -262,9 +274,10 @@ export async function executeToolRequest(
   }
 
   const latencyMs = Date.now() - start;
-  const actualCost = result.units_consumed
-    ? estimatedCost * result.units_consumed
-    : estimatedCost;
+  // Use actual_cost if the adapter provided it, otherwise fall back to the estimate.
+  // Never multiply estimatedCost by units_consumed — units_consumed is a raw count
+  // (tokens, characters, etc.), not a multiplier.
+  const actualCost = result.actual_cost ?? estimatedCost;
   const finalCost = result.success ? actualCost : 0;
 
   // Calculate COGS when using master key

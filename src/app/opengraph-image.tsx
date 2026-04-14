@@ -69,7 +69,7 @@ export default function OgImage() {
             display: "flex",
           }}
         >
-          50+ curated tools &bull; MCP-native &bull; Intelligent librarian
+          70+ curated tools &bull; MCP-native &bull; Intelligent librarian
         </div>
       </div>
     ),

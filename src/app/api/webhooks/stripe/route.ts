@@ -51,6 +51,18 @@ export async function POST(request: NextRequest) {
         if (type === "credits") {
           const creditAmount = parseFloat(session.metadata?.credit_amount ?? "0");
           if (creditAmount > 0) {
+            // Idempotency check: skip if this payment was already processed
+            const { data: existing } = await sb
+              .from("credit_transactions")
+              .select("id")
+              .eq("stripe_payment_id", session.payment_intent as string)
+              .single();
+
+            if (existing) {
+              console.log("Already processed payment:", session.payment_intent);
+              break;
+            }
+
             // Platform fee is handled by Stripe (we set the price). Net credit = purchase amount.
             await sb.rpc("add_credits", {
               p_user_id: userId,

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stripe = getStripe();
-    const origin = request.headers.get("origin") || "https://toolroute.ai";
+    const origin = "https://toolroute.ai"; // Always use production URL for Stripe redirects
 
     if (type === "credits") {
       const credit = CREDIT_PRICES[amount ?? ""];

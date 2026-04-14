@@ -479,7 +479,7 @@ export default function DashboardPage() {
               </h3>
             </div>
             <p className="text-[10px] text-text-dim">
-              Explore 50+ curated tools available through the gateway.
+              Explore 70+ curated tools available through the gateway.
             </p>
           </Link>
           <a

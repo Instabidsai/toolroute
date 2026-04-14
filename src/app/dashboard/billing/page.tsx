@@ -47,7 +47,7 @@ const PLANS = [
     features: [
       "$5 credits/month included",
       "60 requests/min",
-      "10,000 requests/day",
+      "10,000 requests/month",
       "All tools access",
       "BYOK support",
       "Email support",
@@ -60,7 +60,7 @@ const PLANS = [
     features: [
       "$50 credits/month included",
       "300 requests/min",
-      "100,000 requests/day",
+      "100,000 requests/month",
       "Custom adapters",
       "Dedicated support + SLA",
     ],

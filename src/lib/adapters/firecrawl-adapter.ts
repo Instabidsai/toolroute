@@ -108,7 +108,6 @@ export const firecrawlAdapter: ToolAdapter = {
           success: true,
           data,
           provider: "firecrawl",
-          units_consumed: (input.limit as number) ?? 10,
         };
       }
 
