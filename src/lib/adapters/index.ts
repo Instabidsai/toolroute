@@ -39,6 +39,12 @@ import { postizAdapter } from "./postiz-adapter";
 import { creatomateAdapter } from "./creatomate-adapter";
 import { shotstackAdapter } from "./shotstack-adapter";
 import { higgsFieldAdapter } from "./higgsfield-adapter";
+import { exaAdapter } from "./exa-adapter";
+import { tavilyAdapter } from "./tavily-adapter";
+import { twitterAdapter } from "./twitter-adapter";
+import { linkedinAdapter } from "./linkedin-adapter";
+import { youtubeAdapter } from "./youtube-adapter";
+import { slackAdapter } from "./slack-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -102,6 +108,12 @@ registerAdapter(postizAdapter);
 registerAdapter(creatomateAdapter);
 registerAdapter(shotstackAdapter);
 registerAdapter(higgsFieldAdapter);
+registerAdapter(exaAdapter);
+registerAdapter(tavilyAdapter);
+registerAdapter(twitterAdapter);
+registerAdapter(linkedinAdapter);
+registerAdapter(youtubeAdapter);
+registerAdapter(slackAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);

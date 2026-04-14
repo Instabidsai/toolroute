@@ -568,6 +568,121 @@ function heuristicRoute(
     }
   }
 
+  // Exa neural search / find similar / research / AI search
+  if (
+    t.includes("exa") ||
+    t.includes("neural search") ||
+    t.includes("find similar") ||
+    (t.includes("research") && (t.includes("deep") || t.includes("paper") || t.includes("company")))
+  ) {
+    if (availableSlugs.has("exa")) {
+      const op = t.includes("similar") ? "find-similar" : "search";
+      return {
+        adapterSlug: "exa",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions Exa/neural search/find similar -- routing to Exa",
+      };
+    }
+  }
+
+  // Tavily RAG search / extract content
+  if (
+    t.includes("tavily") ||
+    t.includes("rag search") ||
+    t.includes("extract content") ||
+    t.includes("extract url")
+  ) {
+    if (availableSlugs.has("tavily")) {
+      const op = (t.includes("extract")) ? "extract" : "search";
+      return {
+        adapterSlug: "tavily",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions Tavily/RAG search/extract -- routing to Tavily",
+      };
+    }
+  }
+
+  // Twitter / X / tweet
+  if (
+    t.includes("tweet") ||
+    t.includes("post to twitter") ||
+    t.includes("post to x") ||
+    t.includes("twitter") ||
+    (t.includes("post") && t.includes(" x "))
+  ) {
+    if (availableSlugs.has("twitter")) {
+      const op = t.includes("search") ? "search-tweets" :
+        t.includes("mention") ? "get-mentions" :
+        t.includes("delete") ? "delete-tweet" :
+        t.includes("user") || t.includes("profile") ? "get-user" :
+        "post-tweet";
+      return {
+        adapterSlug: "twitter",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions Twitter/X/tweet -- routing to Twitter",
+      };
+    }
+  }
+
+  // LinkedIn
+  if (
+    t.includes("linkedin") ||
+    t.includes("post to linkedin")
+  ) {
+    if (availableSlugs.has("linkedin")) {
+      const op = t.includes("profile") ? "get-profile" : "create-post";
+      return {
+        adapterSlug: "linkedin",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions LinkedIn -- routing to LinkedIn",
+      };
+    }
+  }
+
+  // YouTube
+  if (
+    t.includes("youtube") ||
+    t.includes("upload video") ||
+    t.includes("youtube comments")
+  ) {
+    if (availableSlugs.has("youtube")) {
+      const op = t.includes("upload") ? "upload-video" :
+        t.includes("comment") ? "get-comments" :
+        t.includes("search") ? "search" :
+        "list-videos";
+      return {
+        adapterSlug: "youtube",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions YouTube -- routing to YouTube",
+      };
+    }
+  }
+
+  // Slack
+  if (
+    t.includes("slack") ||
+    t.includes("send to slack") ||
+    t.includes("slack message")
+  ) {
+    if (availableSlugs.has("slack")) {
+      const op = t.includes("read") || t.includes("history") ? "read-channel" :
+        t.includes("list") || t.includes("channels") ? "list-channels" :
+        t.includes("reply") || t.includes("thread") ? "reply-thread" :
+        "send-message";
+      return {
+        adapterSlug: "slack",
+        operation: op,
+        confidence: 0.9,
+        reason: "Task mentions Slack -- routing to Slack",
+      };
+    }
+  }
+
   // Web search -> search
   if (
     (t.includes("search") && (t.includes("web") || t.includes("google") || t.includes("bing"))) ||
@@ -755,6 +870,71 @@ function mapInput(
     if (!mapped.image_url && !mapped.image) {
       const imgUrl = extractUrl(task, input);
       if (imgUrl) mapped.image_url = imgUrl;
+    }
+  }
+
+  // For exa search, ensure query
+  if (adapterSlug === "exa" && (operation === "search" || operation === "search-companies" || operation === "search-people")) {
+    if (!mapped.query) {
+      mapped.query = input.search || input.topic || task;
+    }
+  }
+
+  // For exa find-similar, ensure url
+  if (adapterSlug === "exa" && operation === "find-similar") {
+    if (!mapped.url) {
+      const exaUrl = extractUrl(task, input);
+      if (exaUrl) mapped.url = exaUrl;
+    }
+  }
+
+  // For tavily search, ensure query
+  if (adapterSlug === "tavily" && operation === "search") {
+    if (!mapped.query) {
+      mapped.query = input.search || input.topic || task;
+    }
+  }
+
+  // For tavily extract, ensure urls
+  if (adapterSlug === "tavily" && operation === "extract") {
+    if (!mapped.urls) {
+      const tavUrl = extractUrl(task, input);
+      if (tavUrl) mapped.urls = [tavUrl];
+    }
+  }
+
+  // For twitter post-tweet, ensure text
+  if (adapterSlug === "twitter" && operation === "post-tweet") {
+    if (!mapped.text) {
+      mapped.text = input.content || input.message || task;
+    }
+  }
+
+  // For twitter search-tweets, ensure query
+  if (adapterSlug === "twitter" && operation === "search-tweets") {
+    if (!mapped.query) {
+      mapped.query = input.search || input.topic || task;
+    }
+  }
+
+  // For linkedin create-post, ensure text
+  if (adapterSlug === "linkedin" && operation === "create-post") {
+    if (!mapped.text) {
+      mapped.text = input.content || input.message || task;
+    }
+  }
+
+  // For youtube search, ensure query
+  if (adapterSlug === "youtube" && operation === "search") {
+    if (!mapped.query) {
+      mapped.query = input.search || input.topic || task;
+    }
+  }
+
+  // For slack send-message, ensure text
+  if (adapterSlug === "slack" && (operation === "send-message" || operation === "reply-thread")) {
+    if (!mapped.text) {
+      mapped.text = input.content || input.message || task;
     }
   }
 
