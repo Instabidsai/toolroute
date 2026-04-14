@@ -19,6 +19,14 @@ import { screenshotAdapter } from "./screenshot-adapter";
 import { pdfAdapter } from "./pdf-adapter";
 import { calendarAdapter } from "./calendar-adapter";
 import { driveAdapter } from "./drive-adapter";
+import { openaiAdapter } from "./openai-adapter";
+import { pexelsAdapter } from "./pexels-adapter";
+import { unsplashAdapter } from "./unsplash-adapter";
+import { removebgAdapter } from "./removebg-adapter";
+import { vapiAdapter } from "./vapi-adapter";
+import { creatifyAdapter } from "./creatify-adapter";
+import { apolloAdapter } from "./apollo-adapter";
+import { shippoAdapter } from "./shippo-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -62,6 +70,14 @@ registerAdapter(screenshotAdapter);
 registerAdapter(pdfAdapter);
 registerAdapter(calendarAdapter);
 registerAdapter(driveAdapter);
+registerAdapter(openaiAdapter);
+registerAdapter(pexelsAdapter);
+registerAdapter(unsplashAdapter);
+registerAdapter(removebgAdapter);
+registerAdapter(vapiAdapter);
+registerAdapter(creatifyAdapter);
+registerAdapter(apolloAdapter);
+registerAdapter(shippoAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
