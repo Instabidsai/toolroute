@@ -450,6 +450,48 @@ function heuristicRoute(
     }
   }
 
+  // Higgsfield / Seedance / Cinema Studio / Soul 2 / multi-model video -> higgsfield
+  if (
+    t.includes("higgsfield") ||
+    t.includes("seedance") ||
+    t.includes("cinema studio") ||
+    t.includes("soul 2") ||
+    t.includes("soul-2")
+  ) {
+    if (availableSlugs.has("higgsfield")) {
+      const isImage =
+        t.includes("image") ||
+        t.includes("soul 2") ||
+        t.includes("soul-2") ||
+        t.includes("flux");
+      return {
+        adapterSlug: "higgsfield",
+        operation: isImage ? "generate-image" : "generate-video",
+        confidence: 0.95,
+        reason:
+          "Task mentions Higgsfield/Seedance/Cinema Studio/Soul 2 -- routing to Higgsfield",
+      };
+    }
+  }
+
+  // Generic "ai video" fallback -> higgsfield (if not already matched by heygen/creatomate)
+  if (
+    (t.includes("ai video") || t.includes("generate video") || t.includes("text to video") || t.includes("text-to-video")) &&
+    !t.includes("avatar") &&
+    !t.includes("talking head") &&
+    !t.includes("ad") &&
+    !t.includes("ugc")
+  ) {
+    if (availableSlugs.has("higgsfield")) {
+      return {
+        adapterSlug: "higgsfield",
+        operation: "generate-video",
+        confidence: 0.8,
+        reason: "Task mentions AI video generation -- routing to Higgsfield as multi-model platform",
+      };
+    }
+  }
+
   // PDF generation -> pdf
   if (
     t.includes("pdf") ||

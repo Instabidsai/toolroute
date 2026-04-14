@@ -38,6 +38,7 @@ import { dataforseoAdapter } from "./dataforseo-adapter";
 import { postizAdapter } from "./postiz-adapter";
 import { creatomateAdapter } from "./creatomate-adapter";
 import { shotstackAdapter } from "./shotstack-adapter";
+import { higgsFieldAdapter } from "./higgsfield-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -100,6 +101,7 @@ registerAdapter(dataforseoAdapter);
 registerAdapter(postizAdapter);
 registerAdapter(creatomateAdapter);
 registerAdapter(shotstackAdapter);
+registerAdapter(higgsFieldAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
