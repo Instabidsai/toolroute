@@ -27,6 +27,12 @@ import { vapiAdapter } from "./vapi-adapter";
 import { creatifyAdapter } from "./creatify-adapter";
 import { apolloAdapter } from "./apollo-adapter";
 import { shippoAdapter } from "./shippo-adapter";
+import { replicateAdapter } from "./replicate-adapter";
+import { sentryAdapter } from "./sentry-adapter";
+import { outscraperAdapter } from "./outscraper-adapter";
+import { textbeltAdapter } from "./textbelt-adapter";
+import { deepgramAdapter } from "./deepgram-adapter";
+import { heygenAdapter } from "./heygen-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -78,6 +84,12 @@ registerAdapter(vapiAdapter);
 registerAdapter(creatifyAdapter);
 registerAdapter(apolloAdapter);
 registerAdapter(shippoAdapter);
+registerAdapter(replicateAdapter);
+registerAdapter(sentryAdapter);
+registerAdapter(outscraperAdapter);
+registerAdapter(textbeltAdapter);
+registerAdapter(deepgramAdapter);
+registerAdapter(heygenAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
