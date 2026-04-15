@@ -118,24 +118,71 @@ export async function POST(request: NextRequest) {
         });
 
         const now = new Date().toISOString();
+
+        // Check if auto-router found a tool but execution failed (e.g. missing API key)
+        const resultData = result.data as Record<string, unknown> | undefined;
+        const executionFailed = resultData?.execution_failed === true;
+
+        // Build artifacts -- if execution failed, include routing info as a separate artifact
+        const artifacts: { name: string; parts: { type: string; text: string }[] }[] = [];
+
+        if (executionFailed) {
+          // Routing succeeded but execution failed -- still "completed" because we gave useful info
+          artifacts.push({
+            name: "routing",
+            parts: [
+              {
+                type: "text",
+                text: JSON.stringify(resultData?.routing ?? {}, null, 2),
+              },
+            ],
+          });
+          artifacts.push({
+            name: "recommendation",
+            parts: [
+              {
+                type: "text",
+                text: [
+                  `Auto-router found the right tool but could not execute it.`,
+                  `Error: ${resultData?.error ?? "Unknown"}`,
+                  ``,
+                  `Suggestions:`,
+                  ...((resultData?.suggestions as string[]) ?? []).map(
+                    (s: string) => `  - ${s}`
+                  ),
+                  ``,
+                  `Free alternatives (no API key needed):`,
+                  ...((resultData?.free_alternatives as { slug: string; name: string }[]) ?? []).map(
+                    (a: { slug: string; name: string }) => `  - ${a.slug}: ${a.name}`
+                  ),
+                ].join("\n"),
+              },
+            ],
+          });
+        } else {
+          artifacts.push({
+            name: "result",
+            parts: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  result.data ?? { error: result.error },
+                  null,
+                  2
+                ),
+              },
+            ],
+          });
+        }
+
         const task = {
           id: taskId,
-          status: { state: result.success ? "completed" : "failed" },
-          artifacts: [
-            {
-              name: "result",
-              parts: [
-                {
-                  type: "text",
-                  text: JSON.stringify(
-                    result.data ?? { error: result.error },
-                    null,
-                    2
-                  ),
-                },
-              ],
-            },
-          ],
+          // "completed" if routing succeeded (even if execution failed with helpful info)
+          // "failed" only if routing itself failed
+          status: {
+            state: result.success ? "completed" : "failed",
+          },
+          artifacts,
           created_at: now,
           updated_at: now,
         };

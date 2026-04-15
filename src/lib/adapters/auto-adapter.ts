@@ -1026,6 +1026,9 @@ function mapInput(
   return mapped;
 }
 
+/** Adapters known to work without any API key */
+const FREE_ADAPTERS = ["toolroute", "context7", "playwright", "github", "pexels", "unsplash"];
+
 export const autoAdapter: ToolAdapter = {
   slug: "auto",
   name: "ToolRoute Auto",
@@ -1155,11 +1158,115 @@ export const autoAdapter: ToolAdapter = {
         input
       );
 
-      const result = await adapter.execute(
-        bestMatch.operation,
-        mappedInput,
-        byokKey
-      );
+      // 6b. Execute with graceful fallback on API key / provider errors
+      let result: AdapterResult;
+      try {
+        result = await adapter.execute(
+          bestMatch.operation,
+          mappedInput,
+          byokKey
+        );
+      } catch (execErr) {
+        // Execution failed (likely missing API key) -- return routing info + alternatives
+        const execMessage =
+          execErr instanceof Error ? execErr.message : String(execErr);
+        const isKeyError =
+          /api.?key|unauthorized|forbidden|auth|credential|BYOK|missing.*key/i.test(
+            execMessage
+          );
+
+        const freeAlternatives = adapters
+          .filter(
+            (a: ToolAdapter) =>
+              a.slug !== "auto" && FREE_ADAPTERS.includes(a.slug)
+          )
+          .map((a: ToolAdapter) => ({
+            slug: a.slug,
+            name: a.name,
+            description: a.description,
+            operations: a.operations,
+          }));
+
+        return {
+          success: true, // Routing succeeded even though execution failed
+          data: {
+            routing: {
+              adapter: bestMatch.adapterSlug,
+              operation: bestMatch.operation,
+              confidence: bestMatch.confidence,
+              reason: bestMatch.reason,
+            },
+            execution_failed: true,
+            error: isKeyError
+              ? `Tool "${bestMatch.adapterSlug}" requires an API key. Set up BYOK at https://toolroute.ai/dashboard/providers or use a free alternative.`
+              : `Tool "${bestMatch.adapterSlug}" execution failed: ${execMessage}`,
+            suggestions: [
+              "Use toolroute/check_before_build to find alternatives",
+              "Use github/search-repos (no key needed)",
+              "Use playwright/scrape-text (no key needed)",
+              "Use context7/search (no key needed)",
+            ],
+            free_alternatives: freeAlternatives,
+            check_results: registryResults.slice(0, 5).map((t) => ({
+              name: t.tool_name,
+              slug: t.tool_slug,
+              rating: t.rating,
+              description: t.description,
+            })),
+          },
+          provider: `auto->${bestMatch.adapterSlug}`,
+        };
+      }
+
+      // Also handle non-throwing failures (adapter returned success: false)
+      if (!result.success) {
+        const isKeyError =
+          /api.?key|unauthorized|forbidden|auth|credential|BYOK|missing.*key/i.test(
+            result.error ?? ""
+          );
+
+        if (isKeyError) {
+          const freeAlternatives = adapters
+            .filter(
+              (a: ToolAdapter) =>
+                a.slug !== "auto" && FREE_ADAPTERS.includes(a.slug)
+            )
+            .map((a: ToolAdapter) => ({
+              slug: a.slug,
+              name: a.name,
+              description: a.description,
+              operations: a.operations,
+            }));
+
+          return {
+            success: true,
+            data: {
+              routing: {
+                adapter: bestMatch.adapterSlug,
+                operation: bestMatch.operation,
+                confidence: bestMatch.confidence,
+                reason: bestMatch.reason,
+              },
+              execution_failed: true,
+              error: `Tool "${bestMatch.adapterSlug}" requires an API key. Set up BYOK at https://toolroute.ai/dashboard/providers or use a free alternative.`,
+              suggestions: [
+                "Use toolroute/check_before_build to find alternatives",
+                "Use github/search-repos (no key needed)",
+                "Use playwright/scrape-text (no key needed)",
+                "Use context7/search (no key needed)",
+              ],
+              free_alternatives: freeAlternatives,
+              check_results: registryResults.slice(0, 5).map((t) => ({
+                name: t.tool_name,
+                slug: t.tool_slug,
+                rating: t.rating,
+                description: t.description,
+              })),
+            },
+            provider: `auto->${bestMatch.adapterSlug}`,
+          };
+        }
+      }
 
       // 7. Return result with routing metadata
       return {
