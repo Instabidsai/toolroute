@@ -11,6 +11,51 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-server-list-directory-2026",
+    title: "The Complete MCP Server List for 2026: 34 Servers Worth Using",
+    description:
+      "The definitive list of every MCP server worth using in 2026, organized by category. Live registry data with 8-dimension curation methodology.",
+    date: "2026-04-16",
+    readTime: "14 min",
+    keywords: ["MCP server list", "MCP directory", "2026", "registry"],
+  },
+  {
+    slug: "sentry-vs-datadog-vs-posthog",
+    title: "Sentry vs Datadog vs PostHog for AI Applications in 2026",
+    description:
+      "Sentry for errors, Datadog for infrastructure, PostHog for user behavior. Head-to-head comparison of observability tools for AI apps.",
+    date: "2026-04-16",
+    readTime: "11 min",
+    keywords: ["Sentry", "Datadog", "PostHog", "observability", "AI apps"],
+  },
+  {
+    slug: "github-vs-gitlab-ai-agents",
+    title: "GitHub vs GitLab for AI Agents: Which Wins in 2026?",
+    description:
+      "GitHub vs GitLab compared for AI agent workflows. MCP support, CI/CD, self-hosting, Copilot, and why GitHub became the default.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["GitHub", "GitLab", "MCP", "AI agents", "version control"],
+  },
+  {
+    slug: "assemblyai-vs-whisper-speech-to-text",
+    title: "AssemblyAI vs Whisper: Best Speech-to-Text API for AI Agents",
+    description:
+      "AssemblyAI vs Whisper compared for AI voice workflows. Accuracy, pricing, diarization, MCP support, and when to self-host vs use API.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["AssemblyAI", "Whisper", "speech-to-text", "STT", "AI voice"],
+  },
+  {
+    slug: "twilio-vs-vonage-sms-api",
+    title: "Twilio vs Vonage SMS API for AI Agents in 2026",
+    description:
+      "Twilio vs Vonage compared for AI agent SMS workflows. Pricing, developer experience, MCP support, and when to use each one.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["Twilio", "Vonage", "SMS API", "AI agents", "MCP"],
+  },
+  {
     slug: "context7-documentation-mcp-review",
     title: "Context7 MCP Server Review: Why Every AI Coding Session Needs It",
     description:

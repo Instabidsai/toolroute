@@ -236,6 +236,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/blog/twilio-vs-vonage-sms-api`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/assemblyai-vs-whisper-speech-to-text`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/github-vs-gitlab-ai-agents`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/sentry-vs-datadog-vs-posthog`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/mcp-server-list-directory-2026`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/changelog`,
       lastModified: new Date('2026-04-16'),
       changeFrequency: "weekly",
