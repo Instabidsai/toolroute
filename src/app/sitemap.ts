@@ -68,6 +68,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/what-is-an-mcp-gateway`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/best-mcp-servers-ai-agents-2026`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/use-mcp-tools-without-managing-servers`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/dashboard`,
       lastModified: new Date('2026-04-13'),
       changeFrequency: "weekly",
