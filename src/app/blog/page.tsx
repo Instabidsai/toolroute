@@ -11,6 +11,33 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-governance-soc2-compliance",
+    title: "MCP Governance and SOC 2 Compliance for AI Agents: The 2026 Enterprise Playbook",
+    description:
+      "Map MCP tool usage to the five SOC 2 trust services criteria. Audit logs, access controls, data residency, vendor management, and why a gateway collapses the audit surface from 30 servers to one.",
+    date: "2026-04-16",
+    readTime: "11 min",
+    keywords: ["MCP governance", "SOC 2 compliance", "AI agents", "audit logging", "trust services criteria"],
+  },
+  {
+    slug: "shadow-mcp-risks",
+    title: "Shadow MCP: The Security Risk Nobody Is Talking About",
+    description:
+      "Shadow IT moved from SaaS logins to MCP servers. Developers install unvetted tools, agents gain unmonitored access, credentials sprawl. Detection, prevention, and the 30-day action plan.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["shadow MCP", "shadow IT", "AI agent security", "credential sprawl", "data exfiltration"],
+  },
+  {
+    slug: "how-to-audit-mcp-tool-calls",
+    title: "How to Audit MCP Tool Calls for Compliance: Schema, Retention, and SIEM Integration",
+    description:
+      "Practical audit log schema for MCP tool calls. The exact fields, retention policies for SOC 2/HIPAA/PCI, SIEM pipeline patterns, and real SQL queries auditors actually run.",
+    date: "2026-04-16",
+    readTime: "12 min",
+    keywords: ["MCP audit logging", "SIEM integration", "compliance", "audit schema", "retention"],
+  },
+  {
     slug: "mcp-stdio-vs-http-hub",
     title: "MCP stdio vs HTTP Hub: The 128 GB RAM Crash That Changed How We Ship MCP",
     description:
