@@ -41,6 +41,79 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(functions, { headers: CORS_HEADERS });
     }
 
+    // MCP tools/list format (JSON-RPC result shape)
+    if (format === "mcp") {
+      const adapters = listAdapters();
+      const tools = [];
+      for (const adapter of adapters) {
+        for (const op of adapter.operations) {
+          const toolName = `${adapter.slug}_${op}`.replace(
+            /[^a-zA-Z0-9_-]/g,
+            "_"
+          );
+          tools.push({
+            name: toolName,
+            description: `${adapter.name}: ${op}. ${adapter.description}`,
+            inputSchema: {
+              type: "object",
+              properties: {
+                input: {
+                  type: "object",
+                  description: `Input parameters for ${adapter.slug}/${op}`,
+                  additionalProperties: true,
+                },
+              },
+              required: ["input"],
+              additionalProperties: false,
+            },
+          });
+        }
+      }
+      return NextResponse.json(
+        {
+          protocolVersion: "2025-03-26",
+          serverInfo: {
+            name: "ToolRoute",
+            version: "1.2.0",
+            description:
+              "The OpenRouter for Tools — 51 adapters, 150+ operations via one API",
+          },
+          tools,
+        },
+        { headers: CORS_HEADERS }
+      );
+    }
+
+    // Anthropic tool-use format (messages.create tools param)
+    if (format === "anthropic") {
+      const adapters = listAdapters();
+      const tools = [];
+      for (const adapter of adapters) {
+        for (const op of adapter.operations) {
+          const toolName = `${adapter.slug}_${op}`.replace(
+            /[^a-zA-Z0-9_-]/g,
+            "_"
+          );
+          tools.push({
+            name: toolName,
+            description: `${adapter.name}: ${op} — ${adapter.description}`,
+            input_schema: {
+              type: "object",
+              properties: {
+                input: {
+                  type: "object",
+                  description: `Input parameters for ${adapter.slug}/${op}`,
+                  additionalProperties: true,
+                },
+              },
+              required: ["input"],
+            },
+          });
+        }
+      }
+      return NextResponse.json(tools, { headers: CORS_HEADERS });
+    }
+
     // Default: Supabase catalog format
     const sb = supabaseAdmin();
 

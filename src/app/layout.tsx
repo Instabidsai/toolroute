@@ -10,6 +10,19 @@ export const metadata: Metadata = {
   authors: [{ name: "ToolRoute Team", url: "https://toolroute.ai" }],
   alternates: {
     canonical: "/",
+    types: {
+      "application/json": [
+        { url: "/.well-known/openapi.json", title: "OpenAPI 3.1 spec" },
+        { url: "/.well-known/ai-plugin.json", title: "ChatGPT plugin manifest" },
+        { url: "/.well-known/mcp.json", title: "MCP server manifest" },
+        { url: "/.well-known/agent-card.json", title: "A2A agent card" },
+        { url: "/agents.json", title: "Agent capability index" },
+      ],
+      "text/plain": [
+        { url: "/llms.txt", title: "LLM summary" },
+        { url: "/llms-full.txt", title: "LLM full reference" },
+      ],
+    },
   },
   openGraph: {
     title: "ToolRoute — The OpenRouter for Tools",
@@ -22,6 +35,18 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ToolRoute — The OpenRouter for Tools",
     description: "50 curated tools. Living beliefs. Intelligent composition.",
+  },
+  other: {
+    // Non-standard but agent-readable hints
+    "ai-purpose": "tool gateway for AI agents",
+    "ai-service-type": "mcp-gateway",
+    "ai-agent-readable": "true",
+    "ai-openapi-spec": "https://toolroute.ai/.well-known/openapi.json",
+    "ai-plugin-manifest": "https://toolroute.ai/.well-known/ai-plugin.json",
+    "ai-mcp-endpoint": "https://toolroute.ai/mcp",
+    "ai-tool-catalog": "https://toolroute.ai/api/v1/tools",
+    "ai-llms-txt": "https://toolroute.ai/llms.txt",
+    "ai-agents-json": "https://toolroute.ai/agents.json",
   },
 };
 

@@ -1,0 +1,1706 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ToolRoute API",
+    "description": "The OpenRouter for Tools -- unified API gateway for AI agent tools. One API key, 40 adapters, 107 operations. Covers web scraping, TTS, email, LLMs, GitHub, browser automation, documentation lookup, image generation, translation, video production, voice AI, SEO, shipping, payments, databases, social media, and more.\n\n## Adapter Registry (40 adapters)\n\n| # | Slug | Name | Operations |\n|---|------|------|------------|\n| 1 | toolroute | ToolRoute | check_before_build, search |\n| 2 | context7 | Context7 | search, query-docs |\n| 3 | firecrawl | Firecrawl | scrape, crawl, map |\n| 4 | elevenlabs | ElevenLabs | text-to-speech, voices |\n| 5 | sendgrid | SendGrid | send-email |\n| 6 | playwright | Playwright | screenshot, scrape-text, pdf |\n| 7 | claude | Claude | chat, complete |\n| 8 | github | GitHub | search-repos, get-readme, list-issues |\n| 9 | supabase | Supabase | execute-sql, list-tables, insert, select |\n| 10 | stripe | Stripe | list-customers, create-payment-link, list-products, get-balance |\n| 11 | twilio | Twilio | send-sms, make-call, list-messages |\n| 12 | whisper | Whisper | transcribe |\n| 13 | resend | Resend | send-email, list-emails |\n| 14 | search | Web Search | web, news, images |\n| 15 | image | Image Generation | generate, upscale |\n| 16 | translate | DeepL Translation | text, detect-language |\n| 17 | screenshot | Screenshot Capture | capture, fullpage |\n| 18 | pdf | PDF Generation | from-html, from-url |\n| 19 | calendar | Google Calendar | list-events, create-event, check-availability |\n| 20 | drive | Google Drive | list-files, search, get-content, upload-text |\n| 21 | openai | OpenAI | chat, image, embeddings, moderation |\n| 22 | pexels | Pexels | search-photos, search-videos, curated |\n| 23 | unsplash | Unsplash | search, random, get-photo |\n| 24 | removebg | Remove.bg | remove |\n| 25 | vapi | Vapi | create-call, list-calls, get-call, list-assistants |\n| 26 | creatify | Creatify | create-ad, list-ads, get-ad |\n| 27 | apollo | Apollo.io | search-people, enrich, search-companies |\n| 28 | shippo | Shippo | create-shipment, get-rates, create-label, track |\n| 29 | replicate | Replicate | run, list-models |\n| 30 | sentry | Sentry | list-issues, get-issue, list-events |\n| 31 | outscraper | Outscraper | google-maps, google-reviews, emails-and-contacts |\n| 32 | textbelt | Textbelt | send-sms, check-status |\n| 33 | deepgram | Deepgram | transcribe, transcribe-url |\n| 34 | heygen | HeyGen | create-video, list-avatars, get-video |\n| 35 | mux | Mux | create-asset, get-asset, list-assets, create-playback |\n| 36 | dataforseo | DataForSEO | serp, keywords, backlinks |\n| 37 | postiz | Postiz | create-post, list-posts, get-integrations |\n| 38 | creatomate | Creatomate | render, list-templates, get-render |\n| 39 | shotstack | Shotstack | render, get-render, probe |\n| 40 | auto | ToolRoute Auto | route |",
+    "version": "1.2.0",
+    "contact": {
+      "url": "https://toolroute.ai",
+      "email": "support@toolroute.ai"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://toolroute.ai",
+      "description": "Production"
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/api/v1/execute": {
+      "post": {
+        "operationId": "executeTool",
+        "summary": "Execute a tool",
+        "description": "Execute any tool in the ToolRoute registry via the unified gateway. Requires an API key (tr_live_xxx). The gateway routes to the best available provider, handles auth, and returns structured output.\n\n40 adapters available. Use {slug}/{operation} format. Full adapter list in info.description.",
+        "tags": ["Gateway"],
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExecuteRequest" },
+              "examples": {
+                "toolroute-check": {
+                  "summary": "Check before building",
+                  "value": {
+                    "tool": "toolroute/check_before_build",
+                    "input": { "task": "I need to send transactional emails" }
+                  }
+                },
+                "search-web": {
+                  "summary": "Web search",
+                  "value": {
+                    "tool": "search/web",
+                    "input": { "query": "best MCP servers 2026", "limit": 10 }
+                  }
+                },
+                "claude-chat": {
+                  "summary": "Chat with Claude",
+                  "value": {
+                    "tool": "claude/chat",
+                    "input": {
+                      "messages": [{ "role": "user", "content": "Explain REST in 2 sentences." }],
+                      "max_tokens": 256
+                    }
+                  }
+                },
+                "elevenlabs-tts": {
+                  "summary": "Text to speech",
+                  "value": {
+                    "tool": "elevenlabs/text-to-speech",
+                    "input": { "text": "Hello world", "voice_id": "21m00Tcm4TlvDq8ikWAM" }
+                  }
+                },
+                "firecrawl-scrape": {
+                  "summary": "Scrape a webpage",
+                  "value": {
+                    "tool": "firecrawl/scrape",
+                    "input": { "url": "https://example.com" }
+                  }
+                },
+                "image-generate": {
+                  "summary": "Generate an image",
+                  "value": {
+                    "tool": "image/generate",
+                    "input": { "prompt": "A futuristic city skyline at sunset", "size": "1024x1024" }
+                  }
+                },
+                "translate-text": {
+                  "summary": "Translate text",
+                  "value": {
+                    "tool": "translate/text",
+                    "input": { "text": "Hello, how are you?", "target_lang": "DE" }
+                  }
+                },
+                "auto-route": {
+                  "summary": "Auto-route a task to the best tool",
+                  "value": {
+                    "tool": "auto/route",
+                    "input": { "task": "I need to remove the background from a product photo" }
+                  }
+                },
+                "github-search": {
+                  "summary": "Search GitHub repos",
+                  "value": {
+                    "tool": "github/search-repos",
+                    "input": { "query": "mcp server typescript", "per_page": 5 }
+                  }
+                },
+                "sendgrid-email": {
+                  "summary": "Send an email",
+                  "value": {
+                    "tool": "sendgrid/send-email",
+                    "input": {
+                      "to": "user@example.com",
+                      "from": "noreply@yourapp.com",
+                      "subject": "Hello",
+                      "html": "<h1>It works!</h1>"
+                    }
+                  }
+                },
+                "context7-docs": {
+                  "summary": "Query library docs",
+                  "value": {
+                    "tool": "context7/query-docs",
+                    "input": { "library_id": "vercel/next.js", "query": "how to use server actions" }
+                  }
+                },
+                "playwright-screenshot": {
+                  "summary": "Screenshot a webpage",
+                  "value": {
+                    "tool": "playwright/screenshot",
+                    "input": { "url": "https://example.com", "width": 1920, "height": 1080 }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool executed successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExecuteResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (missing tool, bad input)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error or upstream provider failure",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools": {
+      "get": {
+        "operationId": "listToolsV1",
+        "summary": "List available tools with pricing",
+        "description": "Returns all tools in the ToolRoute registry with pricing, capabilities, and provider information. No authentication required.",
+        "tags": ["Discovery"],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by super_category slug"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Search query to filter tools"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 },
+            "description": "Max results to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tools": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ToolListing" }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/key": {
+      "get": {
+        "operationId": "getApiKeyInfo",
+        "summary": "Get API key info and balance",
+        "description": "Returns information about the authenticated API key including current balance, rate limits, and usage summary.",
+        "tags": ["Keys"],
+        "security": [{ "apiKey": [] }],
+        "responses": {
+          "200": {
+            "description": "API key information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiKeyInfo" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/keys": {
+      "post": {
+        "operationId": "createApiKey",
+        "summary": "Create a new API key",
+        "description": "Creates a new API key for the authenticated user. Requires session authentication (logged in via dashboard).",
+        "tags": ["Keys"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Human-readable label for this key",
+                    "example": "My Agent Key"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API key created. The full key is only returned once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "The full API key (only shown once)",
+                      "example": "tr_live_abc123def456"
+                    },
+                    "id": { "type": "string", "format": "uuid" },
+                    "name": { "type": "string" },
+                    "created_at": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listApiKeys",
+        "summary": "List API keys",
+        "description": "Lists all API keys for the authenticated user. Keys are masked (only last 4 characters shown).",
+        "tags": ["Keys"],
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "name": { "type": "string" },
+                          "key_hint": {
+                            "type": "string",
+                            "description": "Masked key showing only last 4 chars",
+                            "example": "tr_live_...f456"
+                          },
+                          "created_at": { "type": "string", "format": "date-time" },
+                          "last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+                          "total_requests": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeApiKey",
+        "summary": "Revoke an API key",
+        "description": "Permanently revokes an API key. This cannot be undone.",
+        "tags": ["Keys"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["key_id"],
+                "properties": {
+                  "key_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the key to revoke"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": { "type": "boolean" },
+                    "key_id": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usage": {
+      "get": {
+        "operationId": "getUsageHistory",
+        "summary": "Get usage history",
+        "description": "Returns usage history for the authenticated API key or session. Includes per-request cost, tool used, latency, and timestamps.",
+        "tags": ["Usage"],
+        "security": [{ "apiKey": [] }, { "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 },
+            "description": "Max records to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 },
+            "description": "Offset for pagination"
+          },
+          {
+            "name": "tool",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by tool identifier (e.g. firecrawl/scrape)"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Only return usage after this timestamp"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "usage": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/UsageRecord" }
+                    },
+                    "total": { "type": "integer" },
+                    "total_cost": { "type": "number", "description": "Sum of cost for all matching records" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/checkout": {
+      "post": {
+        "operationId": "createCheckoutSession",
+        "summary": "Create Stripe checkout session",
+        "description": "Creates a Stripe checkout session to add credits to the user's account. Redirects to Stripe for payment.",
+        "tags": ["Billing"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Amount in USD to add as credits",
+                    "minimum": 5,
+                    "example": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checkout session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Stripe checkout URL to redirect the user to"
+                    },
+                    "session_id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/byok": {
+      "post": {
+        "operationId": "registerByokKey",
+        "summary": "Register a BYOK provider key",
+        "description": "Register your own API key for a supported provider. Requests will be routed through your key with zero markup. Keys are encrypted at rest with AES-256. Requires session authentication.",
+        "tags": ["BYOK"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["provider", "api_key"],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "The provider slug to register the key for (any of the 40 adapter slugs)",
+                    "example": "elevenlabs"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "description": "Your API key for the provider"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Optional human-readable label for this key",
+                    "example": "My ElevenLabs key"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "provider": { "type": "string" },
+                    "label": { "type": "string" },
+                    "status": { "type": "string", "example": "registered" },
+                    "created_at": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid provider or missing key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listByokKeys",
+        "summary": "List registered BYOK provider keys",
+        "description": "Lists all BYOK provider keys for the authenticated user. Keys are masked. Requires session authentication.",
+        "tags": ["BYOK"],
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of BYOK keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "provider": { "type": "string", "example": "elevenlabs" },
+                          "label": { "type": "string" },
+                          "key_hint": {
+                            "type": "string",
+                            "description": "Masked key showing only last 4 chars",
+                            "example": "...xK7m"
+                          },
+                          "created_at": { "type": "string", "format": "date-time" },
+                          "last_used_at": { "type": "string", "format": "date-time", "nullable": true }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteByokKey",
+        "summary": "Remove a BYOK provider key",
+        "description": "Permanently removes a BYOK provider key. Future requests for this provider will use the platform key. Requires session authentication.",
+        "tags": ["BYOK"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["key_id"],
+                "properties": {
+                  "key_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the BYOK key to remove"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": { "type": "boolean" },
+                    "key_id": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/providers": {
+      "post": {
+        "operationId": "registerMasterProviderKey",
+        "summary": "Register master provider key (admin only)",
+        "description": "Register or update a master API key for a provider. This key is used for all platform-routed requests when users do not have a BYOK key. Requires admin authentication.",
+        "tags": ["Admin"],
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["provider", "api_key"],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "Provider slug (e.g. elevenlabs, firecrawl, claude)",
+                    "example": "elevenlabs"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "description": "Master API key for the provider"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether this provider is enabled for platform routing"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider key registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": { "type": "string" },
+                    "status": { "type": "string", "example": "registered" },
+                    "enabled": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized (admin only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listProviders",
+        "summary": "List providers with redacted keys (admin only)",
+        "description": "Lists all registered providers with key hints (redacted). Requires admin authentication.",
+        "tags": ["Admin"],
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "provider": { "type": "string", "example": "elevenlabs" },
+                          "key_hint": { "type": "string", "example": "...xK7m" },
+                          "enabled": { "type": "boolean" },
+                          "total_requests": { "type": "integer" },
+                          "total_cost": { "type": "number" },
+                          "updated_at": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized (admin only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "operationId": "getAdminStats",
+        "summary": "Get revenue, COGS, and margin stats (admin only)",
+        "description": "Returns platform-wide statistics including total revenue, cost of goods sold (upstream API costs), gross margin, active users, and per-adapter breakdowns. Requires admin authentication.",
+        "tags": ["Admin"],
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["day", "week", "month", "all"], "default": "month" },
+            "description": "Time period for stats aggregation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platform stats",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdminStats" }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized (admin only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provider-keys": {
+      "post": {
+        "operationId": "registerProviderKey",
+        "summary": "Register a BYOK provider key (legacy)",
+        "description": "Legacy endpoint. Register your own API key for a supported provider. Use /api/v1/byok for the v1 equivalent.",
+        "tags": ["Legacy"],
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["provider", "api_key"],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": ["elevenlabs", "firecrawl", "sendgrid", "claude", "github"],
+                    "description": "The provider slug to register the key for"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "description": "Your API key for the provider"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": { "type": "string" },
+                    "status": { "type": "string", "example": "registered" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid provider or missing key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/check": {
+      "post": {
+        "operationId": "checkBeforeBuild",
+        "summary": "Check ToolRoute before building anything (legacy)",
+        "description": "Legacy endpoint. Describe what you need to build, get back matching tools, installed inventory, category beliefs, and composites. Use /api/v1/execute with tool 'toolroute/check_before_build' for the v1 equivalent.",
+        "tags": ["Legacy"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["task"],
+                "properties": {
+                  "task": {
+                    "type": "string",
+                    "description": "Describe what you need to build or accomplish"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching tools, beliefs, composites, and inventory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matching_tools": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tool" }
+                    },
+                    "installed": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/InventoryItem" }
+                    },
+                    "category_beliefs": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Belief" }
+                    },
+                    "composites": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Composite" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "operationId": "searchTools",
+        "summary": "Search the tool registry (legacy)",
+        "description": "Legacy endpoint. Search tools by keyword. Use /api/v1/tools?q=query for the v1 equivalent.",
+        "tags": ["Legacy"],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Search query"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Max results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tool" }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tools": {
+      "get": {
+        "operationId": "listToolsLegacy",
+        "summary": "List all curated tools (legacy)",
+        "description": "Legacy endpoint. Returns all tools. Use /api/v1/tools for the v1 equivalent.",
+        "tags": ["Legacy"],
+        "responses": {
+          "200": {
+            "description": "All tools in the registry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tools": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tool" }
+                    },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key in the format tr_live_xxx. Pass as Bearer token in Authorization header."
+      },
+      "sessionAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Supabase JWT session token from dashboard login. Pass as Bearer token in Authorization header."
+      }
+    },
+    "schemas": {
+      "ExecuteRequest": {
+        "type": "object",
+        "required": ["tool", "input"],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Tool identifier in {adapter_slug}/{operation} format. 40 adapters with 107 operations available. Examples: firecrawl/scrape, claude/chat, search/web, image/generate, translate/text, auto/route.",
+            "example": "firecrawl/scrape"
+          },
+          "input": {
+            "type": "object",
+            "description": "Tool-specific input parameters (see tool operation schemas below)",
+            "additionalProperties": true,
+            "example": {
+              "url": "https://example.com"
+            }
+          },
+          "provider": {
+            "type": "object",
+            "description": "Optional provider routing preferences",
+            "properties": {
+              "prefer": {
+                "type": "string",
+                "description": "Preferred provider name"
+              },
+              "allow_fallbacks": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to fall back to alternative providers on failure"
+              },
+              "max_price": {
+                "type": "number",
+                "description": "Maximum price per call in USD"
+              },
+              "max_latency_ms": {
+                "type": "number",
+                "description": "Maximum acceptable latency in milliseconds"
+              }
+            }
+          }
+        }
+      },
+      "ExecuteResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique request ID for this execution",
+            "example": "req_abc123"
+          },
+          "tool": {
+            "type": "string",
+            "description": "Tool that was executed",
+            "example": "firecrawl/scrape"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that handled the request",
+            "example": "firecrawl"
+          },
+          "data": {
+            "type": "object",
+            "description": "Tool output data (structure varies by tool)",
+            "additionalProperties": true
+          },
+          "usage": {
+            "$ref": "#/components/schemas/UsageInfo"
+          }
+        }
+      },
+      "UsageInfo": {
+        "type": "object",
+        "properties": {
+          "cost": {
+            "type": "number",
+            "description": "Cost of this request in USD",
+            "example": 0.001
+          },
+          "balance_remaining": {
+            "type": "number",
+            "description": "Remaining account balance in USD",
+            "example": 4.99
+          },
+          "latency_ms": {
+            "type": "integer",
+            "description": "End-to-end latency in milliseconds",
+            "example": 234
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message",
+                "example": "Insufficient balance. Add credits at https://toolroute.ai/dashboard/billing"
+              },
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code",
+                "enum": [
+                  "invalid_request",
+                  "invalid_json",
+                  "missing_tool",
+                  "missing_input",
+                  "authentication_required",
+                  "invalid_api_key",
+                  "insufficient_balance",
+                  "tool_not_found",
+                  "rate_limit_exceeded",
+                  "adapter_error",
+                  "provider_error",
+                  "internal_error"
+                ],
+                "example": "insufficient_balance"
+              }
+            }
+          }
+        }
+      },
+      "AdapterInfo": {
+        "type": "object",
+        "description": "Information about a gateway adapter",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Adapter slug used in tool identifiers",
+            "example": "firecrawl"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable adapter name",
+            "example": "Firecrawl"
+          },
+          "operations": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Available operations for this adapter",
+            "example": ["scrape", "crawl", "map"]
+          }
+        }
+      },
+      "AdapterRegistry": {
+        "type": "object",
+        "description": "Complete registry of all 40 gateway adapters and their 107 operations",
+        "properties": {
+          "adapters": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdapterInfo" }
+          },
+          "total_adapters": { "type": "integer", "example": 40 },
+          "total_operations": { "type": "integer", "example": 107 }
+        },
+        "example": {
+          "adapters": [
+            { "slug": "toolroute", "name": "ToolRoute", "operations": ["check_before_build", "search"] },
+            { "slug": "context7", "name": "Context7", "operations": ["search", "query-docs"] },
+            { "slug": "firecrawl", "name": "Firecrawl", "operations": ["scrape", "crawl", "map"] },
+            { "slug": "elevenlabs", "name": "ElevenLabs", "operations": ["text-to-speech", "voices"] },
+            { "slug": "sendgrid", "name": "SendGrid", "operations": ["send-email"] },
+            { "slug": "playwright", "name": "Playwright", "operations": ["screenshot", "scrape-text", "pdf"] },
+            { "slug": "claude", "name": "Claude", "operations": ["chat", "complete"] },
+            { "slug": "github", "name": "GitHub", "operations": ["search-repos", "get-readme", "list-issues"] },
+            { "slug": "supabase", "name": "Supabase", "operations": ["execute-sql", "list-tables", "insert", "select"] },
+            { "slug": "stripe", "name": "Stripe", "operations": ["list-customers", "create-payment-link", "list-products", "get-balance"] },
+            { "slug": "twilio", "name": "Twilio", "operations": ["send-sms", "make-call", "list-messages"] },
+            { "slug": "whisper", "name": "Whisper", "operations": ["transcribe"] },
+            { "slug": "resend", "name": "Resend", "operations": ["send-email", "list-emails"] },
+            { "slug": "search", "name": "Web Search", "operations": ["web", "news", "images"] },
+            { "slug": "image", "name": "Image Generation", "operations": ["generate", "upscale"] },
+            { "slug": "translate", "name": "DeepL Translation", "operations": ["text", "detect-language"] },
+            { "slug": "screenshot", "name": "Screenshot Capture", "operations": ["capture", "fullpage"] },
+            { "slug": "pdf", "name": "PDF Generation", "operations": ["from-html", "from-url"] },
+            { "slug": "calendar", "name": "Google Calendar", "operations": ["list-events", "create-event", "check-availability"] },
+            { "slug": "drive", "name": "Google Drive", "operations": ["list-files", "search", "get-content", "upload-text"] },
+            { "slug": "openai", "name": "OpenAI", "operations": ["chat", "image", "embeddings", "moderation"] },
+            { "slug": "pexels", "name": "Pexels", "operations": ["search-photos", "search-videos", "curated"] },
+            { "slug": "unsplash", "name": "Unsplash", "operations": ["search", "random", "get-photo"] },
+            { "slug": "removebg", "name": "Remove.bg", "operations": ["remove"] },
+            { "slug": "vapi", "name": "Vapi", "operations": ["create-call", "list-calls", "get-call", "list-assistants"] },
+            { "slug": "creatify", "name": "Creatify", "operations": ["create-ad", "list-ads", "get-ad"] },
+            { "slug": "apollo", "name": "Apollo.io", "operations": ["search-people", "enrich", "search-companies"] },
+            { "slug": "shippo", "name": "Shippo", "operations": ["create-shipment", "get-rates", "create-label", "track"] },
+            { "slug": "replicate", "name": "Replicate", "operations": ["run", "list-models"] },
+            { "slug": "sentry", "name": "Sentry", "operations": ["list-issues", "get-issue", "list-events"] },
+            { "slug": "outscraper", "name": "Outscraper", "operations": ["google-maps", "google-reviews", "emails-and-contacts"] },
+            { "slug": "textbelt", "name": "Textbelt", "operations": ["send-sms", "check-status"] },
+            { "slug": "deepgram", "name": "Deepgram", "operations": ["transcribe", "transcribe-url"] },
+            { "slug": "heygen", "name": "HeyGen", "operations": ["create-video", "list-avatars", "get-video"] },
+            { "slug": "mux", "name": "Mux", "operations": ["create-asset", "get-asset", "list-assets", "create-playback"] },
+            { "slug": "dataforseo", "name": "DataForSEO", "operations": ["serp", "keywords", "backlinks"] },
+            { "slug": "postiz", "name": "Postiz", "operations": ["create-post", "list-posts", "get-integrations"] },
+            { "slug": "creatomate", "name": "Creatomate", "operations": ["render", "list-templates", "get-render"] },
+            { "slug": "shotstack", "name": "Shotstack", "operations": ["render", "get-render", "probe"] },
+            { "slug": "auto", "name": "ToolRoute Auto", "operations": ["route"] }
+          ],
+          "total_adapters": 40,
+          "total_operations": 107
+        }
+      },
+      "ToolrouteCheckInput": {
+        "type": "object",
+        "required": ["task"],
+        "description": "Input for toolroute/check_before_build",
+        "properties": {
+          "task": { "type": "string", "description": "Natural language description of what you want to build" }
+        }
+      },
+      "ToolrouteSearchInput": {
+        "type": "object",
+        "required": ["query"],
+        "description": "Input for toolroute/search",
+        "properties": {
+          "query": { "type": "string", "description": "Search keyword or phrase" },
+          "limit": { "type": "integer", "default": 10, "description": "Max results to return" }
+        }
+      },
+      "Context7ResolveInput": {
+        "type": "object",
+        "required": ["library"],
+        "description": "Input for context7/resolve-library",
+        "properties": {
+          "library": { "type": "string", "description": "Library or framework name (e.g. 'react', 'tailwindcss')" }
+        }
+      },
+      "Context7QueryInput": {
+        "type": "object",
+        "required": ["library_id", "query"],
+        "description": "Input for context7/query-docs",
+        "properties": {
+          "library_id": { "type": "string", "description": "Library ID from resolve-library (e.g. 'vercel/next.js')" },
+          "query": { "type": "string", "description": "Natural language question about the library" },
+          "tokens": { "type": "integer", "description": "Max tokens in response (optional)" }
+        }
+      },
+      "ElevenlabsTtsInput": {
+        "type": "object",
+        "required": ["text"],
+        "description": "Input for elevenlabs/text-to-speech",
+        "properties": {
+          "text": { "type": "string", "description": "Text to convert to speech" },
+          "voice_id": { "type": "string", "description": "ElevenLabs voice ID. Default: Rachel (21m00Tcm4TlvDq8ikWAM)" },
+          "model_id": { "type": "string", "description": "Model ID. Default: eleven_monolingual_v1" }
+        }
+      },
+      "ElevenlabsVoicesInput": {
+        "type": "object",
+        "description": "Input for elevenlabs/voices (no parameters required)",
+        "properties": {}
+      },
+      "FirecrawlScrapeInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for firecrawl/scrape",
+        "properties": {
+          "url": { "type": "string", "description": "URL to scrape" },
+          "formats": { "type": "array", "items": { "type": "string" }, "description": "Output formats (e.g. ['markdown', 'html'])" }
+        }
+      },
+      "FirecrawlCrawlInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for firecrawl/crawl",
+        "properties": {
+          "url": { "type": "string", "description": "Starting URL to crawl" },
+          "limit": { "type": "integer", "default": 10, "description": "Max pages to crawl" }
+        }
+      },
+      "FirecrawlMapInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for firecrawl/map",
+        "properties": {
+          "url": { "type": "string", "description": "Website URL to map" }
+        }
+      },
+      "SendgridSendInput": {
+        "type": "object",
+        "required": ["to", "from", "subject"],
+        "description": "Input for sendgrid/send-email. At least one of text or html required.",
+        "properties": {
+          "to": { "type": "string", "description": "Recipient email address" },
+          "from": { "type": "string", "description": "Sender email address (must be verified in SendGrid)" },
+          "subject": { "type": "string", "description": "Email subject line" },
+          "text": { "type": "string", "description": "Plain text body" },
+          "html": { "type": "string", "description": "HTML body" }
+        }
+      },
+      "PlaywrightScreenshotInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for playwright/screenshot",
+        "properties": {
+          "url": { "type": "string", "description": "URL to screenshot" },
+          "width": { "type": "integer", "default": 1280, "description": "Viewport width in pixels" },
+          "height": { "type": "integer", "default": 720, "description": "Viewport height in pixels" }
+        }
+      },
+      "PlaywrightScrapeTextInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for playwright/scrape-text",
+        "properties": {
+          "url": { "type": "string", "description": "URL to extract text from" }
+        }
+      },
+      "PlaywrightPdfInput": {
+        "type": "object",
+        "required": ["url"],
+        "description": "Input for playwright/pdf",
+        "properties": {
+          "url": { "type": "string", "description": "URL to render as PDF" }
+        }
+      },
+      "ClaudeChatInput": {
+        "type": "object",
+        "required": ["messages"],
+        "description": "Input for claude/chat and claude/complete",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["role", "content"],
+              "properties": {
+                "role": { "type": "string", "enum": ["user", "assistant"] },
+                "content": { "type": "string" }
+              }
+            },
+            "description": "Array of message objects"
+          },
+          "model": { "type": "string", "default": "claude-sonnet-4-20250514", "description": "Model ID" },
+          "max_tokens": { "type": "integer", "default": 1024, "description": "Max tokens in response" },
+          "system": { "type": "string", "description": "System prompt" },
+          "temperature": { "type": "number", "minimum": 0, "maximum": 1, "description": "Sampling temperature" }
+        }
+      },
+      "GithubSearchReposInput": {
+        "type": "object",
+        "required": ["query"],
+        "description": "Input for github/search-repos",
+        "properties": {
+          "query": { "type": "string", "description": "Search query (GitHub search syntax)" },
+          "per_page": { "type": "integer", "default": 10, "description": "Results per page (max 100)" }
+        }
+      },
+      "GithubGetReadmeInput": {
+        "type": "object",
+        "required": ["owner", "repo"],
+        "description": "Input for github/get-readme",
+        "properties": {
+          "owner": { "type": "string", "description": "Repository owner (user or org)" },
+          "repo": { "type": "string", "description": "Repository name" }
+        }
+      },
+      "GithubListIssuesInput": {
+        "type": "object",
+        "required": ["owner", "repo"],
+        "description": "Input for github/list-issues",
+        "properties": {
+          "owner": { "type": "string", "description": "Repository owner" },
+          "repo": { "type": "string", "description": "Repository name" },
+          "state": { "type": "string", "default": "open", "enum": ["open", "closed", "all"], "description": "Filter by issue state" },
+          "per_page": { "type": "integer", "default": 10, "description": "Results per page" }
+        }
+      },
+      "SearchWebInput": {
+        "type": "object",
+        "required": ["query"],
+        "description": "Input for search/web, search/news, search/images",
+        "properties": {
+          "query": { "type": "string", "description": "Search query" },
+          "limit": { "type": "integer", "default": 10, "description": "Max results to return" }
+        }
+      },
+      "ImageGenerateInput": {
+        "type": "object",
+        "required": ["prompt"],
+        "description": "Input for image/generate",
+        "properties": {
+          "prompt": { "type": "string", "description": "Text description of the image to generate" },
+          "size": { "type": "string", "default": "1024x1024", "description": "Image dimensions (e.g. 1024x1024, 512x512)" },
+          "model": { "type": "string", "description": "Model to use (optional, defaults to best available)" }
+        }
+      },
+      "TranslateTextInput": {
+        "type": "object",
+        "required": ["text", "target_lang"],
+        "description": "Input for translate/text",
+        "properties": {
+          "text": { "type": "string", "description": "Text to translate" },
+          "target_lang": { "type": "string", "description": "Target language code (e.g. DE, FR, ES, JA)" },
+          "source_lang": { "type": "string", "description": "Source language code (auto-detected if omitted)" }
+        }
+      },
+      "AutoRouteInput": {
+        "type": "object",
+        "required": ["task"],
+        "description": "Input for auto/route. Describes a task in natural language and the system picks the best tool and executes it.",
+        "properties": {
+          "task": { "type": "string", "description": "Natural language description of what you need done" }
+        }
+      },
+      "ToolListing": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string", "example": "Firecrawl" },
+          "slug": { "type": "string", "example": "firecrawl" },
+          "description": { "type": "string" },
+          "operations": {
+            "type": "array",
+            "description": "Available operations for this tool",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "example": "firecrawl/scrape" },
+                "name": { "type": "string", "example": "Scrape" },
+                "description": { "type": "string" },
+                "price_per_call": { "type": "number", "example": 0.005 }
+              }
+            }
+          },
+          "price_per_call": {
+            "type": "number",
+            "description": "Default price per call in USD (may vary by operation)",
+            "example": 0.005
+          },
+          "gateway_enabled": {
+            "type": "boolean",
+            "description": "Whether this tool is available through the gateway (has an active adapter)",
+            "example": true
+          },
+          "health_status": {
+            "type": "string",
+            "description": "Current health status of the tool's upstream provider",
+            "enum": ["healthy", "degraded", "down", "unknown"],
+            "example": "healthy"
+          },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "super_category": { "type": "string" },
+          "sub_category": { "type": "string" },
+          "protocols": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["rest", "mcp", "graphql", "grpc", "sdk"] }
+          },
+          "cost": {
+            "type": "string",
+            "enum": ["free", "freemium", "paid", "usage-based", "enterprise"]
+          },
+          "status": { "type": "string", "enum": ["active", "beta", "deprecated"] }
+        }
+      },
+      "AdminStats": {
+        "type": "object",
+        "description": "Platform-wide revenue, COGS, and margin statistics",
+        "properties": {
+          "period": { "type": "string", "example": "month" },
+          "revenue": {
+            "type": "number",
+            "description": "Total revenue from credit purchases and subscriptions in USD",
+            "example": 1250.00
+          },
+          "cogs": {
+            "type": "number",
+            "description": "Total cost of goods sold (upstream API costs) in USD",
+            "example": 340.50
+          },
+          "gross_margin": {
+            "type": "number",
+            "description": "Gross margin percentage",
+            "example": 72.76
+          },
+          "total_requests": {
+            "type": "integer",
+            "description": "Total API requests in period",
+            "example": 15420
+          },
+          "active_users": {
+            "type": "integer",
+            "description": "Unique users with at least one request in period",
+            "example": 42
+          },
+          "top_adapters": {
+            "type": "array",
+            "description": "Top adapters by request volume",
+            "items": {
+              "type": "object",
+              "properties": {
+                "adapter": { "type": "string", "example": "claude" },
+                "requests": { "type": "integer", "example": 5200 },
+                "revenue": { "type": "number", "example": 520.00 },
+                "cogs": { "type": "number", "example": 156.00 }
+              }
+            }
+          }
+        }
+      },
+      "ApiKeyInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "key_hint": { "type": "string", "example": "tr_live_...f456" },
+          "balance": {
+            "type": "number",
+            "description": "Current account balance in USD",
+            "example": 9.85
+          },
+          "rate_limit": {
+            "type": "object",
+            "properties": {
+              "requests_per_minute": { "type": "integer", "example": 60 },
+              "requests_remaining": { "type": "integer", "example": 58 }
+            }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+          "total_requests": { "type": "integer" },
+          "total_spend": { "type": "number", "description": "Total amount spent in USD" }
+        }
+      },
+      "UsageRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "tool": { "type": "string", "example": "firecrawl/scrape" },
+          "provider": { "type": "string", "example": "firecrawl" },
+          "cost": { "type": "number", "example": 0.005 },
+          "latency_ms": { "type": "integer", "example": 1200 },
+          "status": { "type": "string", "enum": ["success", "error"] },
+          "error_code": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Tool": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "super_category": { "type": "string" },
+          "sub_category": { "type": "string" },
+          "protocols": { "type": "array", "items": { "type": "string" } },
+          "primary_type": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "cost": { "type": "string", "enum": ["free", "freemium", "paid", "usage-based", "enterprise"] },
+          "status": { "type": "string" }
+        }
+      },
+      "Belief": {
+        "type": "object",
+        "properties": {
+          "champion": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "super_category": { "type": "string" },
+          "sub_category": { "type": "string" },
+          "observation_count": { "type": "integer" }
+        }
+      },
+      "Composite": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "tool_slugs": { "type": "array", "items": { "type": "string" } },
+          "use_cases": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "InventoryItem": {
+        "type": "object",
+        "properties": {
+          "tool_slug": { "type": "string" },
+          "installed_location": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Gateway",
+      "description": "Core gateway endpoints for executing tools. Supports 40 adapters with 107 operations across web scraping, TTS, email, LLMs, image generation, translation, video, voice AI, SEO, shipping, payments, databases, social media, and more."
+    },
+    {
+      "name": "Discovery",
+      "description": "Browse and search available tools"
+    },
+    {
+      "name": "Keys",
+      "description": "API key management"
+    },
+    {
+      "name": "Usage",
+      "description": "Usage tracking and history"
+    },
+    {
+      "name": "Billing",
+      "description": "Credits and payment"
+    },
+    {
+      "name": "BYOK",
+      "description": "Bring Your Own Key -- register provider API keys for zero-markup routing"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints for platform operators. Require admin-level session authentication."
+    },
+    {
+      "name": "Legacy",
+      "description": "Backwards-compatible endpoints from v0. Use v1 endpoints for new integrations."
+    }
+  ]
+}
