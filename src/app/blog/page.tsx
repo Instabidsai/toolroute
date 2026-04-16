@@ -11,6 +11,33 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "how-to-choose-mcp-tool-ai-agent",
+    title: "How to Choose the Right MCP Tool for Your AI Agent (2026 Decision Framework)",
+    description:
+      "A practical 7-step framework with a weighted scoring rubric. Real benchmarks from 51 tested tools and a worked example for picking a search tool.",
+    date: "2026-04-15",
+    readTime: "10 min",
+    keywords: ["MCP tool", "decision framework", "AI agent", "scoring rubric"],
+  },
+  {
+    slug: "oauth-for-ai-agents-composio-vs-manual",
+    title: "OAuth for AI Agents: Composio vs Manual Implementation (2026)",
+    description:
+      "AI agents need OAuth to act on behalf of users. Compare building OAuth yourself vs using Composio, with token storage, refresh, and multi-tenant trade-offs.",
+    date: "2026-04-15",
+    readTime: "11 min",
+    keywords: ["OAuth", "Composio", "AI agents", "authentication", "multi-tenant"],
+  },
+  {
+    slug: "how-ai-agents-handle-tool-failures",
+    title: "How AI Agents Handle Tool Failures: Reliability Patterns for Production",
+    description:
+      "Six reliability patterns that keep agents shipping: retries, circuit breakers, fallback chains, timeouts, idempotency, and graceful degradation. Real numbers from 1.2M calls.",
+    date: "2026-04-15",
+    readTime: "11 min",
+    keywords: ["reliability", "tool failures", "retries", "circuit breakers", "AI agents"],
+  },
+  {
     slug: "mcp-server-list-directory-2026",
     title: "The Complete MCP Server List for 2026: 34 Servers Worth Using",
     description:

@@ -278,6 +278,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/blog/how-to-choose-mcp-tool-ai-agent`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/oauth-for-ai-agents-composio-vs-manual`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/how-ai-agents-handle-tool-failures`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/changelog`,
       lastModified: new Date('2026-04-16'),
       changeFrequency: "weekly",
