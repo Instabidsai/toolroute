@@ -1074,10 +1074,47 @@ const summaryRows = allTools.map((t) => [
   t.pricing,
 ]);
 
+/* ---------- Schema ---------- */
+const techArticleSchema = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: "MCP Gateway API Documentation — Developer Guides",
+  description:
+    "ToolRoute API documentation for the MCP gateway with 87 tools across 12 categories. REST, MCP, A2A, and OpenAI function calling protocols. BYOK support, auto-routing, webhook events, SDKs, and integration guides for AI agents.",
+  url: "https://toolroute.ai/docs",
+  inLanguage: "en",
+  author: {
+    "@type": "Organization",
+    name: "ToolRoute",
+    url: "https://toolroute.ai",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "ToolRoute",
+    url: "https://toolroute.ai",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://toolroute.ai/opengraph-image",
+    },
+  },
+  about: [
+    { "@type": "Thing", name: "MCP Gateway" },
+    { "@type": "Thing", name: "AI Agent Tools" },
+    { "@type": "Thing", name: "Tool Routing API" },
+    { "@type": "Thing", name: "BYOK" },
+  ],
+  proficiencyLevel: "Beginner",
+  dependencies: "HTTP client (curl, fetch, httpx, or any REST library)",
+};
+
 /* ---------- Page ---------- */
 export default function DocsPage() {
   return (
     <div className="flex gap-8 pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleSchema) }}
+      />
       {/* Sidebar TOC */}
       <aside className="hidden lg:block w-56 shrink-0">
         <nav className="sticky top-20 space-y-1 max-h-[calc(100vh-6rem)] overflow-y-auto">

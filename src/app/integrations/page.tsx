@@ -271,9 +271,86 @@ curl https://toolroute.ai/api/v1/key \\
   },
 ];
 
+const howToSchemas = integrations.map((intg) => ({
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: `Connect ToolRoute to ${intg.name}`,
+  description: intg.description,
+  url: `https://toolroute.ai/integrations#${intg.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")}`,
+  inLanguage: "en",
+  tool: [
+    { "@type": "HowToTool", name: "ToolRoute API key" },
+    { "@type": "HowToTool", name: intg.name },
+  ],
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Get a ToolRoute API key",
+      text: "Sign in at toolroute.ai/login and generate an API key (tr_live_xxx) from the dashboard.",
+      url: "https://toolroute.ai/login",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: `Configure ${intg.name}`,
+      text: `Add ToolRoute to ${intg.name} using the snippet in ${intg.filename}. Paste your API key as the Bearer token.`,
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Call any tool",
+      text: "Your agent can now call any of the 70+ tools through a single endpoint. ToolRoute handles auth, routing, billing, and fallbacks.",
+      url: "https://toolroute.ai/tools",
+    },
+  ],
+}));
+
+const collectionSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "ToolRoute Integrations",
+  description:
+    "Connect ToolRoute to Claude Code, Cursor, OpenAI Agents SDK, LangChain, CrewAI, AutoGen, Google A2A, and any REST client.",
+  url: "https://toolroute.ai/integrations",
+  isPartOf: {
+    "@type": "WebSite",
+    name: "ToolRoute",
+    url: "https://toolroute.ai",
+  },
+  mainEntity: {
+    "@type": "ItemList",
+    name: "Integration Guides",
+    numberOfItems: integrations.length,
+    itemListElement: integrations.map((intg, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: `Connect ToolRoute to ${intg.name}`,
+      url: `https://toolroute.ai/integrations#${intg.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")}`,
+    })),
+  },
+};
+
 export default function IntegrationsPage() {
   return (
     <div className="space-y-16 pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+      />
+      {howToSchemas.map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
       {/* Hero */}
       <section className="text-center pt-12 pb-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4 leading-[1.1]">

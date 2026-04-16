@@ -11,6 +11,33 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-stdio-vs-http-hub",
+    title: "MCP stdio vs HTTP Hub: The 128 GB RAM Crash That Changed How We Ship MCP",
+    description:
+      "Running MCP servers as stdio processes feels fine at 3 sessions. At 8 sessions across 50 servers, it crashed the box. The math, the failure mode, and why HTTP hub is the only answer at scale.",
+    date: "2026-04-15",
+    readTime: "10 min",
+    keywords: ["MCP stdio", "HTTP hub", "RAM crash", "mcp.json", "transport", "scale"],
+  },
+  {
+    slug: "mcp-gateway-for-claude-code",
+    title: "MCP Gateway for Claude Code: Why Every Serious Session Needs One",
+    description:
+      "Stdio MCP servers break at scale, eat RAM, and stretch cold-starts past 40 seconds. An MCP gateway fixes all three. Setup in under five minutes.",
+    date: "2026-04-15",
+    readTime: "9 min",
+    keywords: ["MCP gateway", "Claude Code", "mcp.json", "setup", "tools"],
+  },
+  {
+    slug: "check-before-build-mcp-tool-pattern",
+    title: "The Check-Before-Build MCP Tool Pattern: How Agents Stop Reimplementing Free Capabilities",
+    description:
+      "The most expensive line of code reimplements something free. Before an AI agent writes a new tool, it should query a capability registry. Pattern, RPC, and belief system.",
+    date: "2026-04-15",
+    readTime: "10 min",
+    keywords: ["check before build", "capability registry", "MCP tool pattern", "AI agents", "ToolRoute"],
+  },
+  {
     slug: "how-to-debug-mcp-tool-calls",
     title: "How to Debug MCP Tool Calls: A Practical Troubleshooting Guide",
     description:

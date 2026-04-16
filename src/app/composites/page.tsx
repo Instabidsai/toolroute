@@ -27,8 +27,39 @@ export default async function CompositesPage() {
 
   const toolMap = new Map(tools.map((t) => [t.slug, t]));
 
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "MCP Tool Combinations — Composites",
+    description:
+      "Discover MCP tool combinations that chain multiple tools into end-to-end AI agent workflows. Pre-built composites from the curated registry.",
+    url: "https://toolroute.ai/composites",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "ToolRoute",
+      url: "https://toolroute.ai",
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      name: "ToolRoute Composites",
+      description:
+        "Multi-tool composites that chain tools together for end-to-end workflows.",
+      numberOfItems: composites.length,
+      itemListElement: composites.slice(0, 25).map((comp, idx) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        url: `https://toolroute.ai/composites/${comp.id}`,
+        name: comp.name,
+      })),
+    },
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+      />
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Composites</h1>
         <p className="text-sm text-text-dim">

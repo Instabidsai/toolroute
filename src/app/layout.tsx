@@ -61,7 +61,10 @@ const organizationSchema = {
   logo: "https://toolroute.ai/opengraph-image",
   description:
     "The OpenRouter for tools — MCP-native capability registry and intelligent librarian for AI agents",
-  sameAs: ["https://github.com/toolroute"],
+  sameAs: [
+    "https://github.com/Instabidsai/toolroute",
+    "https://twitter.com/toolroute",
+  ],
 };
 
 const breadcrumbSchema = {

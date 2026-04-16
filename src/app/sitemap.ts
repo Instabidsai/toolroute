@@ -314,6 +314,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/blog/mcp-stdio-vs-http-hub`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog/mcp-gateway-for-claude-code`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog/check-before-build-mcp-tool-pattern`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/changelog`,
       lastModified: new Date('2026-04-16'),
       changeFrequency: "weekly",
@@ -324,6 +342,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date('2026-04-15'),
       changeFrequency: "monthly",
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/alternatives`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "weekly",
+      priority: 0.85,
     },
     {
       url: `${baseUrl}/dashboard`,
@@ -351,8 +375,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic tool pages
+  // Dynamic tool pages + alternatives pages (same source)
   let toolPages: MetadataRoute.Sitemap = [];
+  let alternativesPages: MetadataRoute.Sitemap = [];
   try {
     const tools = await getTools();
     toolPages = tools.map((tool) => ({
@@ -361,6 +386,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
+    alternativesPages = tools
+      .filter((tool) => tool.rating >= 9)
+      .map((tool) => ({
+        url: `${baseUrl}/alternatives/${tool.slug}`,
+        lastModified: new Date('2026-04-15'),
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      }));
   } catch {
     // Supabase unavailable at build time — skip dynamic tool pages
   }
@@ -410,6 +443,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...categoryPages,
     ...categoryBestPages,
     ...protocolPages,
+    ...alternativesPages,
     ...compositePages,
   ];
 }

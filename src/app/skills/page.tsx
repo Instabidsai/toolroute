@@ -90,8 +90,39 @@ export default async function SkillsPage({
     categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
   }
 
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "AI Agent Skills — Installable Procedures",
+    description:
+      "Browse 40+ AI agent skills your agent can install locally. Procedures for design, development, security, and more. No API calls needed.",
+    url: "https://toolroute.ai/skills",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "ToolRoute",
+      url: "https://toolroute.ai",
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      name: "ToolRoute Skills",
+      description:
+        "Curated agent skills — procedures you install into your agent's context, not APIs you call.",
+      numberOfItems: skills.length,
+      itemListElement: skills.slice(0, 25).map((skill, idx) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        name: skill.name,
+        url: skill.source_url || "https://toolroute.ai/skills",
+      })),
+    },
+  };
+
   return (
     <div className="space-y-12 pb-16 animate-slide-up">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+      />
       {/* Hero */}
       <section className="text-center pt-8 pb-2">
         <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 mb-6">

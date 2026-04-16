@@ -108,9 +108,92 @@ const faqs = [
   },
 ] as const;
 
+const pricingSchema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: "ToolRoute",
+  description:
+    "MCP gateway and unified API for 70+ AI tools. One API key, every tool. Prepaid credits + BYOK support.",
+  brand: {
+    "@type": "Brand",
+    name: "ToolRoute",
+  },
+  url: "https://toolroute.ai/pricing",
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Free",
+      description:
+        "Get started and explore the platform. 100 requests/day, 10 RPM, 2 API keys, $1 starter credits.",
+      price: "0",
+      priceCurrency: "USD",
+      url: "https://toolroute.ai/pricing",
+      availability: "https://schema.org/InStock",
+      category: "Free",
+    },
+    {
+      "@type": "Offer",
+      name: "Pro",
+      description:
+        "For production workloads and serious builders. 10,000 requests/month, 60 RPM, 10 API keys, BYOK, $5/mo included credits.",
+      price: "29",
+      priceCurrency: "USD",
+      url: "https://toolroute.ai/pricing",
+      availability: "https://schema.org/InStock",
+      category: "Subscription",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "29",
+        priceCurrency: "USD",
+        unitText: "MONTH",
+        billingIncrement: 1,
+      },
+    },
+    {
+      "@type": "Offer",
+      name: "Enterprise",
+      description:
+        "For teams that need scale, control, and SLAs. 100,000 requests/month, 300 RPM, 50 API keys, custom adapters, dedicated support, $50/mo credits.",
+      price: "299",
+      priceCurrency: "USD",
+      url: "https://toolroute.ai/pricing",
+      availability: "https://schema.org/InStock",
+      category: "Subscription",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "299",
+        priceCurrency: "USD",
+        unitText: "MONTH",
+        billingIncrement: 1,
+      },
+    },
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: a,
+    },
+  })),
+};
+
 export default function PricingPage() {
   return (
     <div className="space-y-24 pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* Header */}
       <section className="text-center pt-12">
         <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 mb-6">
