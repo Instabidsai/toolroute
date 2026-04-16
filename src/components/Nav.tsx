@@ -22,6 +22,7 @@ import {
   Terminal,
   Activity,
   FileText,
+  Bot,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -35,6 +36,7 @@ const links = [
   { href: "/discover", label: "Discover", icon: Compass },
   { href: "/use-cases", label: "Use Cases", icon: Briefcase },
   { href: "/integrations", label: "Integrations", icon: Plug },
+  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/docs", label: "Docs", icon: BookOpen },
   { href: "/glossary", label: "Glossary", icon: BookMarked },
   { href: "/playground", label: "Playground", icon: Terminal },
