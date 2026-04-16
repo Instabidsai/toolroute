@@ -11,6 +11,15 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-auto-routing-ai-agent-tools",
+    title: "MCP Auto-Routing for AI Agent Tools: Let the Gateway Pick the Right Tool",
+    description:
+      "Most MCP tool calls require agents to know exact tool names. Auto-routing lets agents describe what they need and the gateway selects the best tool using semantic matching, beliefs, and fallback chains.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["MCP auto routing", "AI agent tools", "auto-routing", "gateway", "tool selection", "belief system"],
+  },
+  {
     slug: "a2a-vs-mcp-protocol-comparison",
     title: "A2A vs MCP: Comparing Google's Agent-to-Agent Protocol and Anthropic's Model Context Protocol",
     description:
