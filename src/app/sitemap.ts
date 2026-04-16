@@ -92,6 +92,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/blog/mcp-gateway-vs-api-gateway`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/build-ai-agent-multiple-tools`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/dashboard`,
       lastModified: new Date('2026-04-13'),
       changeFrequency: "weekly",

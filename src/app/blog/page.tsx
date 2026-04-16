@@ -11,6 +11,24 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-gateway-vs-api-gateway",
+    title: "MCP Gateway vs API Gateway: What AI Agents Actually Need",
+    description:
+      "API gateways manage REST traffic. MCP gateways manage AI tool calls. Different problem, different solution. Here is why you cannot just put Kong in front of MCP.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["MCP gateway", "API gateway", "Kong", "AI infrastructure"],
+  },
+  {
+    slug: "build-ai-agent-multiple-tools",
+    title: "How to Build an AI Agent That Uses 50+ Tools",
+    description:
+      "One tool is easy. Fifty tools is an infrastructure problem. Step-by-step guide to discovery, authentication, routing, error handling, and billing at scale.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["AI agent", "multi-tool", "MCP", "tutorial"],
+  },
+  {
     slug: "what-is-an-mcp-gateway",
     title: "What Is an MCP Gateway? The Infrastructure Layer AI Agents Need",
     description:
