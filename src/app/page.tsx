@@ -654,6 +654,16 @@ export default async function HomePage() {
                   GitHub
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://vibearmor.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-text-dim hover:text-accent transition-colors"
+                >
+                  Vibe coding security scanner
+                </a>
+              </li>
             </ul>
           </div>
         </div>
