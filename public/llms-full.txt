@@ -1,28 +1,41 @@
-# ToolRoute — Full API Documentation
+# ToolRoute -- Full API Documentation
 
-> The OpenRouter for Tools — unified API gateway for AI agent tools.
-> One API key. 40 adapters. 120+ operations. Usage-based pricing.
+> The OpenRouter for Tools -- one unified API to access 87+ best-in-class tools for AI agents.
+> 51 API adapters. 152+ operations. 5 protocols. Usage-based pricing.
 
 ## Overview
 
 ToolRoute is a unified API gateway that lets AI agents call curated tools through a single endpoint. Instead of managing dozens of API keys, SDKs, and auth flows, agents use one ToolRoute API key and call any tool with a consistent request/response format.
 
-The registry maintains living beliefs — confidence scores that evolve from real usage data — so recommendations improve over time.
+The registry maintains living beliefs -- confidence scores that evolve from real usage data -- so recommendations improve over time. When you ask "what tool should I use for X?", ToolRoute answers with data from hundreds of real agent sessions, not opinions.
+
+## Protocols
+
+ToolRoute supports 5 integration protocols:
+
+1. **REST API** -- POST /api/v1/execute with JSON body
+2. **MCP Streamable HTTP** -- POST /mcp with JSON-RPC (for Claude Code, Cursor, etc.)
+3. **A2A (Google)** -- POST /api/a2a for Google's Agent-to-Agent protocol
+4. **OpenAI Functions** -- GET /api/v1/tools?format=openai for OpenAI-compatible tool definitions
+5. **SDKs** -- Python and JavaScript helper functions (see SDK section below)
 
 ## Authentication
 
 Two auth schemes:
 
 1. **API Key** (for gateway calls): `Authorization: Bearer tr_live_xxx`
-   - Used for: /api/v1/execute, /api/v1/key, /api/v1/usage
+   - Used for: /api/v1/execute, /api/v1/key, /api/v1/usage, /mcp, /api/a2a
    - Obtain at: https://toolroute.ai/dashboard/keys
+   - Keys are SHA-256 hashed before storage. You only see the full key at creation time.
 
 2. **Session JWT** (for dashboard management): `Authorization: Bearer <supabase_jwt>`
-   - Used for: /api/v1/keys (CRUD), /api/v1/checkout, /api/v1/usage
+   - Used for: /api/v1/keys (CRUD), /api/v1/checkout, /api/v1/settings
 
 ## Endpoints
 
-### POST /api/v1/execute — Execute a Tool
+### POST /api/v1/execute -- Execute a Tool
+
+The primary endpoint for all tool calls.
 
 **Request:**
 ```json
@@ -44,49 +57,163 @@ Two auth schemes:
 ```
 
 **Error Codes:**
-- `invalid_request` (400) — Missing required fields or bad input
-- `authentication_required` (401) — No API key provided
-- `invalid_api_key` (401) — API key not found or revoked
-- `insufficient_balance` (402) — Not enough credits
-- `tool_not_found` (404) — Tool identifier not in registry
-- `rate_limit_exceeded` (429) — Too many requests
-- `adapter_error` (500) — Upstream provider returned an error
+- `invalid_request` (400) -- Missing required fields or bad input
+- `authentication_required` (401) -- No API key provided
+- `invalid_api_key` (401) -- API key not found or revoked
+- `insufficient_balance` (402) -- Not enough credits
+- `tool_not_found` (404) -- Tool identifier not in registry
+- `rate_limit_exceeded` (429) -- Too many requests
+- `adapter_error` (500) -- Upstream provider returned an error
 
-### GET /api/v1/tools — List Available Tools
-No auth required. Query params: `category`, `q`, `limit`.
+### POST /mcp -- MCP Streamable HTTP
 
-### GET /api/v1/key — API Key Info + Balance
+JSON-RPC endpoint for MCP clients (Claude Code, Cursor, etc.). Supports tools/list, tools/call, and the 7 MCP server tools listed below.
+
+### POST /api/a2a -- A2A Protocol
+
+Google Agent-to-Agent protocol endpoint for agent interoperability.
+
+### GET /api/v1/tools -- List Available Tools
+No auth required. Query params: `category`, `q`, `limit`, `format` (set to `openai` for OpenAI function calling format).
+
+### GET /api/v1/key -- API Key Info + Balance
 Auth: Bearer API key required.
 
-### GET /api/v1/usage — Usage History
+### GET /api/v1/usage -- Usage History
 Auth: Bearer API key or session JWT. Query params: `limit`, `offset`, `tool`, `since`.
 
-### POST /api/v1/checkout — Add Credits
+### POST /api/v1/checkout -- Add Credits
 Auth: Session JWT required. Body: `{"amount": 10}`. Minimum $5.
 
-### POST /api/v1/provider-keys — Register BYOK Key
-Auth: Bearer API key required. Body: `{"provider": "elevenlabs", "api_key": "your-key"}`.
+### POST /api/v1/keys -- Create API Key
+Auth: Session JWT required.
+
+### POST /api/v1/byok -- Register BYOK Key
+Auth: Session JWT required. Body: `{"provider": "elevenlabs", "api_key": "your-key"}`.
+
+### PATCH /api/v1/settings -- Auto-Top-Up Settings
+Auth: Session JWT required. Body: `{"auto_topup_enabled": true, "auto_topup_amount": 10, "auto_topup_threshold": 2}`.
 
 ---
 
-## Gateway Adapters — Complete Reference (40 adapters)
+## Category Champions (from the ToolRoute Belief System)
+
+ToolRoute maintains a belief system that tracks which tool is best for each category. Beliefs evolve from real usage data. Here are the current champions ranked by confidence:
+
+### Infrastructure
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Documentation | Context7 | 0.86 |
+| Dev Workflow | Superpowers | 0.85 |
+| Browser Automation | Playwright MCP | 0.85 |
+| Database Management | Supabase MCP | 0.85 |
+| UI Design | frontend-design | 0.85 |
+| Auth Integration | Composio | 0.85 |
+| Programmable Video | Remotion | 0.76 |
+| Design System | Google Stitch | 0.60 |
+| Monitoring | Grafana MCP | 0.60 |
+| 3D Modeling | Blender MCP | 0.60 |
+
+### DevOps
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Git & Version Control | GitHub MCP | 0.85 |
+| Cloud Hosting | Vercel MCP | 0.85 |
+| Containers | Docker MCP | 0.60 |
+| Edge CDN | Cloudflare MCP | 0.60 |
+
+### Finance
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Payment Processing | Stripe MCP | 0.85 |
+
+### Marketing
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Social Multi-Platform | Postiz | 0.85 |
+| Web Scraping | Firecrawl | 0.60 |
+| SEO Content Factory | Firecrawl + Claude + Stitch + Vercel | 0.70 |
+| SEO/AEO | Ahrefs | 0.60 |
+| YouTube Management | YouTube Data API | 0.60 |
+| Ad Creation (Meta) | Meta Marketing API | 0.60 |
+| Ad Creation (Google) | Google Ads API | 0.60 |
+| Content Distribution | Claude + Remotion + Postiz | 0.60 |
+
+### Communication
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| SMS | Twilio | 0.75 |
+| Voice/TTS | ElevenLabs | 0.75 |
+| Email (Transactional) | SendGrid | 0.60 |
+| Email Management | Gmail MCP | 0.60 |
+| Team Chat (Slack) | Slack MCP | 0.60 |
+| Support Monitor | Gmail + Claude + Sentry + SendGrid | 0.60 |
+
+### Content
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Long-Form Writing | Claude API | 0.75 |
+| Avatar/Spokesperson | HeyGen MCP | 0.60 |
+| Transcription | Whisper | 0.60 |
+| Image Generation | Midjourney | 0.60 |
+| Image-to-Video | Kling 3.0 | 0.60 |
+| Automated Video | MoneyPrinterTurbo | 0.60 |
+| Product Demo Pipeline | Stitch + Remotion + ElevenLabs | 0.60 |
+
+### Security
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Code Scanning | Semgrep MCP | 0.85 |
+| Authentication | Supabase Auth | 0.60 |
+| Bot Protection | Cloudflare Turnstile | 0.60 |
+
+### Operations
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Workflow Automation | Zapier MCP | 0.85 |
+| Document/Wiki | Notion MCP | 0.60 |
+| File Storage | Google Drive MCP | 0.60 |
+| Spreadsheets | Google Sheets MCP | 0.60 |
+
+### Analytics
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Error Tracking | Sentry MCP | 0.60 |
+| Product Analytics | PostHog | 0.60 |
+
+### CRM & Sales
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Lead Prospecting | Apollo.io | 0.60 |
+| Cold Email Sequencing | Smartlead | 0.60 |
+| CRM Management | HubSpot MCP | 0.60 |
+| Lead Outreach Pipeline | Apollo + Claude + SendGrid | 0.60 |
+
+### E-Commerce
+| Sub-Category | Champion | Confidence |
+|---|---|---|
+| Storefront | Shopify MCP | 0.60 |
+
+---
+
+## Gateway Adapters -- Complete Reference (40 adapters, 120+ operations)
 
 All operations are called via `POST /api/v1/execute` with the tool ID in `provider/operation` format.
 
 ---
 
-### 1. claude — Anthropic Claude LLM
+### 1. claude -- Anthropic Claude LLM
 BYOK: Yes | Pricing: $0.003/1K chars
 
 #### claude/chat
 Send a multi-turn conversation to Claude.
 
 **Input:**
-- `messages` (array, REQUIRED) — Array of {role, content} objects
-- `model` (string, default: claude-sonnet-4-20250514) — Model ID
-- `max_tokens` (number, default: 1024) — Max tokens in response
-- `system` (string) — System prompt
-- `temperature` (number) — Sampling temperature (0-1)
+- `messages` (array, REQUIRED) -- Array of {role, content} objects
+- `model` (string, default: claude-sonnet-4-20250514) -- Model ID
+- `max_tokens` (number, default: 1024) -- Max tokens in response
+- `system` (string) -- System prompt
+- `temperature` (number) -- Sampling temperature (0-1)
 
 **Example:**
 ```json
@@ -98,75 +225,75 @@ Alias for claude/chat. Same input and output format.
 
 ---
 
-### 2. openai — OpenAI GPT + DALL-E
+### 2. openai -- OpenAI GPT + DALL-E
 BYOK: Yes | Pricing: $0-$0.04/call
 
 #### openai/chat
 **Input:**
-- `messages` (array, REQUIRED) — Array of {role, content} objects
-- `model` (string, default: gpt-4o) — Model ID
+- `messages` (array, REQUIRED) -- Array of {role, content} objects
+- `model` (string, default: gpt-4o) -- Model ID
 - `max_tokens` (number, default: 1024)
 - `temperature` (number, default: 0.7)
 
 #### openai/image
 **Input:**
-- `prompt` (string, REQUIRED) — Image generation prompt
+- `prompt` (string, REQUIRED) -- Image generation prompt
 - `model` (string, default: dall-e-3)
 - `size` (string, default: 1024x1024)
-- `n` (number, default: 1) — Number of images
+- `n` (number, default: 1) -- Number of images
 
 Pricing: $0.04/image
 
 #### openai/embeddings
 **Input:**
-- `input` (string, REQUIRED) — Text to embed
+- `input` (string, REQUIRED) -- Text to embed
 - `model` (string, default: text-embedding-3-small)
 
 Pricing: $0.0001/call
 
 #### openai/moderation
 **Input:**
-- `input` (string, REQUIRED) — Text to check
+- `input` (string, REQUIRED) -- Text to check
 
 Pricing: Free
 
 ---
 
-### 3. replicate — Run Any ML Model
+### 3. replicate -- Run Any ML Model
 BYOK: Yes | Pricing: $0.01/run
 
 #### replicate/run
 **Input:**
-- `model` (string, REQUIRED) — Model identifier (e.g. "stability-ai/sdxl:version")
-- `input` (object) — Model-specific input parameters
-- `version` (string) — Version hash
+- `model` (string, REQUIRED) -- Model identifier (e.g. "stability-ai/sdxl:version")
+- `input` (object) -- Model-specific input parameters
+- `version` (string) -- Version hash
 
 #### replicate/list-models
 **Input:**
-- `owner` (string) — Filter by model owner
+- `owner` (string) -- Filter by model owner
 
 Pricing: Free
 
 ---
 
-### 4. whisper — Speech-to-Text
+### 4. whisper -- Speech-to-Text
 BYOK: Yes | Pricing: $0.01/call
 
 #### whisper/transcribe
 **Input:**
-- `audio_url` (string, REQUIRED) — URL to audio file
+- `audio_url` (string, REQUIRED) -- URL to audio file
 - `model` (string, default: whisper-1)
-- `language` (string) — ISO language code
-- `response_format` (string) — Output format
+- `language` (string) -- ISO language code
+- `response_format` (string) -- Output format
 
 ---
 
-### 5. search — Web Search (Brave)
+### 5. search -- Web Search (Brave)
 BYOK: Yes | Pricing: $0.003/call
 
 #### search/web
 **Input:**
-- `query` (string, REQUIRED) — Search query
+- `query` (string, REQUIRED) -- Search query
 - `num_results` (number, default: 10)
 
 #### search/news
@@ -181,34 +308,34 @@ BYOK: Yes | Pricing: $0.003/call
 
 ---
 
-### 6. context7 — Library Documentation
+### 6. context7 -- Library Documentation
 BYOK: No | Pricing: $0.001/call
 
 #### context7/search
 **Input:**
-- `query` (string, REQUIRED) — Library name or search term
+- `query` (string, REQUIRED) -- Library name or search term
 
 #### context7/query-docs
 **Input:**
-- `query` (string, REQUIRED) — Question about the library
-- `library` (string) — Library name or ID
+- `query` (string, REQUIRED) -- Question about the library
+- `library` (string) -- Library name or ID
 
 ---
 
-### 7. firecrawl — Web Scraping & Crawling
+### 7. firecrawl -- Web Scraping & Crawling
 BYOK: Yes | Pricing: $0.003-$0.01/call
 
 #### firecrawl/scrape
 **Input:**
 - `url` (string, REQUIRED)
-- `formats` (string[]) — Output formats (e.g. ["markdown", "html"])
+- `formats` (string[]) -- Output formats (e.g. ["markdown", "html"])
 
 Pricing: $0.005/call
 
 #### firecrawl/crawl
 **Input:**
 - `url` (string, REQUIRED)
-- `limit` (number, default: 10) — Max pages
+- `limit` (number, default: 10) -- Max pages
 
 Pricing: $0.01/call
 
@@ -220,7 +347,7 @@ Pricing: $0.003/call
 
 ---
 
-### 8. elevenlabs — Text-to-Speech
+### 8. elevenlabs -- Text-to-Speech
 BYOK: Yes | Pricing: $0.0003/character
 
 #### elevenlabs/text-to-speech
@@ -238,12 +365,12 @@ Pricing: $0.0001/call
 
 ---
 
-### 9. deepgram — Speech-to-Text (Fast)
+### 9. deepgram -- Speech-to-Text (Fast)
 BYOK: Yes | Pricing: $0.005/call
 
 #### deepgram/transcribe
 **Input:**
-- `url` (string, REQUIRED) — URL to audio file
+- `url` (string, REQUIRED) -- URL to audio file
 - `model` (string, default: nova-3)
 - `language` (string, default: en)
 - `smart_format` (boolean, default: true)
@@ -256,14 +383,14 @@ Alias for deepgram/transcribe. Same input.
 
 ---
 
-### 10. vapi — Voice AI Agents
+### 10. vapi -- Voice AI Agents
 BYOK: Yes | Pricing: $0.001-$0.05/call
 
 #### vapi/create-call
 **Input:**
 - `assistant_id` (string, REQUIRED)
 - `phone_number_id` (string)
-- `customer` (object) — {number: string}
+- `customer` (object) -- {number: string}
 
 Pricing: $0.05/call
 
@@ -281,14 +408,14 @@ Pricing: $0.05/call
 
 ---
 
-### 11. twilio — SMS & Voice
+### 11. twilio -- SMS & Voice
 BYOK: Yes (format: "SID:TOKEN") | Pricing: $0.001-$0.02/call
 
 #### twilio/send-sms
 **Input:**
-- `to` (string, REQUIRED) — Recipient phone number
-- `from` (string, REQUIRED) — Your Twilio phone number
-- `body` (string, REQUIRED) — Message text
+- `to` (string, REQUIRED) -- Recipient phone number
+- `from` (string, REQUIRED) -- Your Twilio phone number
+- `body` (string, REQUIRED) -- Message text
 
 Pricing: $0.01/call
 
@@ -296,7 +423,7 @@ Pricing: $0.01/call
 **Input:**
 - `to` (string, REQUIRED)
 - `from` (string, REQUIRED)
-- `url` (string, REQUIRED) — TwiML URL
+- `url` (string, REQUIRED) -- TwiML URL
 
 Pricing: $0.02/call
 
@@ -308,20 +435,20 @@ Pricing: $0.001/call
 
 ---
 
-### 12. sendgrid — Email Sending
+### 12. sendgrid -- Email Sending
 BYOK: Yes | Pricing: $0.001/call
 
 #### sendgrid/send-email
 **Input:**
 - `to` (string, REQUIRED)
-- `from` (string, REQUIRED) — Must be verified in SendGrid
+- `from` (string, REQUIRED) -- Must be verified in SendGrid
 - `subject` (string, REQUIRED)
-- `text` (string) — Plain text body (at least one of text/html required)
-- `html` (string) — HTML body
+- `text` (string) -- Plain text body (at least one of text/html required)
+- `html` (string) -- HTML body
 
 ---
 
-### 13. resend — Modern Email Delivery
+### 13. resend -- Modern Email Delivery
 BYOK: Yes | Pricing: $0.001/call
 
 #### resend/send-email
@@ -329,8 +456,8 @@ BYOK: Yes | Pricing: $0.001/call
 - `from` (string, REQUIRED)
 - `to` (string|string[], REQUIRED)
 - `subject` (string, REQUIRED)
-- `html` (string) — HTML body
-- `text` (string) — Plain text body
+- `html` (string) -- HTML body
+- `text` (string) -- Plain text body
 - `reply_to` (string)
 - `cc` (string|string[])
 - `bcc` (string|string[])
@@ -341,7 +468,7 @@ BYOK: Yes | Pricing: $0.001/call
 
 ---
 
-### 14. image — AI Image Generation (fal.ai)
+### 14. image -- AI Image Generation (fal.ai)
 BYOK: Yes | Pricing: $0.02-$0.03/call
 
 #### image/generate
@@ -363,7 +490,7 @@ Pricing: $0.03/call
 
 ---
 
-### 15. pexels — Stock Photos & Videos
+### 15. pexels -- Stock Photos & Videos
 BYOK: Yes | Pricing: $0.001/call
 
 #### pexels/search-photos
@@ -383,7 +510,7 @@ BYOK: Yes | Pricing: $0.001/call
 
 ---
 
-### 16. unsplash — High-Resolution Stock Photos
+### 16. unsplash -- High-Resolution Stock Photos
 BYOK: Yes | Pricing: $0.001/call
 
 #### unsplash/search
@@ -394,27 +521,27 @@ BYOK: Yes | Pricing: $0.001/call
 #### unsplash/random
 **Input:**
 - `count` (number, default: 1)
-- `query` (string) — Optional topic filter
+- `query` (string) -- Optional topic filter
 
 #### unsplash/get-photo
 **Input:**
-- `id` (string, REQUIRED) — Unsplash photo ID
+- `id` (string, REQUIRED) -- Unsplash photo ID
 
 ---
 
-### 17. removebg — Background Removal
+### 17. removebg -- Background Removal
 BYOK: Yes | Pricing: $0.10/call
 
 #### removebg/remove
 **Input:**
-- `image_url` (string) — URL to image (provide this or image_base64)
-- `image_base64` (string) — Base64-encoded image
+- `image_url` (string) -- URL to image (provide this or image_base64)
+- `image_base64` (string) -- Base64-encoded image
 
 Returns: `image_base64` (PNG with transparent background)
 
 ---
 
-### 18. screenshot — Website Screenshots
+### 18. screenshot -- Website Screenshots
 BYOK: Yes | Pricing: $0.005/call
 
 #### screenshot/capture
@@ -432,12 +559,12 @@ BYOK: Yes | Pricing: $0.005/call
 
 ---
 
-### 19. heygen — AI Avatar Videos
+### 19. heygen -- AI Avatar Videos
 BYOK: Yes | Pricing: $0.001-$0.50/call
 
 #### heygen/create-video
 **Input:**
-- `script` (string, REQUIRED) — Text the avatar will speak
+- `script` (string, REQUIRED) -- Text the avatar will speak
 - `avatar_id` (string, default: Daisy-inskirt-20220818)
 - `voice_id` (string, default: 1bd001e7e50f421d891986aad5c8bbd2)
 - `width` (number, default: 1920)
@@ -455,13 +582,13 @@ Pricing: $0.50/video
 
 ---
 
-### 20. creatomate — Template-Based Video Rendering
+### 20. creatomate -- Template-Based Video Rendering
 BYOK: Yes | Pricing: $0.001-$0.50/call
 
 #### creatomate/render
 **Input:**
 - `template_id` (string, REQUIRED)
-- `modifications` (object) — Template variable overrides
+- `modifications` (object) -- Template variable overrides
 
 Pricing: $0.50/render
 
@@ -475,12 +602,12 @@ Pricing: $0.50/render
 
 ---
 
-### 21. shotstack — Video Editing API
+### 21. shotstack -- Video Editing API
 BYOK: Yes | Pricing: $0.001-$0.30/call
 
 #### shotstack/render
 **Input:**
-- `timeline` (object, REQUIRED) — Shotstack timeline JSON
+- `timeline` (object, REQUIRED) -- Shotstack timeline JSON
 - `output` (object, default: {format: "mp4", resolution: "hd"})
 
 Pricing: $0.30/render
@@ -491,17 +618,17 @@ Pricing: $0.30/render
 
 #### shotstack/probe
 **Input:**
-- `url` (string, REQUIRED) — Media URL to analyze
+- `url` (string, REQUIRED) -- Media URL to analyze
 
 ---
 
-### 22. mux — Video Hosting & Streaming
+### 22. mux -- Video Hosting & Streaming
 BYOK: Yes (format: "TOKEN_ID:TOKEN_SECRET") | Pricing: $0.001-$0.02/call
 
 #### mux/create-asset
 **Input:**
-- `input_url` (string, REQUIRED) — URL to video file
-- `playback_policy` (string, default: public) — public or signed
+- `input_url` (string, REQUIRED) -- URL to video file
+- `playback_policy` (string, default: public) -- public or signed
 
 Pricing: $0.02/asset
 
@@ -519,39 +646,39 @@ Pricing: $0.02/asset
 
 ---
 
-### 23. translate — DeepL Translation
+### 23. translate -- DeepL Translation
 BYOK: Yes | Pricing: $0.00005/character
 
 #### translate/text
 **Input:**
-- `text` (string, REQUIRED) — Text to translate
-- `target_lang` (string, REQUIRED) — Target language code (e.g. DE, FR, ES, JA)
-- `source_lang` (string) — Source language (auto-detected if omitted)
+- `text` (string, REQUIRED) -- Text to translate
+- `target_lang` (string, REQUIRED) -- Target language code (e.g. DE, FR, ES, JA)
+- `source_lang` (string) -- Source language (auto-detected if omitted)
 
 #### translate/detect-language
 **Input:**
-- `text` (string, REQUIRED) — Text to detect
+- `text` (string, REQUIRED) -- Text to detect
 
 ---
 
-### 24. pdf — PDF Generation
+### 24. pdf -- PDF Generation
 BYOK: Yes | Pricing: $0.005/call
 
 #### pdf/from-html
 **Input:**
-- `html` (string, REQUIRED) — HTML content
+- `html` (string, REQUIRED) -- HTML content
 - `filename` (string, default: document.pdf)
 
 Returns: `pdf_base64` or `pdf_url`
 
 #### pdf/from-url
 **Input:**
-- `url` (string, REQUIRED) — URL to convert
+- `url` (string, REQUIRED) -- URL to convert
 - `filename` (string, default: document.pdf)
 
 ---
 
-### 25. playwright — Browser Automation
+### 25. playwright -- Browser Automation
 BYOK: No | Pricing: $0.002-$0.005/call
 
 #### playwright/screenshot
@@ -576,7 +703,7 @@ Pricing: $0.005/call
 
 ---
 
-### 26. stripe — Payments
+### 26. stripe -- Payments
 BYOK: Yes | Pricing: $0.002/call
 
 #### stripe/list-customers
@@ -585,8 +712,8 @@ BYOK: Yes | Pricing: $0.002/call
 
 #### stripe/create-payment-link
 **Input:**
-- `line_items` (array, REQUIRED) — Array of {price: string, quantity: number}
-- `after_completion_url` (string) — Redirect URL after payment
+- `line_items` (array, REQUIRED) -- Array of {price: string, quantity: number}
+- `after_completion_url` (string) -- Redirect URL after payment
 
 #### stripe/list-products
 **Input:**
@@ -597,14 +724,14 @@ BYOK: Yes | Pricing: $0.002/call
 
 ---
 
-### 27. apollo — Contact Enrichment & Prospecting
+### 27. apollo -- Contact Enrichment & Prospecting
 BYOK: Yes | Pricing: $0.01-$0.03/call
 
 #### apollo/search-people
 **Input:**
-- `person_titles` (string[]) — Job titles (e.g. ["CEO", "CTO"])
-- `person_locations` (string[]) — Locations
-- `q_organization_name` (string) — Company name
+- `person_titles` (string[]) -- Job titles (e.g. ["CEO", "CTO"])
+- `person_locations` (string[]) -- Locations
+- `q_organization_name` (string) -- Company name
 - `per_page` (number, default: 25)
 - `page` (number, default: 1)
 
@@ -612,7 +739,7 @@ Pricing: $0.01/call
 
 #### apollo/enrich
 **Input:**
-- `email` (string) — Email to enrich
+- `email` (string) -- Email to enrich
 - `first_name` (string)
 - `last_name` (string)
 - `domain` (string)
@@ -622,21 +749,21 @@ Pricing: $0.03/call
 
 #### apollo/search-companies
 **Input:**
-- `q_organization_name` (string) — Company name
+- `q_organization_name` (string) -- Company name
 - `organization_locations` (string[])
 - `per_page` (number)
 - `page` (number)
 
 ---
 
-### 28. creatify — AI Ad Generation
+### 28. creatify -- AI Ad Generation
 BYOK: Yes (format: "API_ID:API_KEY") | Pricing: $0.001-$2.00/call
 
 #### creatify/create-ad
 **Input:**
-- `url` (string, REQUIRED) — Product page URL
-- `ad_format` (string) — Ad format type
-- `duration` (number) — Duration in seconds
+- `url` (string, REQUIRED) -- Product page URL
+- `ad_format` (string) -- Ad format type
+- `duration` (number) -- Duration in seconds
 - `voice_id` (string)
 
 Pricing: $2.00/ad
@@ -650,14 +777,14 @@ Pricing: $2.00/ad
 
 ---
 
-### 29. shippo — Shipping Labels & Tracking
+### 29. shippo -- Shipping Labels & Tracking
 BYOK: Yes | Pricing: $0.001-$0.05/call
 
 #### shippo/create-shipment
 **Input:**
-- `address_from` (object, REQUIRED) — {name, street1, city, state, zip, country}
-- `address_to` (object, REQUIRED) — Same format
-- `parcels` (object[], REQUIRED) — [{length, width, height, weight, mass_unit, distance_unit}]
+- `address_from` (object, REQUIRED) -- {name, street1, city, state, zip, country}
+- `address_to` (object, REQUIRED) -- Same format
+- `parcels` (object[], REQUIRED) -- [{length, width, height, weight, mass_unit, distance_unit}]
 
 Pricing: $0.005/call
 
@@ -667,24 +794,24 @@ Pricing: $0.005/call
 
 #### shippo/create-label
 **Input:**
-- `rate_id` (string, REQUIRED) — Rate ID from get-rates
+- `rate_id` (string, REQUIRED) -- Rate ID from get-rates
 
 Pricing: $0.05/label
 
 #### shippo/track
 **Input:**
-- `carrier` (string, REQUIRED) — Carrier name (e.g. "usps")
+- `carrier` (string, REQUIRED) -- Carrier name (e.g. "usps")
 - `tracking_number` (string, REQUIRED)
 
 ---
 
-### 30. supabase — Database Operations
+### 30. supabase -- Database Operations
 BYOK: Yes | Pricing: $0.001/call
 
 #### supabase/execute-sql
 **Input:**
-- `project_ref` (string, REQUIRED) — Supabase project reference
-- `sql` (string, REQUIRED) — SQL query
+- `project_ref` (string, REQUIRED) -- Supabase project reference
+- `sql` (string, REQUIRED) -- SQL query
 
 #### supabase/list-tables
 **Input:**
@@ -692,28 +819,28 @@ BYOK: Yes | Pricing: $0.001/call
 
 #### supabase/insert
 **Input:**
-- `project_url` (string, REQUIRED) — Full project URL
-- `anon_key` (string, REQUIRED) — Project anon key
-- `table` (string, REQUIRED) — Table name
-- `data` (object, REQUIRED) — Row data
+- `project_url` (string, REQUIRED) -- Full project URL
+- `anon_key` (string, REQUIRED) -- Project anon key
+- `table` (string, REQUIRED) -- Table name
+- `data` (object, REQUIRED) -- Row data
 
 #### supabase/select
 **Input:**
 - `project_url` (string, REQUIRED)
 - `anon_key` (string, REQUIRED)
 - `table` (string, REQUIRED)
-- `filters` (object) — PostgREST filter expressions
+- `filters` (object) -- PostgREST filter expressions
 - `limit` (number)
 
 ---
 
-### 31. sentry — Error Tracking
+### 31. sentry -- Error Tracking
 BYOK: Yes | Pricing: $0.001/call
 
 #### sentry/list-issues
 **Input:**
-- `organization` (string, REQUIRED) — Sentry org slug
-- `project` (string, REQUIRED) — Project slug
+- `organization` (string, REQUIRED) -- Sentry org slug
+- `project` (string, REQUIRED) -- Project slug
 - `query` (string, default: "is:unresolved")
 - `limit` (number, default: 10)
 
@@ -730,34 +857,34 @@ BYOK: Yes | Pricing: $0.001/call
 
 ---
 
-### 32. dataforseo — SEO Data
+### 32. dataforseo -- SEO Data
 BYOK: Yes (format: "login:password") | Pricing: $0.002/call
 
 #### dataforseo/serp
 **Input:**
-- `keyword` (string, REQUIRED) — Search keyword
+- `keyword` (string, REQUIRED) -- Search keyword
 - `location_name` (string, default: "United States")
 - `language_name` (string, default: "English")
 
 #### dataforseo/keywords
 **Input:**
-- `keywords` (string[], REQUIRED) — Array of keywords
+- `keywords` (string[], REQUIRED) -- Array of keywords
 - `location_name` (string, default: "United States")
 
 #### dataforseo/backlinks
 **Input:**
-- `target` (string, REQUIRED) — Domain to analyze (e.g. "example.com")
+- `target` (string, REQUIRED) -- Domain to analyze (e.g. "example.com")
 
 ---
 
-### 33. postiz — Social Media Posting
+### 33. postiz -- Social Media Posting
 BYOK: Yes | Pricing: $0.001-$0.002/call
 
 #### postiz/create-post
 **Input:**
-- `content` (string, REQUIRED) — Post text
-- `platforms` (string[]) — Target platforms
-- `media_url` (string) — Attachment URL
+- `content` (string, REQUIRED) -- Post text
+- `platforms` (string[]) -- Target platforms
+- `media_url` (string) -- Attachment URL
 
 Pricing: $0.002/call
 
@@ -770,132 +897,132 @@ Pricing: $0.002/call
 
 ---
 
-### 34. outscraper — Data Scraping
+### 34. outscraper -- Data Scraping
 BYOK: Yes | Pricing: $0.005-$0.01/call
 
 #### outscraper/google-maps
 **Input:**
-- `query` (string, REQUIRED) — e.g. "restaurants in Miami"
+- `query` (string, REQUIRED) -- e.g. "restaurants in Miami"
 - `limit` (number, default: 20)
 
 Pricing: $0.01/call
 
 #### outscraper/google-reviews
 **Input:**
-- `query` (string, REQUIRED) — e.g. "restaurant name, Miami FL"
-- `limit` (number, default: 20) — Reviews per place
+- `query` (string, REQUIRED) -- e.g. "restaurant name, Miami FL"
+- `limit` (number, default: 20) -- Reviews per place
 
 Pricing: $0.01/call
 
 #### outscraper/emails-and-contacts
 **Input:**
-- `query` (string, REQUIRED) — Domain name
+- `query` (string, REQUIRED) -- Domain name
 
 Pricing: $0.005/call
 
 ---
 
-### 35. github — GitHub API
+### 35. github -- GitHub API
 BYOK: Yes | Pricing: $0.001/call
 
 #### github/search-repos
 **Input:**
-- `query` (string, REQUIRED) — GitHub search query
+- `query` (string, REQUIRED) -- GitHub search query
 - `per_page` (number, default: 10)
 
 #### github/get-readme
 **Input:**
-- `owner` (string, REQUIRED) — Repo owner
+- `owner` (string, REQUIRED) -- Repo owner
 - `repo` (string, REQUIRED)
 
 #### github/list-issues
 **Input:**
 - `owner` (string, REQUIRED)
 - `repo` (string, REQUIRED)
-- `state` (string, default: "open") — open, closed, or all
+- `state` (string, default: "open") -- open, closed, or all
 - `per_page` (number, default: 10)
 
 ---
 
-### 36. calendar — Google Calendar
+### 36. calendar -- Google Calendar
 BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
 
 #### calendar/list-events
 **Input:**
 - `calendar_id` (string, default: "primary")
 - `max_results` (number, default: 10)
-- `time_min` (string) — ISO datetime
-- `time_max` (string) — ISO datetime
+- `time_min` (string) -- ISO datetime
+- `time_max` (string) -- ISO datetime
 
 #### calendar/create-event
 **Input:**
-- `summary` (string, REQUIRED) — Event title
-- `start` (string, REQUIRED) — ISO datetime
-- `end` (string, REQUIRED) — ISO datetime
+- `summary` (string, REQUIRED) -- Event title
+- `start` (string, REQUIRED) -- ISO datetime
+- `end` (string, REQUIRED) -- ISO datetime
 - `description` (string)
-- `attendees` (string[]) — Email addresses
+- `attendees` (string[]) -- Email addresses
 
 #### calendar/check-availability
 **Input:**
 - `calendar_id` (string, default: "primary")
-- `time_min` (string) — ISO datetime
-- `time_max` (string) — ISO datetime
+- `time_min` (string) -- ISO datetime
+- `time_max` (string) -- ISO datetime
 
 ---
 
-### 37. drive — Google Drive
+### 37. drive -- Google Drive
 BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
 
 #### drive/list-files
 **Input:**
 - `page_size` (number, default: 20)
-- `folder_id` (string) — Folder to list
-- `query` (string) — Drive search query
+- `folder_id` (string) -- Folder to list
+- `query` (string) -- Drive search query
 
 #### drive/search
 **Input:**
-- `query` (string, REQUIRED) — Full-text search query
+- `query` (string, REQUIRED) -- Full-text search query
 - `page_size` (number, default: 20)
 
 #### drive/get-content
 **Input:**
-- `file_id` (string, REQUIRED) — Drive file ID
+- `file_id` (string, REQUIRED) -- Drive file ID
 
 Returns text content or base64-encoded binary.
 
 #### drive/upload-text
 **Input:**
-- `name` (string, REQUIRED) — File name
-- `content` (string, REQUIRED) — File content
+- `name` (string, REQUIRED) -- File name
+- `content` (string, REQUIRED) -- File content
 - `mime_type` (string, default: text/plain)
 - `folder_id` (string, default: root)
 
 ---
 
-### 38. textbelt — Cheap SMS
+### 38. textbelt -- Cheap SMS
 BYOK: Yes | Pricing: $0-$0.005/call
 
 #### textbelt/send-sms
 **Input:**
-- `phone` (string, REQUIRED) — Recipient phone number
-- `message` (string, REQUIRED) — SMS text
+- `phone` (string, REQUIRED) -- Recipient phone number
+- `message` (string, REQUIRED) -- SMS text
 
 Pricing: $0.005/call. Returns: `textId`, `quotaRemaining`
 
 #### textbelt/check-status
 **Input:**
-- `text_id` (string, REQUIRED) — Text ID from send-sms
+- `text_id` (string, REQUIRED) -- Text ID from send-sms
 
 Pricing: Free
 
 ---
 
-### 39. toolroute — Capability Registry
+### 39. toolroute -- Capability Registry
 BYOK: N/A | Pricing: $0.0005-$0.001/call
 
 #### toolroute/check_before_build
 **Input:**
-- `task` (string, REQUIRED) — Natural language description of what you want to build
+- `task` (string, REQUIRED) -- Natural language description of what you want to build
 
 Returns: `matching_tools`, `installed`, `category_beliefs`, `composites`
 
@@ -903,21 +1030,21 @@ Pricing: $0.001/call
 
 #### toolroute/search
 **Input:**
-- `query` (string, REQUIRED) — Search keyword
+- `query` (string, REQUIRED) -- Search keyword
 - `limit` (number, default: 10)
 
 Pricing: $0.0005/call
 
 ---
 
-### 40. auto — Auto-Router
+### 40. auto -- Auto-Router
 BYOK: N/A | Pricing: Same as routed tool
 
 #### auto/route
 Describe your task in natural language. ToolRoute picks the best adapter and operation, maps your input, and executes it. Returns routing metadata alongside the result.
 
 **Input:**
-- `task` (string, REQUIRED) — Natural language task description
+- `task` (string, REQUIRED) -- Natural language task description
 
 **Example:**
 ```json
@@ -925,6 +1052,27 @@ Describe your task in natural language. ToolRoute picks the best adapter and ope
 ```
 
 Response includes `routing` object with `selected_tool`, `confidence`, `reason`, and `registry_alternatives`.
+
+---
+
+## ToolRoute vs Self-Hosting MCP Servers
+
+| Dimension | Self-Hosting MCP Servers | ToolRoute Gateway |
+|---|---|---|
+| Setup | Install and configure each MCP server separately | One API key, zero server management |
+| API Keys | Manage N separate API keys and accounts | One ToolRoute key covers all tools |
+| Auth | Each server has its own auth mechanism | Unified Bearer token auth |
+| Billing | N separate invoices from N providers | One prepaid credit balance |
+| Discovery | Manually research which tools exist | Belief-ranked registry with auto-routing |
+| Maintenance | Update each server independently | Adapters maintained by ToolRoute |
+| Fallbacks | Build your own retry/fallback logic | Automatic fallbacks between providers |
+| Resource Usage | Each MCP server = separate process (stdio spawns per session) | One HTTP endpoint, no local processes |
+| BYOK | N/A (you already have the keys) | Optional -- use your keys for zero markup, or use pooled keys |
+| Cost | Free (you pay providers directly) | Small per-call markup on pooled keys; zero markup on BYOK |
+| Best For | Single-tool heavy usage, full control | Multi-tool agents, rapid prototyping, teams |
+
+**When to self-host:** You use 1-2 tools heavily and want full control over configuration.
+**When to use ToolRoute:** Your agents need 5+ tools, you want unified billing, or you want the intelligence layer (belief-ranked recommendations, auto-routing, composites).
 
 ---
 
@@ -938,11 +1086,31 @@ Register your own API key for supported providers to get zero-markup routing.
 
 **Register:**
 ```
-POST /api/v1/provider-keys
+POST /api/v1/byok
 {"provider": "elevenlabs", "api_key": "your-key-here"}
 ```
 
 Keys are encrypted at rest with AES-256. ToolRoute still handles routing, logging, and fallbacks.
+
+---
+
+## Auto-Routing
+
+Two approaches when you do not know which tool to use:
+
+### toolroute/check_before_build -- Search Only
+Describe your task and get matching tools, composites, and category beliefs ranked by confidence. Does not execute anything.
+
+```json
+{"tool": "toolroute/check_before_build", "input": {"task": "I need to send transactional emails"}}
+```
+
+### auto/route -- Search + Execute
+Describe your task, ToolRoute picks the best tool and executes it automatically.
+
+```json
+{"tool": "auto/route", "input": {"task": "scrape example.com and get the text"}}
+```
 
 ---
 
@@ -958,17 +1126,52 @@ Rate-limited requests return 429 with a Retry-After header.
 
 ---
 
+## Pricing Plans
+
+### Free -- $0/mo
+- 100 requests/day
+- 10 RPM rate limit
+- 2 API keys
+- Basic tools access
+- Community support
+- $1 starter credits
+
+### Pro -- $29/mo (recommended)
+- 10,000 requests/month
+- 60 RPM rate limit
+- 10 API keys
+- All tools access
+- Priority routing
+- BYOK support
+- Usage analytics
+- Email support
+- $5/mo included credits
+
+### Enterprise -- $299/mo
+- 100,000 requests/month
+- 300 RPM rate limit
+- 50 API keys
+- All tools + custom adapters
+- Priority routing
+- BYOK support
+- Dedicated support + SLA
+- $50/mo included credits
+
+Credits are prepaid and work across all tools. Each tool call costs a small amount based on the underlying provider. Auto-top-up available so you never hit a wall.
+
+---
+
 ## MCP Server
 
-ToolRoute is available as an MCP server with 7 tools:
+ToolRoute is available as an MCP server with 7 tools for direct integration into Claude Code, Cursor, and other MCP clients:
 
-- `check_before_build` — Describe what you need, get matching tools
-- `search_tools` — Search the registry by keyword
-- `get_category_champion` — Get the champion for a category
-- `record_usage` — Log tool usage for belief evolution
-- `challenge_tool` — Challenge a tool's position with evidence
-- `librarian_status` — Registry stats and top beliefs
-- `log_tool_request` — Log a tool request for discovery tracking
+- `check_before_build` -- Describe what you need, get matching tools
+- `search_tools` -- Search the registry by keyword
+- `get_category_champion` -- Get the champion for a category
+- `record_usage` -- Log tool usage for belief evolution
+- `challenge_tool` -- Challenge a tool's position with evidence
+- `librarian_status` -- Registry stats and top beliefs
+- `log_tool_request` -- Log a tool request for discovery tracking
 
 ### Add to Claude Code (HTTP):
 ```json
@@ -1000,6 +1203,7 @@ def toolroute(tool: str, input: dict) -> dict:
 
 result = toolroute("firecrawl/scrape", {"url": "https://example.com"})
 audio = toolroute("elevenlabs/text-to-speech", {"text": "Hello!"})
+repos = toolroute("github/search-repos", {"query": "mcp tools"})
 ```
 
 ### JavaScript / TypeScript
@@ -1017,6 +1221,7 @@ async function toolroute(tool, input) {
   return res.json();
 }
 
+const page = await toolroute("firecrawl/scrape", { url: "https://example.com" });
 const chat = await toolroute("claude/chat", {
   messages: [{ role: "user", content: "Hello!" }],
 });
@@ -1024,14 +1229,48 @@ const chat = await toolroute("claude/chat", {
 
 ---
 
+## Frequently Asked Questions
+
+### How does billing work?
+Prepaid credits. Buy credits, each tool call costs a small amount based on the underlying provider. Your plan includes monthly credits that refresh on your billing date.
+
+### What if I run out of credits?
+Requests return a 402 Payment Required response. Top up instantly from your dashboard or enable auto-top-up to never hit a wall.
+
+### Can I use my own API keys?
+Yes. BYOK (Bring Your Own Key) is supported on Pro and Enterprise plans. Register your own API keys for any tool and pay zero markup on those calls.
+
+### How is this different from using tools directly?
+One key, one bill, automatic routing and fallbacks. Plus the intelligence layer picks the best tool for your task based on real usage data across hundreds of agents. No more managing 20 different API keys and accounts.
+
+### Can I switch plans anytime?
+Yes. Upgrade or downgrade at any time. Upgrades take effect immediately; downgrades apply at the end of your billing period. Unused credits roll over for 30 days.
+
+### Is there a rate limit on the Free plan?
+Free gets 10 requests per minute and 100 per day. This is enough for development and testing. Pro and Enterprise get much higher limits for production use.
+
+### What is the belief system?
+ToolRoute maintains confidence-scored beliefs about which tool is best for each category. These evolve from real usage data -- when agents use a tool and report success or failure, beliefs update. This means recommendations improve over time rather than being static opinions.
+
+### What are composites?
+Composites are multi-tool workflows chained together. For example, "SEO Content Factory" chains Firecrawl (research) + Claude (writing) + Stitch (design) + Vercel (deploy). You can discover composites via check_before_build.
+
+---
+
 ## Key Pages
 
-- https://toolroute.ai — Homepage
-- https://toolroute.ai/docs — API documentation
-- https://toolroute.ai/pricing — Pricing details
-- https://toolroute.ai/tools — Browse all curated tools
-- https://toolroute.ai/dashboard — User dashboard
-- https://toolroute.ai/llms.txt — Short reference for LLMs
+- https://toolroute.ai -- Homepage
+- https://toolroute.ai/docs -- API documentation
+- https://toolroute.ai/pricing -- Pricing details
+- https://toolroute.ai/tools -- Browse all curated tools
+- https://toolroute.ai/skills -- Browse agent skills
+- https://toolroute.ai/categories -- Browse by category
+- https://toolroute.ai/composites -- Multi-tool workflows
+- https://toolroute.ai/blog -- Articles and guides
+- https://toolroute.ai/dashboard -- User dashboard
+- https://toolroute.ai/llms.txt -- Short reference for LLMs
+- https://toolroute.ai/openapi.json -- OpenAPI specification
+- https://github.com/Instabidsai/toolroute -- Source code
 
 ## Contact
 
