@@ -698,6 +698,36 @@ export default function Article() {
           </div>
 
           <div className="border-t border-border pt-8 mt-8">
+            <h3 className="font-semibold text-sm mb-4">Related Articles</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/blog/what-is-model-context-protocol"
+                  className="text-accent hover:underline"
+                >
+                  What Is Model Context Protocol (MCP)? The Complete Guide for 2026
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/what-is-an-mcp-gateway"
+                  className="text-accent hover:underline"
+                >
+                  What Is an MCP Gateway? The Infrastructure Layer AI Agents Need
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/bring-your-own-key-mcp-byok"
+                  className="text-accent hover:underline"
+                >
+                  Bring Your Own Key (BYOK) for MCP Tools: How It Works
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="border-t border-border pt-8 mt-8">
             <p className="text-text-dim">
               ToolRoute is an MCP gateway that handles authentication,
               credential management, rate limiting, and audit logging for{" "}

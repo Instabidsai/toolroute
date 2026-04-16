@@ -11,6 +11,51 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-vs-rest-api-ai-agents",
+    title: "MCP vs REST APIs for AI Agents: When to Use Which",
+    description:
+      "REST APIs power the web. MCP powers AI tool use. A side-by-side comparison of protocols, discovery, auth, and composability for agent builders.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["MCP vs REST", "AI agents", "API comparison", "Model Context Protocol"],
+  },
+  {
+    slug: "ai-agent-tool-billing-credits",
+    title: "AI Agent Tool Billing: How Credits, Metering, and Cost Control Work",
+    description:
+      "AI agents call tools that cost money. Learn how prepaid credits, per-call metering, spend limits, and auto-top-up keep agent costs predictable.",
+    date: "2026-04-16",
+    readTime: "8 min",
+    keywords: ["AI billing", "tool credits", "metering", "cost control", "MCP gateway"],
+  },
+  {
+    slug: "bring-your-own-key-mcp-byok",
+    title: "Bring Your Own Key (BYOK) for MCP Tools: How It Works",
+    description:
+      "Use your existing API keys through an MCP gateway. BYOK gives you unified routing and logging without paying markup on tools you already own.",
+    date: "2026-04-16",
+    readTime: "7 min",
+    keywords: ["BYOK", "bring your own key", "MCP tools", "API keys", "gateway"],
+  },
+  {
+    slug: "what-is-model-context-protocol",
+    title: "What Is Model Context Protocol (MCP)? The Complete Guide for 2026",
+    description:
+      "MCP is the open standard that lets AI agents call external tools. Learn how MCP works, its architecture, transport types, and why it matters.",
+    date: "2026-04-15",
+    readTime: "10 min",
+    keywords: ["Model Context Protocol", "MCP", "AI tools", "Anthropic", "open standard"],
+  },
+  {
+    slug: "mcp-server-security-best-practices",
+    title: "MCP Server Security Best Practices 2026: Protect Your AI Agent Infrastructure",
+    description:
+      "MCP servers give agents access to databases and APIs. Learn authentication, authorization, input validation, rate limiting, and audit logging.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["MCP security", "AI agent security", "input validation", "audit logging"],
+  },
+  {
     slug: "mcp-tools-for-developers",
     title: "MCP Tools for Developers in 2026: The Complete Workflow Guide",
     description:

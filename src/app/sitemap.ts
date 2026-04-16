@@ -122,6 +122,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/blog/mcp-vs-rest-api-ai-agents`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/ai-agent-tool-billing-credits`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/bring-your-own-key-mcp-byok`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/dashboard`,
       lastModified: new Date('2026-04-13'),
       changeFrequency: "weekly",

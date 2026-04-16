@@ -808,6 +808,36 @@ export default function Article() {
           </div>
 
           <div className="border-t border-border pt-8 mt-8">
+            <h3 className="font-semibold text-sm mb-4">Related Articles</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/blog/mcp-server-security-best-practices"
+                  className="text-accent hover:underline"
+                >
+                  MCP Server Security Best Practices 2026
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/mcp-tools-for-developers"
+                  className="text-accent hover:underline"
+                >
+                  MCP Tools for Developers in 2026: The Complete Workflow Guide
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/mcp-vs-rest-api-ai-agents"
+                  className="text-accent hover:underline"
+                >
+                  MCP vs REST APIs for AI Agents: When to Use Which
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="border-t border-border pt-8 mt-8">
             <p className="text-text-dim">
               ToolRoute is an MCP gateway that gives AI agents access to 87
               tools through one API key and one endpoint.{" "}

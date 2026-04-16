@@ -2,8 +2,45 @@ import { getToolBySlug, getBeliefs, getInventory } from "@/lib/api";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const tool = await getToolBySlug(slug);
+  if (!tool) return {};
+
+  const title = `${tool.name} — MCP Tool | ToolRoute`;
+  const description =
+    tool.description.length > 160
+      ? tool.description.slice(0, 157) + "..."
+      : tool.description;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/tools/${slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://toolroute.ai/tools/${slug}`,
+      siteName: "ToolRoute",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function ToolDetailPage({
   params,
@@ -33,8 +70,33 @@ export default async function ToolDetailPage({
         ? "text-accent"
         : "text-amber";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: tool.name,
+    description: tool.description,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Web",
+    url: `https://toolroute.ai/tools/${slug}`,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: tool.rating,
+      bestRating: 10,
+      ratingCount: 1,
+    },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link
         href="/tools"
         className="inline-flex items-center gap-1.5 text-xs text-text-dim hover:text-accent mb-6 transition-colors"
