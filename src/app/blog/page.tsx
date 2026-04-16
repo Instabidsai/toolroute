@@ -11,6 +11,33 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "how-to-debug-mcp-tool-calls",
+    title: "How to Debug MCP Tool Calls: A Practical Troubleshooting Guide",
+    description:
+      "MCP tool calls fail in nine repeatable ways. Learn how to recognize each from logs, reproduce it in isolation, and fix it fast.",
+    date: "2026-04-15",
+    readTime: "11 min",
+    keywords: ["MCP debugging", "tool calls", "troubleshooting", "logs", "AI agents"],
+  },
+  {
+    slug: "mcp-tool-caching-best-practices",
+    title: "MCP Tool Caching Best Practices: Cut Latency and Cost",
+    description:
+      "Cache key design, TTL strategy, invalidation patterns, and what never to cache when running MCP tools at scale.",
+    date: "2026-04-15",
+    readTime: "10 min",
+    keywords: ["MCP caching", "performance", "TTL", "invalidation", "cost optimization"],
+  },
+  {
+    slug: "building-custom-mcp-servers-guide",
+    title: "Building Custom MCP Servers: A Complete Guide for 2026",
+    description:
+      "Build your own MCP server from scratch. Transport, tools, schemas, auth, testing, and deployment with a minimal TypeScript example.",
+    date: "2026-04-15",
+    readTime: "13 min",
+    keywords: ["MCP server", "custom tools", "TypeScript", "stdio", "Streamable HTTP"],
+  },
+  {
     slug: "how-to-choose-mcp-tool-ai-agent",
     title: "How to Choose the Right MCP Tool for Your AI Agent (2026 Decision Framework)",
     description:

@@ -296,6 +296,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/blog/how-to-debug-mcp-tool-calls`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/mcp-tool-caching-best-practices`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/building-custom-mcp-servers-guide`,
+      lastModified: new Date('2026-04-15'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/changelog`,
       lastModified: new Date('2026-04-16'),
       changeFrequency: "weekly",
@@ -355,6 +373,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Dynamic "Best [Category] Tools" programmatic SEO pages
+  const categoryBestPages: MetadataRoute.Sitemap = SUPER_CATEGORIES.map((sc) => ({
+    url: `${baseUrl}/categories/${sc.key}/best`,
+    lastModified: new Date('2026-04-15'),
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+
+  // Dynamic protocol pages (MCP, REST, A2A, GraphQL, OpenAPI, Skill, CLI, NPM)
+  const protocolKeys = ["mcp", "rest", "a2a", "graphql", "openapi", "skill", "cli", "npm"];
+  const protocolPages: MetadataRoute.Sitemap = protocolKeys.map((key) => ({
+    url: `${baseUrl}/protocols/${key}`,
+    lastModified: new Date('2026-04-15'),
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+
   // Dynamic composite pages
   let compositePages: MetadataRoute.Sitemap = [];
   try {
@@ -369,5 +404,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Supabase unavailable at build time — skip dynamic composite pages
   }
 
-  return [...staticPages, ...toolPages, ...categoryPages, ...compositePages];
+  return [
+    ...staticPages,
+    ...toolPages,
+    ...categoryPages,
+    ...categoryBestPages,
+    ...protocolPages,
+    ...compositePages,
+  ];
 }
