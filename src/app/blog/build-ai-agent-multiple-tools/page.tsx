@@ -653,6 +653,15 @@ result = safe_execute("tavily", "search", {"query": "MCP tools"})`}
           </p>
 
           <div className="border-t border-border pt-8 mt-8">
+            <h3 className="font-semibold text-sm mb-4">Related Articles</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/blog/what-is-an-mcp-gateway" className="text-accent hover:underline">What Is an MCP Gateway? The Infrastructure Layer AI Agents Need</Link></li>
+              <li><Link href="/blog/use-mcp-tools-without-managing-servers" className="text-accent hover:underline">How to Use MCP Tools Without Managing Servers</Link></li>
+              <li><Link href="/blog/best-mcp-servers-ai-agents-2026" className="text-accent hover:underline">Best MCP Servers for AI Agents in 2026: 87 Tools Rated and Compared</Link></li>
+            </ul>
+          </div>
+
+          <div className="border-t border-border pt-8 mt-8">
             <p className="text-text-dim">
               ToolRoute provides 87 tools across 14 categories through one
               endpoint.{" "}

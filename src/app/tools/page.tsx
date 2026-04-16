@@ -3,15 +3,15 @@ import { getTools, getInventory } from "@/lib/api";
 import { ToolsClient } from "./ToolsClient";
 
 export const metadata: Metadata = {
-  title: "Tool Registry — ToolRoute",
+  title: "MCP Tools Catalog — Browse 70+ Curated AI Tools | ToolRoute",
   description:
-    "Browse 70+ curated best-in-class tools for AI agents. Filter by category, protocol, or search. Every tool rated 9/10 or higher.",
+    "Browse the MCP tools catalog with 70+ curated best-in-class tools for AI agents. Filter by category, protocol, or search. Every tool rated 9/10+.",
   alternates: {
     canonical: "/tools",
   },
   openGraph: {
-    title: "Tool Registry — ToolRoute",
-    description: "Browse 70+ curated best-in-class tools for AI agents.",
+    title: "MCP Tools Catalog — Browse 70+ Curated AI Tools | ToolRoute",
+    description: "Browse the MCP tools catalog with 70+ curated tools for AI agents. Filter by category, protocol, or search.",
     url: "https://toolroute.ai/tools",
   },
 };

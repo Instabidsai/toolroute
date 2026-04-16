@@ -12,16 +12,15 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Skills Directory — ToolRoute",
+  title: "AI Agent Skills — 40+ Installable Procedures | ToolRoute",
   description:
-    "Discover 40+ curated skills for AI agents. Skills are procedures your agent installs to learn new capabilities — design, development, security, and more.",
+    "Browse 40+ AI agent skills your agent can install locally. Procedures for design, development, security, and more. No API calls needed.",
   alternates: {
     canonical: "/skills",
   },
   openGraph: {
-    title: "Skills Directory — ToolRoute",
-    description:
-      "Discover curated skills for AI agents. Install procedures for design, development, security, and more.",
+    title: "AI Agent Skills — 40+ Installable Procedures | ToolRoute",
+    description: "Browse 40+ AI agent skills your agent can install locally. Procedures for design, development, security, and more.",
     url: "https://toolroute.ai/skills",
   },
 };

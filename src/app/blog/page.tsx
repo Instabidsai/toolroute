@@ -11,6 +11,15 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "mcp-tools-for-developers",
+    title: "MCP Tools for Developers in 2026: The Complete Workflow Guide",
+    description:
+      "The 8 MCP tools developers actually use daily, organized by workflow stage: Code, Test, Deploy, Monitor. Real registry data and chain examples.",
+    date: "2026-04-15",
+    readTime: "11 min",
+    keywords: ["MCP tools", "developer workflow", "Semgrep", "Playwright", "Context7"],
+  },
+  {
     slug: "mcp-gateway-vs-api-gateway",
     title: "MCP Gateway vs API Gateway: What AI Agents Actually Need",
     description:

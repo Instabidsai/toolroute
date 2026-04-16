@@ -4,9 +4,17 @@ import { Activity, CheckCircle, Circle, Info } from "lucide-react";
 export const revalidate = 30;
 
 export const metadata: Metadata = {
-  title: "System Status — ToolRoute",
+  title: "MCP Tool Status — Live Adapter Health & Availability | ToolRoute",
   description:
-    "Live system status for all 40 ToolRoute adapters. Check adapter health, availability, and configuration.",
+    "Check MCP tool status for all 40 ToolRoute adapters in real time. View adapter health, availability, and key configuration.",
+  alternates: {
+    canonical: "/status",
+  },
+  openGraph: {
+    title: "MCP Tool Status — Live Adapter Health & Availability | ToolRoute",
+    description: "Check MCP tool status for all 40 ToolRoute adapters. Real-time health and availability.",
+    url: "https://toolroute.ai/status",
+  },
 };
 
 /* ---------- Adapter registry ---------- */

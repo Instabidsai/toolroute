@@ -4,15 +4,15 @@ import Link from "next/link";
 import { Layers, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Composites — ToolRoute",
+  title: "MCP Tool Combinations — Multi-Tool Composites | ToolRoute",
   description:
-    "Multi-tool solutions assembled from the curated registry. Each composite chains tools together for end-to-end AI agent workflows.",
+    "Discover MCP tool combinations that chain multiple tools into end-to-end AI agent workflows. Pre-built composites from the curated registry.",
   alternates: {
     canonical: "/composites",
   },
   openGraph: {
-    title: "Composites — ToolRoute",
-    description: "Multi-tool solutions for end-to-end AI agent workflows.",
+    title: "MCP Tool Combinations — Multi-Tool Composites | ToolRoute",
+    description: "Discover MCP tool combinations that chain multiple tools into end-to-end AI agent workflows.",
     url: "https://toolroute.ai/composites",
   },
 };

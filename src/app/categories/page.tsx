@@ -8,15 +8,15 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Category Map — ToolRoute",
+  title: "MCP Tool Categories — 12 Super-Categories for AI Agents | ToolRoute",
   description:
-    "Explore 12 super-categories and 89 sub-categories of AI agent tools. Each category has a champion tool with a living belief based on real usage.",
+    "Explore MCP tool categories across 12 super-categories and 89 sub-categories. Each has a champion tool with living beliefs based on real usage.",
   alternates: {
     canonical: "/categories",
   },
   openGraph: {
-    title: "Category Map — ToolRoute",
-    description: "Explore 12 super-categories of AI agent tools with champion beliefs.",
+    title: "MCP Tool Categories — 12 Super-Categories for AI Agents | ToolRoute",
+    description: "Explore MCP tool categories across 12 super-categories with champion beliefs based on real usage.",
     url: "https://toolroute.ai/categories",
   },
 };

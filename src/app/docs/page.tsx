@@ -3,9 +3,17 @@ import Link from "next/link";
 import { Zap, ArrowRight, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Documentation — ToolRoute",
+  title: "MCP Gateway API Documentation — Developer Guides | ToolRoute",
   description:
-    "Developer documentation for the ToolRoute API. 40 adapters, 120+ operations. Authentication, endpoints, integration guides.",
+    "Complete MCP gateway API documentation. 40 adapters, 120+ operations. Auth, endpoints, SDKs, BYOK, MCP integration, and auto-routing.",
+  alternates: {
+    canonical: "/docs",
+  },
+  openGraph: {
+    title: "MCP Gateway API Documentation — Developer Guides | ToolRoute",
+    description: "Complete MCP gateway API documentation. 40 adapters, 120+ operations. Auth, endpoints, and integration guides.",
+    url: "https://toolroute.ai/docs",
+  },
 };
 
 /* ---------- TOC data ---------- */

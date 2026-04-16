@@ -423,6 +423,15 @@ response = client.chat.completions.create(
           </p>
 
           <div className="border-t border-border pt-8 mt-8">
+            <h3 className="font-semibold text-sm mb-4">Related Articles</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/blog/what-is-an-mcp-gateway" className="text-accent hover:underline">What Is an MCP Gateway? The Infrastructure Layer AI Agents Need</Link></li>
+              <li><Link href="/blog/mcp-gateway-vs-api-gateway" className="text-accent hover:underline">MCP Gateway vs API Gateway: What AI Agents Actually Need</Link></li>
+              <li><Link href="/blog/build-ai-agent-multiple-tools" className="text-accent hover:underline">How to Build an AI Agent With Multiple Tools</Link></li>
+            </ul>
+          </div>
+
+          <div className="border-t border-border pt-8 mt-8">
             <p className="text-text-dim">
               ToolRoute provides 87 tools through one endpoint.{" "}
               <Link href="/docs" className="text-accent hover:underline">

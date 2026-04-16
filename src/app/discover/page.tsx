@@ -4,15 +4,15 @@ import { StatCard } from "@/components/StatCard";
 import { Activity, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Discovery Dashboard — ToolRoute",
+  title: "Discover MCP Servers — Usage Intelligence & Health Dashboard | ToolRoute",
   description:
-    "System health, usage events, and belief intelligence for the ToolRoute registry. Track tool usage across 17 companies in real time.",
+    "Discover MCP servers and track real-time usage, belief intelligence, and system health across the ToolRoute registry.",
   alternates: {
     canonical: "/discover",
   },
   openGraph: {
-    title: "Discovery Dashboard — ToolRoute",
-    description: "System health, usage events, and belief intelligence.",
+    title: "Discover MCP Servers — Usage Intelligence & Health Dashboard | ToolRoute",
+    description: "Discover MCP servers and track real-time usage, belief intelligence, and system health.",
     url: "https://toolroute.ai/discover",
   },
 };

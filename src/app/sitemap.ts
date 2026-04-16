@@ -104,6 +104,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/blog/what-is-model-context-protocol`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog/mcp-server-security-best-practices`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/mcp-tools-for-developers`,
+      lastModified: new Date('2026-04-16'),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/dashboard`,
       lastModified: new Date('2026-04-13'),
       changeFrequency: "weekly",

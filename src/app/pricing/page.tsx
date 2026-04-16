@@ -9,9 +9,17 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Pricing — ToolRoute",
+  title: "MCP Gateway Pricing — Free, Pro & Enterprise Plans | ToolRoute",
   description:
-    "Simple, transparent pricing for ToolRoute. Start free, scale with credits.",
+    "Transparent MCP gateway pricing from $0/mo. One API key for 70+ tools. Start free, scale with prepaid credits and BYOK support.",
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: "MCP Gateway Pricing — Free, Pro & Enterprise Plans | ToolRoute",
+    description: "Transparent MCP gateway pricing from $0/mo. One API key for 70+ tools with prepaid credits.",
+    url: "https://toolroute.ai/pricing",
+  },
 };
 
 const plans = [

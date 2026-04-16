@@ -539,16 +539,16 @@ export default async function HomePage() {
             </p>
           </Link>
           <Link
-            href="/blog/best-mcp-servers-ai-agents-2026"
+            href="/blog/mcp-gateway-vs-api-gateway"
             className="border border-border rounded-lg p-5 bg-bg-card hover:border-accent/30 transition-all group"
           >
-            <p className="text-[10px] text-accent font-medium mb-2">Benchmarks</p>
+            <p className="text-[10px] text-accent font-medium mb-2">Infrastructure</p>
             <h3 className="font-semibold text-sm mb-2 group-hover:text-accent transition-colors">
-              Best MCP Servers for AI Agents in 2026
+              MCP Gateway vs API Gateway
             </h3>
             <p className="text-xs text-text-dim line-clamp-2">
-              87 tools rated across 14 categories. Real scores from our belief
-              system, not opinions.
+              API gateways route HTTP requests. MCP gateways route tool calls.
+              A side-by-side comparison of what each does.
             </p>
           </Link>
           <Link
