@@ -11,6 +11,105 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "context7-documentation-mcp-review",
+    title: "Context7 MCP Server Review: Why Every AI Coding Session Needs It",
+    description:
+      "Deep review of Context7, the #1 MCP server with 50K+ GitHub stars. How it eliminates doc hallucination with version-specific docs injected into prompts.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["Context7", "MCP server", "documentation", "AI coding"],
+  },
+  {
+    slug: "vercel-vs-netlify-ai-deployment",
+    title: "Vercel vs Netlify for AI Applications: Which Platform Wins in 2026?",
+    description:
+      "Vercel vs Netlify for AI apps. MCP support, edge functions, AI SDK, pricing, and why Vercel became the default for AI agent deployment.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["Vercel", "Netlify", "AI deployment", "edge functions"],
+  },
+  {
+    slug: "stripe-vs-square-payment-api",
+    title: "Stripe vs Square API for AI Agents: Payment Processing Compared",
+    description:
+      "Stripe vs Square compared for AI agent payment workflows. API design, MCP support, subscriptions, global coverage, and which wins for SaaS vs retail.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["Stripe", "Square", "payment API", "AI agents", "MCP"],
+  },
+  {
+    slug: "elevenlabs-vs-amazon-polly-tts",
+    title: "ElevenLabs vs Amazon Polly: Best Text-to-Speech API for AI Agents",
+    description:
+      "ElevenLabs vs Amazon Polly compared for AI voice agents. Voice quality, cloning, pricing, latency, and when to use each one.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["ElevenLabs", "Amazon Polly", "TTS", "text-to-speech", "AI voice"],
+  },
+  {
+    slug: "tavily-vs-firecrawl-vs-brave-search",
+    title: "Tavily vs Firecrawl vs Brave Search API: Which Search Tool Do AI Agents Actually Need?",
+    description:
+      "Head-to-head comparison of Tavily, Firecrawl, and Brave Search API for AI agents. Pricing, MCP support, latency, and when to use each one.",
+    date: "2026-04-16",
+    readTime: "11 min",
+    keywords: ["Tavily", "Firecrawl", "Brave Search", "search API", "AI agents", "MCP"],
+  },
+  {
+    slug: "resend-vs-sendgrid-email-api",
+    title: "Resend vs SendGrid for AI Agents: Which Email API Should Your Agent Use?",
+    description:
+      "Resend vs SendGrid compared for AI agent email workflows. API design, pricing, deliverability, MCP support, and developer experience.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["Resend", "SendGrid", "email API", "AI agents", "MCP", "deliverability"],
+  },
+  {
+    slug: "playwright-vs-puppeteer-vs-selenium",
+    title: "Playwright vs Puppeteer vs Selenium for AI Agents in 2026: Which Wins?",
+    description:
+      "Three-way comparison of Playwright, Puppeteer, and Selenium for AI agent browser automation. MCP support, snapshots, and real data.",
+    date: "2026-04-16",
+    readTime: "11 min",
+    keywords: ["Playwright", "Puppeteer", "Selenium", "browser automation", "AI agents", "MCP"],
+  },
+  {
+    slug: "supabase-vs-firebase-ai-apps",
+    title: "Supabase vs Firebase for AI Applications in 2026: Which Database Should Your Agents Use?",
+    description:
+      "Supabase vs Firebase for AI agent workflows. SQL vs NoSQL, MCP support, pricing, and real production data from 50 observations.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["Supabase", "Firebase", "database", "AI agents", "MCP", "backend"],
+  },
+  {
+    slug: "composio-vs-zapier-ai-automation",
+    title: "Composio vs Zapier MCP: Which AI Agent Automation Platform Should You Use?",
+    description:
+      "Composio handles OAuth for 60+ apps. Zapier MCP connects to 7,000+. Breakdown of when to use each for AI agent automation.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["Composio", "Zapier", "automation", "AI agents", "OAuth", "MCP"],
+  },
+  {
+    slug: "elevenlabs-vs-amazon-polly-tts",
+    title: "ElevenLabs vs Amazon Polly: Which Text-to-Speech AI Should Your Agent Use?",
+    description:
+      "ElevenLabs vs Amazon Polly for AI agent TTS. Voice quality, pricing, cloning, MCP support, latency, and language coverage compared.",
+    date: "2026-04-16",
+    readTime: "9 min",
+    keywords: ["ElevenLabs", "Amazon Polly", "text-to-speech", "TTS", "AI agents", "voice"],
+  },
+  {
+    slug: "vercel-vs-netlify-ai-deployment",
+    title: "Vercel vs Netlify for AI Applications Deployment in 2026: Which Platform Wins?",
+    description:
+      "Vercel vs Netlify for AI app deployment. MCP server support, AI SDK, edge functions, framework integration, and pricing compared.",
+    date: "2026-04-16",
+    readTime: "10 min",
+    keywords: ["Vercel", "Netlify", "deployment", "AI applications", "edge functions", "MCP"],
+  },
+  {
     slug: "mcp-auto-routing-ai-agent-tools",
     title: "MCP Auto-Routing for AI Agent Tools: Let the Gateway Pick the Right Tool",
     description:
