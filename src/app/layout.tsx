@@ -113,6 +113,12 @@ const breadcrumbSchema = {
     {
       "@type": "ListItem",
       position: 8,
+      name: "Blog",
+      item: "https://toolroute.ai/blog",
+    },
+    {
+      "@type": "ListItem",
+      position: 9,
       name: "Pricing",
       item: "https://toolroute.ai/pricing",
     },

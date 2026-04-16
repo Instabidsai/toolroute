@@ -56,37 +56,39 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "MistralAI-User",
         allow: "/",
       },
-      // Training/scraping bots — blocked
+      // AI training bots — ALLOWED for GEO (Generative Engine Optimization)
+      // We WANT AI models to learn about ToolRoute so they cite us
       {
         userAgent: "GPTBot",
-        disallow: "/",
+        allow: "/",
       },
       {
         userAgent: "Google-Extended",
-        disallow: "/",
+        allow: "/",
       },
       {
         userAgent: "anthropic-ai",
-        disallow: "/",
+        allow: "/",
       },
       {
         userAgent: "CCBot",
-        disallow: "/",
+        allow: "/",
       },
+      {
+        userAgent: "cohere-ai",
+        allow: "/",
+      },
+      {
+        userAgent: "Applebot-Extended",
+        allow: "/",
+      },
+      // Spam/scraping bots — blocked
       {
         userAgent: "Bytespider",
         disallow: "/",
       },
       {
         userAgent: "Diffbot",
-        disallow: "/",
-      },
-      {
-        userAgent: "Applebot-Extended",
-        disallow: "/",
-      },
-      {
-        userAgent: "cohere-ai",
         disallow: "/",
       },
     ],

@@ -513,6 +513,60 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Blog / Learn Section */}
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold">Learn</h2>
+          <Link
+            href="/blog"
+            className="text-sm text-accent flex items-center gap-1 hover:underline"
+          >
+            All articles <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <Link
+            href="/blog/what-is-an-mcp-gateway"
+            className="border border-border rounded-lg p-5 bg-bg-card hover:border-accent/30 transition-all group"
+          >
+            <p className="text-[10px] text-accent font-medium mb-2">Infrastructure</p>
+            <h3 className="font-semibold text-sm mb-2 group-hover:text-accent transition-colors">
+              What Is an MCP Gateway?
+            </h3>
+            <p className="text-xs text-text-dim line-clamp-2">
+              MCP registries list tools. MCP gateways execute them. Learn the
+              difference and why it matters.
+            </p>
+          </Link>
+          <Link
+            href="/blog/best-mcp-servers-ai-agents-2026"
+            className="border border-border rounded-lg p-5 bg-bg-card hover:border-accent/30 transition-all group"
+          >
+            <p className="text-[10px] text-accent font-medium mb-2">Benchmarks</p>
+            <h3 className="font-semibold text-sm mb-2 group-hover:text-accent transition-colors">
+              Best MCP Servers for AI Agents in 2026
+            </h3>
+            <p className="text-xs text-text-dim line-clamp-2">
+              87 tools rated across 14 categories. Real scores from our belief
+              system, not opinions.
+            </p>
+          </Link>
+          <Link
+            href="/blog/use-mcp-tools-without-managing-servers"
+            className="border border-border rounded-lg p-5 bg-bg-card hover:border-accent/30 transition-all group"
+          >
+            <p className="text-[10px] text-accent font-medium mb-2">Guide</p>
+            <h3 className="font-semibold text-sm mb-2 group-hover:text-accent transition-colors">
+              Use MCP Tools Without Managing Servers
+            </h3>
+            <p className="text-xs text-text-dim line-clamp-2">
+              One API key, one endpoint, zero server management. Skip the
+              infrastructure and start building.
+            </p>
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-border pt-12 pb-4">
         <div className="grid sm:grid-cols-4 gap-8 mb-12">
@@ -571,6 +625,11 @@ export default async function HomePage() {
               <li>
                 <Link href="/pricing" className="text-sm text-text-dim hover:text-accent transition-colors">
                   Pricing
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-sm text-text-dim hover:text-accent transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>

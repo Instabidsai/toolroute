@@ -18,6 +18,7 @@ import {
   CreditCard,
   Terminal,
   Activity,
+  FileText,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -32,6 +33,7 @@ const links = [
   { href: "/docs", label: "Docs", icon: BookOpen },
   { href: "/playground", label: "Playground", icon: Terminal },
   { href: "/status", label: "Status", icon: Activity },
+  { href: "/blog", label: "Blog", icon: FileText },
   { href: "/pricing", label: "Pricing", icon: CreditCard },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, authOnly: true },
 ];
