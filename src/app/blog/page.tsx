@@ -11,6 +11,42 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "a2a-vs-mcp-protocol-comparison",
+    title: "A2A vs MCP: Comparing Google's Agent-to-Agent Protocol and Anthropic's Model Context Protocol",
+    description:
+      "Google's A2A protocol connects agents to agents. Anthropic's MCP connects agents to tools. Compare purpose, transport, discovery, auth, and use cases to decide when to use each protocol.",
+    date: "2026-04-16",
+    readTime: "12 min",
+    keywords: ["A2A", "MCP", "Google", "Anthropic", "protocol comparison", "AI agents"],
+  },
+  {
+    slug: "self-hosted-vs-cloud-mcp-servers",
+    title: "Self-Hosted vs Cloud MCP Servers: Pros, Cons, and Decision Matrix",
+    description:
+      "Should you run MCP servers yourself or use a cloud gateway? Honest comparison of setup time, maintenance, scaling, security, and cost at 1, 10, and 50 tools.",
+    date: "2026-04-16",
+    readTime: "8 min",
+    keywords: ["self-hosted", "cloud", "MCP servers", "decision matrix", "infrastructure"],
+  },
+  {
+    slug: "openai-agents-mcp-tools",
+    title: "OpenAI Agents SDK + MCP Tools Integration: The Missing Bridge",
+    description:
+      "OpenAI's Agents SDK doesn't natively support MCP. Use ToolRoute's OpenAI-compatible endpoint to bridge MCP tools into function calling with one gateway.",
+    date: "2026-04-15",
+    readTime: "10 min",
+    keywords: ["OpenAI Agents SDK", "MCP tools", "function calling", "integration", "gateway"],
+  },
+  {
+    slug: "claude-code-mcp-server-setup",
+    title: "Claude Code MCP Server Setup: 3 Ways to Connect Tools (2026 Guide)",
+    description:
+      "Step-by-step guide to connecting MCP tools to Claude Code. Compare direct stdio servers, HTTP hub transport, and the ToolRoute gateway for one-config access to 87 tools.",
+    date: "2026-04-16",
+    readTime: "8 min",
+    keywords: ["Claude Code", "MCP server setup", "mcp.json", "stdio", "HTTP transport", "gateway"],
+  },
+  {
     slug: "mcp-vs-rest-api-ai-agents",
     title: "MCP vs REST APIs for AI Agents: When to Use Which",
     description:

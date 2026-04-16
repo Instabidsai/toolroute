@@ -829,6 +829,23 @@ export default function Article() {
                   How to Build an AI Agent With Multiple Tools
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/blog/a2a-vs-mcp-protocol-comparison"
+                  className="text-accent hover:underline"
+                >
+                  A2A vs MCP: Comparing Google and Anthropic Agent Protocols
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/self-hosted-vs-cloud-mcp-servers"
+                  className="text-accent hover:underline"
+                >
+                  Self-Hosted vs Cloud MCP Servers: Pros, Cons, and Decision
+                  Matrix
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -510,6 +510,16 @@ curl -X DELETE https://toolroute.ai/api/v1/byok/byok_7f3a... \\
                   MCP Server Security Best Practices
                 </Link>
               </li>
+              <li>
+                <Link href="/blog/claude-code-mcp-server-setup" className="text-accent hover:underline">
+                  Claude Code MCP Server Setup: 3 Ways to Connect Tools
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog/self-hosted-vs-cloud-mcp-servers" className="text-accent hover:underline">
+                  Self-Hosted vs Cloud MCP Servers: Pros, Cons, and Decision Matrix
+                </Link>
+              </li>
             </ul>
           </div>
 

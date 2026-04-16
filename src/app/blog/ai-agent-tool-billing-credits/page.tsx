@@ -567,6 +567,23 @@ curl https://toolroute.ai/api/v1/key \\
                   What Is an MCP Gateway? The Infrastructure Layer AI Agents Need
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/blog/self-hosted-vs-cloud-mcp-servers"
+                  className="text-accent hover:underline"
+                >
+                  Self-Hosted vs Cloud MCP Servers: Pros, Cons, and Decision
+                  Matrix
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/claude-code-mcp-server-setup"
+                  className="text-accent hover:underline"
+                >
+                  Claude Code MCP Server Setup: 3 Ways to Connect Tools
+                </Link>
+              </li>
             </ul>
           </div>
 
