@@ -5,13 +5,26 @@ import { Zap, ArrowRight, ExternalLink } from "lucide-react";
 export const metadata: Metadata = {
   title: "MCP Gateway API Documentation — Developer Guides | ToolRoute",
   description:
-    "Complete MCP gateway API documentation. 40 adapters, 120+ operations. Auth, endpoints, SDKs, BYOK, MCP integration, and auto-routing.",
+    "ToolRoute API documentation for the MCP gateway with 87 tools across 12 categories. REST, MCP, A2A, and OpenAI function calling protocols. BYOK support, auto-routing, webhook events, SDKs, and integration guides for AI agents.",
+  keywords: [
+    "toolroute api documentation",
+    "mcp gateway docs",
+    "mcp server api",
+    "ai tool gateway",
+    "openrouter for tools",
+    "agent to agent protocol",
+    "mcp streamable http",
+    "byok api keys",
+    "ai agent tools",
+    "tool routing api",
+  ],
   alternates: {
     canonical: "/docs",
   },
   openGraph: {
     title: "MCP Gateway API Documentation — Developer Guides | ToolRoute",
-    description: "Complete MCP gateway API documentation. 40 adapters, 120+ operations. Auth, endpoints, and integration guides.",
+    description:
+      "ToolRoute API documentation: 87 tools, 12 categories, 5 protocols. Complete developer guides for REST, MCP, A2A, BYOK, webhooks, and auto-routing.",
     url: "https://toolroute.ai/docs",
   },
 };
@@ -28,6 +41,9 @@ const sections = [
   { id: "rate-limits", label: "Rate Limits" },
   { id: "sdks", label: "SDKs" },
   { id: "mcp-integration", label: "MCP Integration" },
+  { id: "full-adapter-registry", label: "Full Adapter Registry" },
+  { id: "webhook-events", label: "Webhook Events" },
+  { id: "changelog", label: "Changelog" },
 ] as const;
 
 const categories = [
@@ -1548,6 +1564,495 @@ const chat = await toolroute("claude/chat", {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Full Adapter Registry */}
+        <SectionHeading id="full-adapter-registry">
+          Full Adapter Registry
+        </SectionHeading>
+        <p className="text-text-dim text-sm leading-relaxed mb-4">
+          ToolRoute indexes <strong className="text-text">87 tools</strong>{" "}
+          across <strong className="text-text">12 categories</strong>, sourced
+          live from the registry database. Each tool supports one or more
+          protocols (REST, MCP, OpenAPI, GraphQL, CLI, npm, or skill). The table
+          below groups every registered adapter by its super-category so you can
+          see the full landscape at a glance.
+        </p>
+
+        <div className="border border-border rounded-lg overflow-hidden mb-8">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-bg-card">
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Tools
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider hidden sm:table-cell">
+                  Protocols
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Cost Range
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {[
+                {
+                  category: "Analytics",
+                  count: 2,
+                  tools: "PostHog, Sentry MCP",
+                  protocols: "REST, OpenAPI, MCP",
+                  cost: "Freemium",
+                },
+                {
+                  category: "Communication",
+                  count: 10,
+                  tools:
+                    "ElevenLabs, Deepgram, DeepL, Gmail MCP, SendGrid, Slack API, Slack MCP, Textbelt, Twilio, Vapi",
+                  protocols: "REST, OpenAPI, MCP",
+                  cost: "Free -- Paid",
+                },
+                {
+                  category: "Content",
+                  count: 17,
+                  tools:
+                    "Claude API, Creatomate, fal.ai, HeyGen, HeyGen MCP, Hicsfield.ai, Higgsfield, html2pdf.app, Kling 3.0, Midjourney, MoneyPrinterTurbo, Mux, Pexels, Remove.bg, Shotstack, Unsplash, Whisper",
+                  protocols: "REST, OpenAPI, MCP, CLI, npm",
+                  cost: "Free -- Paid",
+                },
+                {
+                  category: "CRM & Sales",
+                  count: 4,
+                  tools: "Apollo.io, HubSpot CRM, HubSpot MCP, Smartlead",
+                  protocols: "REST, OpenAPI, MCP",
+                  cost: "Freemium -- Paid",
+                },
+                {
+                  category: "DevOps",
+                  count: 4,
+                  tools:
+                    "Cloudflare MCP, Docker MCP, GitHub MCP, Vercel MCP",
+                  protocols: "MCP, REST",
+                  cost: "Free -- Freemium",
+                },
+                {
+                  category: "Ecommerce",
+                  count: 2,
+                  tools: "Shippo, Shopify MCP",
+                  protocols: "REST, MCP, GraphQL",
+                  cost: "Freemium",
+                },
+                {
+                  category: "Finance",
+                  count: 1,
+                  tools: "Stripe MCP",
+                  protocols: "MCP, REST, OpenAPI",
+                  cost: "Freemium",
+                },
+                {
+                  category: "Infrastructure",
+                  count: 19,
+                  tools:
+                    "Blender MCP, Brave Search, Composio, Context7, Exa, Glido, Google Stitch, Grafana MCP, OpenAI GPT, Playwright MCP, Remotion, Replicate, ScreenshotOne, Supabase MCP, Tavily, and skills",
+                  protocols: "REST, OpenAPI, MCP, CLI, npm, Skill",
+                  cost: "Free -- Usage-based",
+                },
+                {
+                  category: "Marketing",
+                  count: 12,
+                  tools:
+                    "Ahrefs, Creatify, DataForSEO, Firecrawl, Google Ads API, LinkedIn API, Meta Marketing API, Outscraper, Postiz, Twitter/X API, YouTube Data API",
+                  protocols: "REST, OpenAPI, MCP",
+                  cost: "Free -- Paid",
+                },
+                {
+                  category: "Operations",
+                  count: 10,
+                  tools:
+                    "Google Drive, Google Drive MCP, Google Sheets, Google Sheets MCP, Linear, Linear MCP, n8n, Notion, Notion MCP, Zapier MCP",
+                  protocols: "REST, MCP, GraphQL",
+                  cost: "Free -- Freemium",
+                },
+                {
+                  category: "Scheduling",
+                  count: 3,
+                  tools: "Cal.com, Google Calendar, Google Calendar MCP",
+                  protocols: "REST, OpenAPI, MCP",
+                  cost: "Free -- Freemium",
+                },
+                {
+                  category: "Security",
+                  count: 3,
+                  tools:
+                    "Cloudflare Turnstile, Semgrep MCP, Supabase Auth",
+                  protocols: "REST, OpenAPI, MCP",
+                  cost: "Free -- Freemium",
+                },
+              ].map((row) => (
+                <tr
+                  key={row.category}
+                  className="hover:bg-bg-card-hover transition-colors"
+                >
+                  <td className="p-3">
+                    <div className="font-medium text-text">
+                      {row.category}
+                    </div>
+                    <div className="text-[10px] text-text-muted mt-0.5">
+                      {row.count} tool{row.count > 1 ? "s" : ""}
+                    </div>
+                  </td>
+                  <td className="p-3 text-text-dim text-xs max-w-xs">
+                    {row.tools}
+                  </td>
+                  <td className="p-3 text-text-dim text-xs hidden sm:table-cell">
+                    {row.protocols}
+                  </td>
+                  <td className="p-3 text-text-dim text-xs whitespace-nowrap">
+                    {row.cost}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-border bg-bg-card">
+                <td className="p-3 font-semibold text-text">
+                  Total
+                </td>
+                <td className="p-3 font-semibold text-text text-xs">
+                  87 tools across 12 categories
+                </td>
+                <td className="p-3 text-text-dim text-xs hidden sm:table-cell">
+                  7 protocol types
+                </td>
+                <td className="p-3 text-text-dim text-xs">
+                  Free -- Paid
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div className="border border-border rounded-lg p-4 bg-bg-card mb-4">
+          <p className="text-sm text-text-dim leading-relaxed">
+            <strong className="text-text">Live registry:</strong> This list
+            reflects the current state of the ToolRoute registry. New tools are
+            added regularly. Use{" "}
+            <InlineCode>GET /api/v1/tools</InlineCode> to fetch the latest
+            catalog programmatically, or query{" "}
+            <InlineCode>toolroute/check_before_build</InlineCode> to find the
+            right tool for your task.
+          </p>
+        </div>
+
+        <SubHeading>Protocol Support</SubHeading>
+        <p className="text-text-dim text-sm leading-relaxed mb-4">
+          ToolRoute supports five primary integration protocols. Choose the one
+          that fits your architecture:
+        </p>
+        <div className="border border-border rounded-lg overflow-hidden mb-8">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-bg-card">
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Protocol
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Endpoint
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider hidden sm:table-cell">
+                  Use Case
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {[
+                [
+                  "REST",
+                  "POST /api/v1/execute",
+                  "Direct tool calls from any language or script",
+                ],
+                [
+                  "MCP Streamable HTTP",
+                  "POST /mcp",
+                  "Claude Code, Cursor, Windsurf, and MCP-native clients",
+                ],
+                [
+                  "A2A (Agent-to-Agent)",
+                  "POST /api/a2a",
+                  "Google A2A protocol for multi-agent orchestration",
+                ],
+                [
+                  "OpenAI Functions",
+                  "GET /api/v1/tools?format=openai",
+                  "Drop-in function definitions for GPT tool_choice",
+                ],
+                [
+                  "SDKs",
+                  "Python / TypeScript",
+                  "Typed wrappers with built-in auth and error handling",
+                ],
+              ].map(([protocol, endpoint, use]) => (
+                <tr
+                  key={protocol}
+                  className="hover:bg-bg-card-hover transition-colors"
+                >
+                  <td className="p-3 text-text font-medium">{protocol}</td>
+                  <td className="p-3">
+                    <code className="text-xs text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                      {endpoint}
+                    </code>
+                  </td>
+                  <td className="p-3 text-text-dim hidden sm:table-cell">
+                    {use}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Webhook Events */}
+        <SectionHeading id="webhook-events">Webhook Events</SectionHeading>
+        <p className="text-text-dim text-sm leading-relaxed mb-4">
+          ToolRoute can send webhook notifications to your server when key
+          events occur. Configure your webhook URL in the{" "}
+          <Link href="/login" className="text-accent hover:underline">
+            Dashboard
+          </Link>{" "}
+          under Settings. All webhook payloads are delivered as{" "}
+          <InlineCode>POST</InlineCode> requests with a JSON body and include an{" "}
+          <InlineCode>X-ToolRoute-Signature</InlineCode> header for
+          verification.
+        </p>
+
+        <SubHeading>Event Types</SubHeading>
+        <div className="border border-border rounded-lg overflow-hidden mb-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-bg-card">
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Event
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider">
+                  Trigger
+                </th>
+                <th className="text-left p-3 text-text-muted text-xs font-medium uppercase tracking-wider hidden sm:table-cell">
+                  Key Fields
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {[
+                [
+                  "tool.execution.completed",
+                  "A tool call finishes successfully",
+                  "tool, duration_ms, cost, request_id",
+                ],
+                [
+                  "tool.execution.failed",
+                  "A tool call fails (adapter or upstream error)",
+                  "tool, error_code, error_message, request_id",
+                ],
+                [
+                  "balance.low",
+                  "Account balance drops below configured threshold",
+                  "current_balance, threshold, auto_topup_enabled",
+                ],
+                [
+                  "balance.depleted",
+                  "Account balance reaches $0.00",
+                  "last_tool, last_cost",
+                ],
+                [
+                  "balance.topped_up",
+                  "Credits added via checkout or auto-top-up",
+                  "amount, new_balance, source",
+                ],
+                [
+                  "key.created",
+                  "A new API key is generated",
+                  "key_prefix, key_name, permissions",
+                ],
+                [
+                  "key.revoked",
+                  "An API key is deleted or revoked",
+                  "key_prefix, key_name",
+                ],
+                [
+                  "byok.registered",
+                  "A BYOK provider key is added or updated",
+                  "provider, status",
+                ],
+                [
+                  "usage.threshold",
+                  "Daily or monthly usage exceeds configured threshold",
+                  "period, usage_count, threshold",
+                ],
+              ].map(([event, trigger, fields]) => (
+                <tr
+                  key={event}
+                  className="hover:bg-bg-card-hover transition-colors"
+                >
+                  <td className="p-3">
+                    <code className="text-xs text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                      {event}
+                    </code>
+                  </td>
+                  <td className="p-3 text-text-dim">{trigger}</td>
+                  <td className="p-3 text-text-dim text-xs hidden sm:table-cell font-mono">
+                    {fields}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SubHeading>Webhook Payload Format</SubHeading>
+        <CodeBlock title="Example: tool.execution.completed">
+          {`{
+  "id": "evt_1a2b3c4d5e6f",
+  "type": "tool.execution.completed",
+  "created_at": "2026-04-15T12:34:56Z",
+  "data": {
+    "request_id": "req_abc123",
+    "tool": "firecrawl/scrape",
+    "duration_ms": 1240,
+    "cost": 0.003,
+    "input_summary": "url: https://example.com",
+    "output_bytes": 4521
+  }
+}`}
+        </CodeBlock>
+
+        <SubHeading>Signature Verification</SubHeading>
+        <p className="text-text-dim text-sm leading-relaxed mb-4">
+          Every webhook includes an{" "}
+          <InlineCode>X-ToolRoute-Signature</InlineCode> header containing an
+          HMAC-SHA256 signature of the raw request body, signed with your
+          webhook secret. Verify it before processing:
+        </p>
+        <CodeBlock lang="typescript">
+          {`import { createHmac } from "crypto";
+
+function verifyWebhook(body: string, signature: string, secret: string): boolean {
+  const expected = createHmac("sha256", secret)
+    .update(body, "utf-8")
+    .digest("hex");
+  return signature === \`sha256=\${expected}\`;
+}
+
+// In your webhook handler:
+const isValid = verifyWebhook(rawBody, req.headers["x-toolroute-signature"], WEBHOOK_SECRET);
+if (!isValid) return res.status(401).json({ error: "Invalid signature" });`}
+        </CodeBlock>
+
+        <div className="border border-border rounded-lg p-4 bg-bg-card mb-4">
+          <p className="text-sm text-text-dim leading-relaxed">
+            <strong className="text-text">Retry policy:</strong> Failed webhook
+            deliveries are retried up to 3 times with exponential backoff (10s,
+            60s, 300s). After 3 failures, the event is marked as failed and
+            visible in your dashboard. Events are retained for 30 days.
+          </p>
+        </div>
+
+        {/* Changelog */}
+        <SectionHeading id="changelog">Changelog</SectionHeading>
+        <p className="text-text-dim text-sm leading-relaxed mb-6">
+          Recent updates to the ToolRoute API and platform.
+        </p>
+
+        <div className="space-y-6">
+          {[
+            {
+              date: "April 15, 2026",
+              title: "87 Tools, Webhook Events, Full Registry Documentation",
+              items: [
+                "Registry expanded to 87 tools across 12 categories",
+                "Webhook event system for tool executions, balance alerts, and key lifecycle",
+                "Full adapter registry documentation with live Supabase data",
+                "Protocol support table: REST, MCP, A2A, OpenAI Functions, SDKs",
+              ],
+            },
+            {
+              date: "April 13, 2026",
+              title: "API Gateway Launch -- OpenRouter for Tools",
+              items: [
+                "Transformed from catalog to full API gateway with unified /api/v1/execute endpoint",
+                "14 initial adapters with auto-routing intelligence",
+                "Stripe billing with prepaid credits and auto-top-up",
+                "Dashboard with real-time usage tracking and API key management",
+                "Full API documentation with curl examples for every adapter",
+              ],
+            },
+            {
+              date: "April 10, 2026",
+              title: "A2A Protocol Support",
+              items: [
+                "Google Agent-to-Agent (A2A) protocol endpoint at POST /api/a2a",
+                "Agent Cards with full capability advertisement",
+                "Multi-agent orchestration support with task lifecycle",
+              ],
+            },
+            {
+              date: "April 8, 2026",
+              title: "47 Gateway Adapters, BYOK Expansion",
+              items: [
+                "Gateway adapters expanded from 14 to 47",
+                "BYOK support for 34 providers with AES-256 encryption",
+                "Auto-routing intelligence picks the best tool for natural language tasks",
+                "OpenAI function calling format at GET /api/v1/tools?format=openai",
+              ],
+            },
+            {
+              date: "April 1, 2026",
+              title: "Skills + Composites System",
+              items: [
+                "Registry upgraded from tools-only to TOOLS + SKILLS + COMPOSITES",
+                "15 generic skills indexed alongside tool adapters",
+                "check_before_build now searches skills and composites, not just tools",
+                "Department-level mappings for organizational tool recommendations",
+              ],
+            },
+            {
+              date: "March 2026",
+              title: "Initial Registry + MCP Server",
+              items: [
+                "ToolRoute MCP server with 7 tools: check_before_build, search_tools, get_category_champion, record_usage, challenge_tool, librarian_status, log_tool_request",
+                "Belief-driven librarian system that evolves recommendations from usage data",
+                "Composio integration for OAuth-based tool access",
+              ],
+            },
+          ].map((entry) => (
+            <div
+              key={entry.date}
+              className="border-l-2 border-accent/30 pl-4"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xs text-text-muted font-mono bg-bg-card border border-border px-2 py-0.5 rounded">
+                  {entry.date}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-text mb-2">
+                {entry.title}
+              </p>
+              <ul className="space-y-1">
+                {entry.items.map((item, i) => (
+                  <li
+                    key={i}
+                    className="text-xs text-text-dim flex items-start gap-2"
+                  >
+                    <span className="text-accent mt-0.5 shrink-0">
+                      --
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         {/* Bottom nav */}
