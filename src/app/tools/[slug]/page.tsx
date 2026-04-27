@@ -1,4 +1,5 @@
-import { getToolBySlug, getBeliefs, getInventory } from "@/lib/api";
+import { getToolBySlug, getBeliefs } from "@/lib/api";
+import { getInventory } from "@/lib/api-server";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, CheckCircle } from "lucide-react";
 import Link from "next/link";

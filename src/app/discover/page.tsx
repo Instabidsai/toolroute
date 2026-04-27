@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getLibrarianState, getUsageEvents, getTools, getBeliefs } from "@/lib/api";
+import { getLibrarianState, getTools, getBeliefs } from "@/lib/api";
+import { getUsageEvents } from "@/lib/api-server";
 import { StatCard } from "@/components/StatCard";
 import { Activity, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 
