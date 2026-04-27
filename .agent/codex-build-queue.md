@@ -195,6 +195,13 @@ Claude is fixing the `check_rate_limit` RPC. Do not modify `src/lib/gateway.ts` 
 
 Claude is auditing RLS policies and resale rights. Do not modify SQL migrations or `src/lib/gateway.ts`.
 
+### 4.4 — RLS regression guard (DONE 2026-04-27)
+- **File:** `scripts/verify-rls-lockdown.mjs`
+- **What:** Probes Supabase REST with anon key. Asserts (a) sensitive tables refuse SELECT (or are empty), (b) public catalog tables still serve rows.
+- **How to run:** `node scripts/verify-rls-lockdown.mjs` — exits 1 on any leak.
+- **Result of first run:** 2 confirmed leaks (`usage_events`, `inventory`); 5 permissive-but-empty (`tool_requests`, `gateway_usage_log`, `api_keys`, `user_provider_keys`, `gateway_users`).
+- **Follow-up Lane 4.5 needed:** Existing lockdown SQL only covers 3 of the 8 sensitive tables. Need to extend `scripts/lockdown-anon-read-leaks.sql` (or new file) to also lock `api_keys`, `user_provider_keys`, `gateway_usage_log`, `gateway_users`. A single row in any of those leaks key hashes / billing data / PII to the public internet.
+
 ---
 
 ## Lane 5 — Adapter coverage
