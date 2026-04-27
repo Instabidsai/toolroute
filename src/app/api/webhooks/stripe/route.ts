@@ -1,11 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/gateway";
+import { sendDunningEmail } from "@/lib/stripe-dunning";
 
 const PLAN_CREDITS: Record<string, number> = {
   pro: 5.0,
   enterprise: 50.0,
 };
+
+async function recordPaymentFailure({
+  sb,
+  customerId,
+  stripePaymentId,
+  eventType,
+  reason,
+  retryUrl,
+  description,
+}: {
+  sb: ReturnType<typeof supabaseAdmin>;
+  customerId: string | null;
+  stripePaymentId: string;
+  eventType: string;
+  reason: string;
+  retryUrl: string | null;
+  description: string;
+}) {
+  if (!customerId) return;
+
+  const { data: user } = await sb
+    .from("gateway_users")
+    .select("id, email, credit_balance")
+    .eq("stripe_customer_id", customerId)
+    .single();
+
+  if (!user) return;
+
+  const { data: existing } = await sb
+    .from("credit_transactions")
+    .select("id")
+    .eq("stripe_payment_id", stripePaymentId)
+    .eq("type", "payment_failed")
+    .single();
+
+  let shouldEmail = false;
+
+  if (!existing) {
+    const { error: insertError } = await sb.from("credit_transactions").insert({
+      user_id: user.id,
+      amount: 0,
+      balance_after: user.credit_balance ?? 0,
+      type: "payment_failed",
+      description,
+      stripe_payment_id: stripePaymentId,
+      metadata: {
+        status: "failed",
+        event_type: eventType,
+        reason,
+        retry_url: retryUrl,
+      },
+    });
+
+    shouldEmail = !insertError;
+  }
+
+  if (shouldEmail) {
+    await sendDunningEmail(user.email, { retryUrl, reason }).catch(() => false);
+  }
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -196,6 +257,44 @@ export async function POST(request: NextRequest) {
           });
           console.log(`Saved default payment method for customer ${customerId}`);
         }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string | null;
+        const reason =
+          typeof invoice.last_finalization_error?.message === "string"
+            ? invoice.last_finalization_error.message
+            : "Invoice payment failed";
+
+        await recordPaymentFailure({
+          sb,
+          customerId,
+          stripePaymentId: invoice.id,
+          eventType: event.type,
+          reason,
+          retryUrl: invoice.hosted_invoice_url ?? null,
+          description: `Invoice payment failed${invoice.amount_due ? ` ($${(invoice.amount_due / 100).toFixed(2)})` : ""}`,
+        });
+        break;
+      }
+
+      case "payment_intent.payment_failed": {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        const customerId = paymentIntent.customer as string | null;
+        const reason =
+          paymentIntent.last_payment_error?.message || "Payment intent failed";
+
+        await recordPaymentFailure({
+          sb,
+          customerId,
+          stripePaymentId: paymentIntent.id,
+          eventType: event.type,
+          reason,
+          retryUrl: null,
+          description: `Payment failed${paymentIntent.amount ? ` ($${(paymentIntent.amount / 100).toFixed(2)})` : ""}`,
+        });
         break;
       }
 
