@@ -29,7 +29,7 @@ const plans = [
     period: "/mo",
     description: "Get started and explore the platform.",
     cta: "Get Started Free",
-    ctaHref: "/login",
+    ctaHref: "/signup?plan=free",
     highlighted: false,
     features: [
       "100 requests/day",
@@ -37,7 +37,7 @@ const plans = [
       "2 API keys",
       "Basic tools access",
       "Community support",
-      "$1 starter credits",
+      "Test keys only",
     ],
   },
   {
@@ -46,7 +46,7 @@ const plans = [
     period: "/mo",
     description: "For production workloads and serious builders.",
     cta: "Start Pro Trial",
-    ctaHref: "/login",
+    ctaHref: "/signup?plan=pro",
     highlighted: true,
     features: [
       "10,000 requests/month",
@@ -66,7 +66,7 @@ const plans = [
     period: "/mo",
     description: "For teams that need scale, control, and SLAs.",
     cta: "Contact Sales",
-    ctaHref: "/login",
+    ctaHref: "/signup?plan=enterprise",
     highlighted: false,
     features: [
       "100,000 requests/month",
@@ -343,11 +343,11 @@ export default function PricingPage() {
         <div className="border border-border rounded-lg p-10 bg-bg-card max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-3">Ready to get started?</h2>
           <p className="text-text-dim text-sm mb-6">
-            Get your API key in seconds. Start with $1 in free credits.
+          Create a test key in seconds. Add credits when you are ready.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/login"
+              href="/signup"
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm"
             >
               Get Your API Key
