@@ -123,6 +123,25 @@ For each provider:
 
     **Why this matters at this layer, not just legal:** pooled env vars present + no runtime BYOK gate = a customer hitting `/api/v1/execute?tool=replicate.flux-schnell` today gets served from ToolRoute's master Replicate account. That is the breach. Removing the env var (or wrapping every byok_only adapter in a `requireByok()` guard) is the only hard fix. Marketing copy is downstream of this.
 
+    **Verified empirically 2026-04-27 (loop iteration 2):**
+    - All 4 byok_only adapters share the identical fallback pattern at line ~5-8 of each file:
+      ```ts
+      function getApiKey(byokKey?: string): string | null {
+        return byokKey || process.env.ANTHROPIC_API_KEY || null;  // (or REPLICATE_API_TOKEN / ELEVENLABS_API_KEY / RESEND_API_KEY)
+      }
+      ```
+      This is `byok-supported`, not `byok-required`.
+    - `src/lib/gateway.ts::executeToolRequest` (lines 239–293) resolves keys in priority order **BYOK → master (`tool_providers` table) → env_var fallback (adapter `process.env.X`)** and passes the resolved key (or `undefined`) to `adapter.execute(operation, input, resolvedKey)`. There is **zero gate** between key-resolution and adapter dispatch — the function does not know nor care that some providers' ToS forbid the master/env_var paths.
+    - `src/app/api/v1/execute/route.ts` calls `validateRequest` + `checkRateLimit` + `executeToolRequest` and does no BYOK enforcement of its own.
+    - **Net result:** as of 2026-04-27 master, a customer with a ToolRoute API key but no row in `user_provider_keys` calling `claude.messages.create` (or `replicate.run` / `elevenlabs.tts` / `resend.send`) is served from ToolRoute's master pooled key. Verdict cross-cutting #6 graduates from speculative to **verified structural breach**.
+
+    **Smallest fix (proposed Lane 6.2):**
+    1. Add `BYOK_ONLY_ADAPTERS = new Set(["claude", "replicate", "elevenlabs", "resend"])` to `src/lib/adapter-availability.ts`.
+    2. In `executeToolRequest`, after the BYOK lookup but before the master lookup, insert: `if (!byokRow && BYOK_ONLY_ADAPTERS.has(adapter.slug)) throw new GatewayError("This provider requires BYOK. Add your key at /dashboard/byok", 402, "byok_required")`.
+    3. Test asserting a fresh user with no BYOK row gets a 402 with code `byok_required` for each of the 4 providers.
+
+    Holding the code change out of this docs PR. Lane 6.2 implementation needs Justin's explicit OK given the change is in the gateway critical path and the auditor self-merge question is still open.
+
 ## Recommendation framework (preliminary)
 
 | Provider | Verdict | Confidence | Source |
