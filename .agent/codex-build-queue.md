@@ -377,3 +377,5 @@ Claude is reading provider ToS for resale clauses.
 [BLOCKED] lane-3.2 @ 2026-04-27T16:32:52.4917030-04:00 | live Stripe purchase E2E requires funded card/customer checkout run; skipping to code-backed lane 3.3
 
 [CLAIMED] lane-3.3 @ 2026-04-27T16:32:52.4917030-04:00
+
+[REVIEW-WAIT] lane-3.3 @ 2026-04-27T16:58:42.3969601-04:00 | https://github.com/Instabidsai/toolroute/pull/8
