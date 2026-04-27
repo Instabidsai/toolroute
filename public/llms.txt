@@ -1,16 +1,16 @@
 # ToolRoute
 
-> The OpenRouter for Tools -- one unified API to access 87+ best-in-class tools for AI agents.
+> The OpenRouter for Tools -- one unified API to access the live ToolRoute catalog for AI agents.
 
 ToolRoute is an MCP gateway that lets AI agents execute tools through a single API endpoint. Instead of managing separate API keys, authentication flows, and billing accounts for each tool, agents authenticate once and access everything.
 
 ## Key Facts
-- 87 tools across 14 categories (AI/LLM, search, email, voice, database, security, video, image, content, business, social, code, productivity, SMS)
-- 51 API adapters with 152+ operations
-- 5 protocols: REST, MCP Streamable HTTP, A2A (Google), OpenAI Functions, SDKs
+- Live tool catalog: GET /api/v1/tools
+- API adapters exposed through provider/operation tool IDs
+- Protocols: REST, MCP Streamable HTTP, A2A (Google), OpenAI Functions, SDKs
 - Prepaid credits billing with auto-top-up
-- BYOK (bring-your-own-key) support for 36 adapters
-- Free tier: 100 requests/day, $1 starter credits
+- BYOK (bring-your-own-key) support where provider terms allow it
+- Signup starts with a test key and no free credit grant; paid checkout unlocks live usage
 
 ## Quick Start
 
@@ -47,5 +47,5 @@ Describe your task in natural language:
 - Pricing: https://toolroute.ai/pricing
 - Blog: https://toolroute.ai/blog
 - Full API reference: https://toolroute.ai/llms-full.txt
-- OpenAPI spec: https://toolroute.ai/openapi.json
+- OpenAPI spec: https://toolroute.ai/api/v1/openapi.json
 - GitHub: https://github.com/Instabidsai/toolroute

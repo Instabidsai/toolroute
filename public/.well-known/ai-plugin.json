@@ -10,10 +10,10 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://toolroute.ai/.well-known/openapi.json",
+    "url": "https://toolroute.ai/api/v1/openapi.json",
     "is_user_authenticated": true
   },
   "logo_url": "https://toolroute.ai/opengraph-image",
   "contact_email": "support@toolroute.ai",
-  "legal_info_url": "https://toolroute.ai/docs"
+  "legal_info_url": "https://toolroute.ai/terms"
 }
