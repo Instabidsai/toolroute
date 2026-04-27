@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack -p 3014",
     "build": "next build",
     "start": "next start -p 3014",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "stripe": "22.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.59.1",
     "@tailwindcss/postcss": "4.2.2",
     "@types/node": "25.5.0",
     "@types/react": "19.2.14",
