@@ -15,7 +15,20 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { supabase } from "@/lib/supabase";
+import {
+  buildSevenDayUsageChart,
+  type UsageChartPoint,
+} from "@/lib/dashboard-metrics";
 
 interface ApiKeyRow {
   id: string;
@@ -44,6 +57,7 @@ interface DashboardData {
   requestsMonth: number;
   keys: ApiKeyRow[];
   recentUsage: UsageRow[];
+  usageChart: UsageChartPoint[];
 }
 
 function formatTime(iso: string): string {
@@ -129,10 +143,19 @@ export default function DashboardPage() {
       const headers: Record<string, string> = {
         Authorization: `Bearer ${token}`,
       };
+      const now = new Date();
+      const usageStart = new Date(now);
+      usageStart.setDate(now.getDate() - 6);
+      usageStart.setHours(0, 0, 0, 0);
 
       const [keysRes, usageRes] = await Promise.all([
         fetch("/api/v1/keys", { headers }),
-        fetch("/api/v1/usage?limit=10", { headers }),
+        fetch(
+          `/api/v1/usage?limit=200&start_date=${encodeURIComponent(
+            usageStart.toISOString()
+          )}`,
+          { headers }
+        ),
       ]);
 
       const keysJson = await keysRes.json();
@@ -154,7 +177,6 @@ export default function DashboardPage() {
         .single();
 
       // Count today and month requests from usage
-      const now = new Date();
       const dayStart = new Date(now);
       dayStart.setUTCHours(0, 0, 0, 0);
       const monthStart = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1);
@@ -178,7 +200,8 @@ export default function DashboardPage() {
         requestsToday: todayCount ?? 0,
         requestsMonth: monthCount ?? 0,
         keys: keysJson.data ?? [],
-        recentUsage: usageJson.data ?? [],
+        recentUsage: (usageJson.data ?? []).slice(0, 10),
+        usageChart: buildSevenDayUsageChart(usageJson.data ?? [], now),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
@@ -251,6 +274,12 @@ export default function DashboardPage() {
           <p className="text-2xl font-bold text-text">
             ${data.creditBalance.toFixed(2)}
           </p>
+          <Link
+            href="/dashboard/billing"
+            className="text-[10px] text-accent hover:underline"
+          >
+            Buy credits
+          </Link>
         </div>
         <div className="border border-border rounded-lg p-4 bg-bg-card">
           <div className="flex items-center gap-2 mb-1">
@@ -286,6 +315,72 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* 7-day usage chart */}
+      <section className="border border-border rounded-lg bg-bg-card p-4">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <Activity className="w-4 h-4 text-text-dim" />
+              Usage Last 7 Days
+            </h2>
+            <p className="text-[10px] text-text-muted mt-1">
+              Requests and billed usage from the gateway ledger.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/usage"
+            className="text-xs text-accent hover:underline"
+          >
+            Details
+          </Link>
+        </div>
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.usageChart}>
+              <CartesianGrid
+                stroke="var(--color-border)"
+                strokeDasharray="3 3"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "var(--color-text-dim)", fontSize: 10 }}
+                tickLine={false}
+                axisLine={{ stroke: "var(--color-border)" }}
+              />
+              <YAxis
+                yAxisId="requests"
+                tick={{ fill: "var(--color-text-dim)", fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+                width={32}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(99, 102, 241, 0.08)" }}
+                contentStyle={{
+                  background: "var(--color-bg-card)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 8,
+                  color: "var(--color-text)",
+                  fontSize: 12,
+                }}
+                formatter={(value, name) =>
+                  name === "cost"
+                    ? [`$${Number(value).toFixed(4)}`, "Cost"]
+                    : [value, "Requests"]
+                }
+              />
+              <Bar
+                yAxisId="requests"
+                dataKey="requests"
+                fill="var(--color-accent)"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
 
       {/* API Keys */}
       <section>
@@ -461,7 +556,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 mb-1">
               <Wallet className="w-4 h-4 text-green group-hover:text-accent transition-colors" />
               <h3 className="text-xs font-semibold group-hover:text-accent transition-colors">
-                Add Credits
+                Buy Credits
               </h3>
             </div>
             <p className="text-[10px] text-text-dim">
