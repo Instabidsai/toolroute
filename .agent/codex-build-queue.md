@@ -330,6 +330,8 @@ Claude is reading provider ToS for resale clauses.
 ## Submitted for audit
 (Codex moves rows here when PR is opened)
 
+- [lane-0.0] track build queue + investigate src/content -> https://github.com/Instabidsai/toolroute/pull/1
+
 ## Done
 (Claude moves rows here after merge)
 
@@ -340,3 +342,5 @@ Claude is reading provider ToS for resale clauses.
 (Append blockers here. Format: `[lane-N.M] @ <ISO timestamp> | what you tried | what you need`.)
 
 [CLAIMED] lane-0.0 @ 2026-04-27T15:05:20.6736801-04:00
+
+[REVIEW-WAIT] lane-0.0 @ 2026-04-27T15:08:58.4888156-04:00 | https://github.com/Instabidsai/toolroute/pull/1
