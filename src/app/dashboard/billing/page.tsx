@@ -12,6 +12,10 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import {
+  getStripeReference,
+  getTransactionStatus,
+} from "@/lib/billing-transactions";
 
 interface UserInfo {
   credit_balance: number;
@@ -34,6 +38,8 @@ interface Transaction {
   type: string;
   description: string;
   balance_after: number | null;
+  stripe_payment_id: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -101,6 +107,23 @@ function TypeBadge({ type }: { type: string }) {
       className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${cls}`}
     >
       {type}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    paid: "bg-green/10 text-green border-green/20",
+    failed: "bg-red/10 text-red border-red/20",
+    usage: "bg-accent/10 text-accent border-accent/20",
+    posted: "bg-text-muted/10 text-text-dim border-border",
+  };
+  const cls = colors[status] || colors.posted;
+  return (
+    <span
+      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${cls}`}
+    >
+      {status}
     </span>
   );
 }
@@ -256,7 +279,7 @@ export default function BillingPage() {
         }),
         supabase
           .from("credit_transactions")
-          .select("id, amount, type, description, balance_after, created_at")
+          .select("id, amount, type, description, balance_after, stripe_payment_id, metadata, created_at")
           .eq("user_id", session.user.id)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -576,13 +599,13 @@ export default function BillingPage() {
         </div>
       </section>
 
-      {/* Transaction History */}
+      {/* Invoice History */}
       <section>
-        <h2 className="text-sm font-semibold mb-3">Transaction History</h2>
+        <h2 className="text-sm font-semibold mb-3">Invoice History</h2>
         {transactions.length === 0 ? (
           <div className="border border-border rounded-lg bg-bg-card p-6 text-center">
             <CreditCard className="w-8 h-8 text-text-muted mx-auto mb-2" />
-            <p className="text-xs text-text-dim">No transactions yet.</p>
+            <p className="text-xs text-text-dim">No invoices or credit transactions yet.</p>
           </div>
         ) : (
           <div className="border border-border rounded-lg bg-bg-card overflow-hidden">
@@ -592,9 +615,13 @@ export default function BillingPage() {
                   <tr className="border-b border-border text-text-muted text-[10px] uppercase tracking-wider">
                     <th className="text-left p-3 font-medium">Date</th>
                     <th className="text-left p-3 font-medium">Type</th>
+                    <th className="text-left p-3 font-medium">Status</th>
                     <th className="text-right p-3 font-medium">Amount</th>
                     <th className="text-right p-3 font-medium hidden sm:table-cell">
                       Balance After
+                    </th>
+                    <th className="text-left p-3 font-medium hidden lg:table-cell">
+                      Stripe Ref
                     </th>
                     <th className="text-left p-3 font-medium hidden md:table-cell">
                       Description
@@ -602,16 +629,23 @@ export default function BillingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((tx) => (
-                    <tr
-                      key={tx.id}
-                      className="border-b border-border/50 hover:bg-bg-surface/50 transition-colors"
-                    >
+                  {transactions.map((tx) => {
+                    const status = getTransactionStatus(tx);
+                    const stripeRef = getStripeReference(tx);
+
+                    return (
+                      <tr
+                        key={tx.id}
+                        className="border-b border-border/50 hover:bg-bg-surface/50 transition-colors"
+                      >
                       <td className="p-3 text-text-dim whitespace-nowrap">
                         {formatDate(tx.created_at)}
                       </td>
                       <td className="p-3">
                         <TypeBadge type={tx.type} />
+                      </td>
+                      <td className="p-3">
+                        <StatusBadge status={status} />
                       </td>
                       <td className="p-3 text-right">
                         <span
@@ -632,11 +666,19 @@ export default function BillingPage() {
                           ? `$${tx.balance_after.toFixed(2)}`
                           : "-"}
                       </td>
+                      <td className="p-3 text-text-dim hidden lg:table-cell">
+                        {stripeRef ? (
+                          <code className="text-[10px]">{stripeRef}</code>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                       <td className="p-3 text-text-dim hidden md:table-cell max-w-[200px] truncate">
                         {tx.description}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
