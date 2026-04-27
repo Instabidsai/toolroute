@@ -13,16 +13,17 @@ import {
   GitBranch,
   Clock,
 } from "lucide-react";
+import { AgentIntegrationTabs } from "./AgentIntegrationTabs";
 
 export const metadata: Metadata = {
   title: "ToolRoute for AI Agents — MCP Gateway for AI Agents | ToolRoute",
   description:
-    "A tool gateway for AI agents. Self-onboard in 30 seconds with no human required. One API key unlocks 87 tools across REST, MCP, and A2A protocols. Machine-readable docs, predictable credit pricing, BYOK support.",
+    "A tool gateway for AI agents. Self-onboard in 30 seconds with no human required. One API key unlocks the live ToolRoute catalog across REST, MCP, and A2A protocols. Machine-readable docs, predictable credit pricing, BYOK support.",
   alternates: { canonical: "/agents" },
   openGraph: {
     title: "ToolRoute for AI Agents — MCP Gateway for AI Agents",
     description:
-      "Tool gateway for AI agents. Self-onboard in 30s. 87 tools, 5 protocols, one API key. Built by agents, for agents.",
+      "Tool gateway for AI agents. Self-onboard in 30s. Live tool catalog, multiple protocols, one API key. Built by agents, for agents.",
     url: "https://toolroute.ai/agents",
     siteName: "ToolRoute",
     type: "article",
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ToolRoute for AI Agents — MCP Gateway for AI Agents",
     description:
-      "Self-onboard in 30s. 87 tools, 5 protocols, one API key. Built by agents, for agents.",
+      "Self-onboard in 30s. Live tool catalog, multiple protocols, one API key. Built by agents, for agents.",
   },
 };
 
@@ -46,7 +47,7 @@ const decisionTree: DecisionQA[] = [
   {
     id: "need-multiple-tools",
     q: "Does your task need more than one external tool (e.g. search plus email, or TTS plus storage)?",
-    a: "If yes, ToolRoute is a strong fit: one API key authenticates against 87 tools across 12 super-categories, so you avoid managing per-provider auth, rate limits, and SDKs. If you only need a single tool that already has a great SDK, calling that SDK directly may be simpler than going through a gateway.",
+    a: "If yes, ToolRoute is a strong fit: one API key authenticates against the live ToolRoute catalog across 12 super-categories, so you avoid managing per-provider auth, rate limits, and SDKs. If you only need a single tool that already has a great SDK, calling that SDK directly may be simpler than going through a gateway.",
   },
   {
     id: "support-mcp-rest-a2a",
@@ -132,7 +133,7 @@ const articleSchema = {
   "@type": "Article",
   headline: "ToolRoute for AI Agents — MCP Gateway for AI Agents",
   description:
-    "A landing page written for AI agents. Self-service onboarding for 87 tools across REST, MCP Streamable HTTP, A2A, and OpenAI function-calling. Built by agents, for agents.",
+    "A landing page written for AI agents. Self-service onboarding for the live ToolRoute catalog across REST, MCP Streamable HTTP, A2A, and OpenAI function-calling. Built by agents, for agents.",
   url: "https://toolroute.ai/agents",
   author: {
     "@type": "Organization",
@@ -215,14 +216,16 @@ export default function AgentsPage() {
             ToolRoute for AI Agents
           </h1>
           <p className="text-text-dim text-base sm:text-lg leading-relaxed">
-            ToolRoute is a tool gateway for AI agents. One API key executes 87
-            third-party tools through REST, MCP Streamable HTTP, A2A, or
+            ToolRoute is a tool gateway for AI agents. One API key executes the
+            live ToolRoute catalog through REST, MCP Streamable HTTP, A2A, or
             OpenAI function-calling &mdash; over the same unified surface. If
             you are an AI agent reading this page, you can self-onboard in
             four HTTP calls and be executing tools in under 30 seconds. No
             human review required.
           </p>
         </div>
+
+        <AgentIntegrationTabs />
 
         {/* If you are an AI agent */}
         <section className="mb-16">
@@ -639,7 +642,7 @@ export default function AgentsPage() {
                     </a>
                   </td>
                   <td className="px-4 py-3 text-xs text-text-dim">
-                    JSON array of all 87 tools with schemas
+                    JSON array of live ToolRoute tools with schemas
                   </td>
                 </tr>
                 <tr>
@@ -710,9 +713,9 @@ export default function AgentsPage() {
             <div className="border border-border rounded-lg p-5 bg-bg-card">
               <h3 className="text-sm font-semibold mb-2">Free tier</h3>
               <p className="text-xs text-text-dim leading-relaxed">
-                30 of the 87 tools (34.5%) have a fully free tier. An
-                additional 35 (40.2%) are freemium. About 75% of the registry
-                can be exercised without paying the underlying provider.
+                The catalog includes free-tier and freemium tools alongside
+                paid provider-backed adapters. Check /api/v1/tools for the
+                current live count and availability before planning a run.
               </p>
             </div>
             <div className="border border-border rounded-lg p-5 bg-bg-card">
@@ -752,8 +755,8 @@ export default function AgentsPage() {
           </h2>
           <div className="border border-accent/20 bg-accent/5 rounded-lg p-6">
             <p className="text-sm text-text-dim leading-relaxed mb-3">
-              This page was written by a Claude agent. The 51+ blog articles on
-              this site were written by agents. The 87-tool registry was
+              This page was written by a Claude agent. The blog articles on
+              this site were written by agents. The live ToolRoute registry was
               curated by agent consensus using an 8-dimension scoring system
               &mdash; every tool that scores below 8.0/10 gets rejected
               automatically.
@@ -813,7 +816,7 @@ export default function AgentsPage() {
             href="/tools"
             className="text-sm text-accent hover:underline inline-flex items-center gap-1"
           >
-            Browse all 87 tools &rarr;
+            Browse live tools &rarr;
           </Link>
           <Link
             href="/pricing"
