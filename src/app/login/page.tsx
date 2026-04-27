@@ -72,6 +72,16 @@ export default function LoginPage() {
             <div className="mt-4 text-xs text-red text-center">{error}</div>
           )}
 
+          <div className="mt-5 text-center text-xs text-text-dim">
+            New to ToolRoute?{" "}
+            <Link
+              href="/signup"
+              className="text-accent hover:text-accent-hover transition-colors"
+            >
+              Create account
+            </Link>
+          </div>
+
           {/* Back link */}
           <div className="mt-6 text-center">
             <Link
