@@ -656,6 +656,14 @@ export default async function HomePage() {
               </li>
               <li>
                 <a
+                  href="mailto:support@toolroute.ai"
+                  className="text-sm text-text-dim hover:text-accent transition-colors"
+                >
+                  support@toolroute.ai
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://vibearmor.ai"
                   target="_blank"
                   rel="noopener noreferrer"
