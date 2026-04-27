@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getUserFromSession,
   generateApiKey,
+  generateTestApiKey,
   supabaseAdmin,
   CORS_HEADERS,
 } from "@/lib/gateway";
@@ -20,9 +21,25 @@ export async function POST(request: NextRequest) {
     }
 
     const keyName = body.name || "Default Key";
-    const { raw, hash, prefix } = generateApiKey();
 
     const sb = supabaseAdmin();
+
+    const { data: planRow, error: planError } = await sb
+      .from("gateway_users")
+      .select("plan_slug")
+      .eq("id", userId)
+      .single();
+
+    if (planError || !planRow) {
+      return NextResponse.json(
+        { error: { message: "User not found", code: "user_not_found" } },
+        { status: 404, headers: CORS_HEADERS }
+      );
+    }
+
+    const planSlug = (planRow.plan_slug as string | null) ?? "free";
+    const isPaidPlan = planSlug !== "free";
+    const { raw, hash, prefix } = isPaidPlan ? generateApiKey() : generateTestApiKey();
 
     let expiresAt: string | null = null;
     if (body.expires_in_days && body.expires_in_days > 0) {

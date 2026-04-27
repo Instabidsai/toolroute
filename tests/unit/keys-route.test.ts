@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 const mocks = vi.hoisted(() => ({
   getUserFromSession: vi.fn(),
   generateApiKey: vi.fn(),
+  generateTestApiKey: vi.fn(),
   supabaseAdmin: vi.fn(),
 }));
 
@@ -11,10 +12,11 @@ vi.mock("@/lib/gateway", () => ({
   CORS_HEADERS: {},
   getUserFromSession: mocks.getUserFromSession,
   generateApiKey: mocks.generateApiKey,
+  generateTestApiKey: mocks.generateTestApiKey,
   supabaseAdmin: mocks.supabaseAdmin,
 }));
 
-import { PATCH } from "@/app/api/v1/keys/route";
+import { PATCH, POST } from "@/app/api/v1/keys/route";
 
 function requestFor(body: unknown) {
   return new Request("https://toolroute.ai/api/v1/keys", {
@@ -100,5 +102,94 @@ describe("PATCH /api/v1/keys", () => {
     expect(response.status).toBe(400);
     expect(payload.error.code).toBe("missing_name");
     expect(supabase.apiKeys.update).not.toHaveBeenCalled();
+  });
+});
+
+function postRequest(body: unknown) {
+  return new Request("https://toolroute.ai/api/v1/keys", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer user-token",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  }) as NextRequest;
+}
+
+function buildPostSupabaseMock(plan: string | null) {
+  const planChain = queryChain({ data: { plan_slug: plan }, error: null });
+  const insertChain = queryChain({
+    data: {
+      id: "key_new",
+      name: "Default Key",
+      key_prefix: plan && plan !== "free" ? "tr_live_abcd1234" : "tr_test_abcd",
+      allowed_tools: null,
+      is_active: true,
+      created_at: "2026-04-27T00:00:00.000Z",
+      expires_at: null,
+    },
+    error: null,
+  });
+  const gatewayUsers = { select: vi.fn(() => planChain) };
+  const apiKeys = { insert: vi.fn(() => insertChain) };
+  const from = vi.fn((table: string) =>
+    table === "gateway_users" ? gatewayUsers : apiKeys
+  );
+  mocks.supabaseAdmin.mockReturnValue({ from });
+  return { from, apiKeys, gatewayUsers };
+}
+
+describe("POST /api/v1/keys", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mocks.getUserFromSession.mockResolvedValue({
+      userId: "user_123",
+      email: "agent@example.com",
+    });
+    mocks.generateApiKey.mockReturnValue({
+      raw: "tr_live_aaaa",
+      hash: "hash_live",
+      prefix: "tr_live_aaaa",
+    });
+    mocks.generateTestApiKey.mockReturnValue({
+      raw: "tr_test_bbbb",
+      hash: "hash_test",
+      prefix: "tr_test_bbb",
+    });
+  });
+
+  it("mints a tr_test_ key for free-plan users", async () => {
+    buildPostSupabaseMock("free");
+
+    const response = await POST(postRequest({}));
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.key).toBe("tr_test_bbbb");
+    expect(mocks.generateTestApiKey).toHaveBeenCalled();
+    expect(mocks.generateApiKey).not.toHaveBeenCalled();
+  });
+
+  it("mints a tr_live_ key for paid-plan users", async () => {
+    buildPostSupabaseMock("starter");
+
+    const response = await POST(postRequest({}));
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.key).toBe("tr_live_aaaa");
+    expect(mocks.generateApiKey).toHaveBeenCalled();
+    expect(mocks.generateTestApiKey).not.toHaveBeenCalled();
+  });
+
+  it("defaults missing plan_slug to free (mints tr_test_)", async () => {
+    buildPostSupabaseMock(null);
+
+    const response = await POST(postRequest({}));
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.key).toBe("tr_test_bbbb");
+    expect(mocks.generateTestApiKey).toHaveBeenCalled();
   });
 });
