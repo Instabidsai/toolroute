@@ -6,19 +6,74 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://isbratmfnnzipzyoefbo.supabase.co";
+// Public anon key — read-only. All write paths now go through the api-key-gated
+// HTTPS gateway (see TOOLROUTE_BASE_URL/api/v1/registry/*).
 const SUPABASE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYnJhdG1mbm56aXB6eW9lZmJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MzY0MTYsImV4cCI6MjA5MDIxMjQxNn0.GI565bgr2HCQfeRYMVrTUyB2gUlncdb6mx-DEoL9_Fs";
+
+const TOOLROUTE_BASE_URL =
+  process.env.TOOLROUTE_BASE_URL || "https://toolroute.ai";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const server = new McpServer({
   name: "toolroute",
-  version: "1.0.0",
+  version: "1.1.0",
   description:
-    "ToolRoute — The OpenRouter for Tools. 50 curated best-in-class tools for AI agents.",
+    "ToolRoute — The OpenRouter for Tools. 87+ curated tools for AI agents.",
 });
 
-// ── check_before_build ──────────────────────────────────────────────
+function getApiKey(passed) {
+  return passed || process.env.TOOLROUTE_API_KEY;
+}
+
+async function gatewayPost(path, body, apiKey) {
+  const key = getApiKey(apiKey);
+  if (!key) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Error: No ToolRoute API key. Pass api_key or set TOOLROUTE_API_KEY env var. Get one at https://toolroute.ai.",
+        },
+      ],
+    };
+  }
+  try {
+    const res = await fetch(`${TOOLROUTE_BASE_URL}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const errorMsg = data?.error?.message || `HTTP ${res.status}`;
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error (${res.status}): ${errorMsg}\n\n${JSON.stringify(data, null, 2)}`,
+          },
+        ],
+      };
+    }
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  } catch (err) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        },
+      ],
+    };
+  }
+}
+
+// ── check_before_build (read) ───────────────────────────────────────
 server.tool(
   "check_before_build",
   "Check ToolRoute before building anything. Returns matching tools, installed inventory, category beliefs, and composites for a given task.",
@@ -35,7 +90,7 @@ server.tool(
   }
 );
 
-// ── search_tools ────────────────────────────────────────────────────
+// ── search_tools (read) ─────────────────────────────────────────────
 server.tool(
   "search_tools",
   "Search the curated tool registry by name or capability.",
@@ -56,7 +111,7 @@ server.tool(
   }
 );
 
-// ── get_category_champion ───────────────────────────────────────────
+// ── get_category_champion (read) ────────────────────────────────────
 server.tool(
   "get_category_champion",
   "Get the champion tool for a specific category with belief confidence.",
@@ -83,75 +138,7 @@ server.tool(
   }
 );
 
-// ── record_usage ────────────────────────────────────────────────────
-server.tool(
-  "record_usage",
-  "Record a tool usage event. Feeds the belief system — success reinforces, failure weakens.",
-  {
-    tool_slug: z.string().describe("Slug of the tool used"),
-    company: z.string().describe("Company name"),
-    action: z.string().describe("What action was performed"),
-    outcome: z
-      .enum(["success", "failure", "degraded", "partial"])
-      .describe("Outcome of the usage"),
-    duration_ms: z
-      .number()
-      .optional()
-      .describe("Duration in milliseconds"),
-  },
-  async ({ tool_slug, company, action, outcome, duration_ms }) => {
-    const { data, error } = await supabase.rpc("record_usage", {
-      p_tool_slug: tool_slug,
-      p_company: company,
-      p_action: action,
-      p_outcome: outcome,
-      p_duration_ms: duration_ms || null,
-    });
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
-    return {
-      content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-    };
-  }
-);
-
-// ── challenge_tool ──────────────────────────────────────────────────
-server.tool(
-  "challenge_tool",
-  "Challenge the current champion of a sub-category with a new tool. 8-dimension scoring, must win 5 to dethrone.",
-  {
-    challenger_slug: z.string().describe("Slug of the challenger tool"),
-    sub_category: z
-      .string()
-      .describe("Sub category to challenge in"),
-    scores: z
-      .object({
-        capability: z.number().min(1).max(10),
-        protocols: z.number().min(1).max(10),
-        cost: z.number().min(1).max(10),
-        maturity: z.number().min(1).max(10),
-        resale: z.number().min(1).max(10),
-        reliability: z.number().min(1).max(10),
-        ecosystem: z.number().min(1).max(10),
-        agent_native: z.number().min(1).max(10),
-      })
-      .describe("8-dimension scores for the challenger"),
-  },
-  async ({ challenger_slug, sub_category, scores }) => {
-    const { data, error } = await supabase.rpc("challenge_tool", {
-      p_challenger_slug: challenger_slug,
-      p_sub_category: sub_category,
-      p_scores: scores,
-    });
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
-    return {
-      content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-    };
-  }
-);
-
-// ── librarian_status ────────────────────────────────────────────────
+// ── librarian_status (read) ─────────────────────────────────────────
 server.tool(
   "librarian_status",
   "Get full ToolRoute system status: tool count, beliefs, composites, inventory, recent usage.",
@@ -166,109 +153,89 @@ server.tool(
   }
 );
 
-// ── log_tool_request ────────────────────────────────────────────────
+// ── record_usage (write — gated) ────────────────────────────────────
+server.tool(
+  "record_usage",
+  "Record a tool usage event — feeds the belief system. Requires a ToolRoute API key (Bearer-validated server-side).",
+  {
+    tool_slug: z.string().describe("Slug of the tool used"),
+    company: z.string().describe("Company name"),
+    action: z.string().describe("What action was performed"),
+    outcome: z.enum(["success", "failure", "degraded", "partial"]),
+    duration_ms: z.number().optional(),
+    api_key: z
+      .string()
+      .optional()
+      .describe("ToolRoute API key (tr_live_... / tr_test_...) — falls back to TOOLROUTE_API_KEY env"),
+  },
+  async ({ tool_slug, company, action, outcome, duration_ms, api_key }) =>
+    gatewayPost(
+      "/api/v1/registry/usage",
+      { tool_slug, company, action, outcome, duration_ms },
+      api_key
+    )
+);
+
+// ── challenge_tool (write — gated) ──────────────────────────────────
+server.tool(
+  "challenge_tool",
+  "Challenge a category champion. 8-dimension scores; must win 5 to dethrone. Requires a ToolRoute API key.",
+  {
+    challenger_slug: z.string(),
+    sub_category: z.string(),
+    scores: z.object({
+      capability: z.number().min(1).max(10),
+      protocols: z.number().min(1).max(10),
+      cost: z.number().min(1).max(10),
+      maturity: z.number().min(1).max(10),
+      resale: z.number().min(1).max(10),
+      reliability: z.number().min(1).max(10),
+      ecosystem: z.number().min(1).max(10),
+      agent_native: z.number().min(1).max(10),
+    }),
+    api_key: z.string().optional(),
+  },
+  async ({ challenger_slug, sub_category, scores, api_key }) =>
+    gatewayPost(
+      "/api/v1/registry/challenge",
+      { challenger_slug, sub_category, scores },
+      api_key
+    )
+);
+
+// ── log_tool_request (write — gated) ────────────────────────────────
 server.tool(
   "log_tool_request",
-  "Log a gap — when no tool exists for a need. Tracks unmet demands.",
+  "Log a tool gap — a need with no existing match. Requires a ToolRoute API key.",
   {
     requested_by: z.string().describe("Who needs this (session/agent name)"),
     company: z.string().describe("Which company needs it"),
     need: z.string().describe("What capability is needed"),
+    api_key: z.string().optional(),
   },
-  async ({ requested_by, company, need }) => {
-    const { data, error } = await supabase.rpc("log_tool_request", {
-      p_requested_by: requested_by,
-      p_company: company,
-      p_need: need,
-    });
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
-    return {
-      content: [
-        {
-          type: "text",
-          text: data
-            ? JSON.stringify(data, null, 2)
-            : "Tool request logged successfully.",
-        },
-      ],
-    };
-  }
+  async ({ requested_by, company, need, api_key }) =>
+    gatewayPost(
+      "/api/v1/registry/request",
+      { requested_by, company, need },
+      api_key
+    )
 );
 
-// ── execute ─────────────────────────────────────────────────────────
+// ── execute (write — gated) ─────────────────────────────────────────
 server.tool(
   "execute",
-  "Execute any tool through the ToolRoute gateway. Supports all registered adapters (firecrawl, playwright, claude, elevenlabs, sendgrid, resend, twilio, github, context7, supabase, stripe, whisper, toolroute, auto). Use 'auto/route' with a task description for auto-routing.",
+  "Execute any tool through the ToolRoute gateway. Supports all registered adapters. Use 'auto/route' with a task description for auto-routing.",
   {
     tool: z
       .string()
       .describe(
         'Tool path: "provider/operation" (e.g. "firecrawl/scrape", "auto/route", "claude/chat")'
       ),
-    input: z
-      .record(z.unknown())
-      .describe(
-        "Input object for the tool. For auto/route, include { task: \"description\" }. For firecrawl/scrape, include { url: \"...\" }."
-      ),
-    api_key: z
-      .string()
-      .optional()
-      .describe(
-        "ToolRoute API key (tr_live_... or tr_test_...). Falls back to TOOLROUTE_API_KEY env var."
-      ),
+    input: z.record(z.unknown()),
+    api_key: z.string().optional(),
   },
-  async ({ tool, input, api_key }) => {
-    const key = api_key || process.env.TOOLROUTE_API_KEY;
-    if (!key) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Error: No API key provided. Pass api_key or set TOOLROUTE_API_KEY environment variable.",
-          },
-        ],
-      };
-    }
-
-    try {
-      const res = await fetch("https://toolroute.ai/api/v1/execute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-        },
-        body: JSON.stringify({ tool, input }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const errorMsg = data?.error?.message || `HTTP ${res.status}`;
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error (${res.status}): ${errorMsg}\n\n${JSON.stringify(data, null, 2)}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    } catch (err) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-          },
-        ],
-      };
-    }
-  }
+  async ({ tool, input, api_key }) =>
+    gatewayPost("/api/v1/execute", { tool, input }, api_key)
 );
 
 // ── Start ────────────────────────────────────────────────────────────
