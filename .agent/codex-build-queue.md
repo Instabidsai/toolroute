@@ -397,3 +397,5 @@ Claude is reading provider ToS for resale clauses.
 [BLOCKED] lane-5.3 @ 2026-04-27T16:55:08.7402978-04:00 | depends on Lane 5.2 provider keys before smoke-testing paid adapters
 
 [CLAIMED] lane-5.4 @ 2026-04-27T16:55:08.7402978-04:00
+
+[CLAIMED] lane-5.5 @ 2026-04-27T16:59:48.6689429-04:00
