@@ -183,6 +183,22 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case "setup_intent.succeeded": {
+        const setupIntent = event.data.object as Stripe.SetupIntent;
+        const customerId = setupIntent.customer as string | null;
+        const paymentMethodId = setupIntent.payment_method as string | null;
+
+        if (customerId && paymentMethodId) {
+          await stripe.customers.update(customerId, {
+            invoice_settings: {
+              default_payment_method: paymentMethodId,
+            },
+          });
+          console.log(`Saved default payment method for customer ${customerId}`);
+        }
+        break;
+      }
+
       case "customer.subscription.deleted": {
         // Downgrade to free
         const sub = event.data.object as Stripe.Subscription;

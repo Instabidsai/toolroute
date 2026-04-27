@@ -19,7 +19,13 @@ interface UserInfo {
   auto_topup_enabled: boolean;
   auto_topup_threshold: number;
   auto_topup_amount_cents: number;
-  stripe_customer_id: string | null;
+  has_payment_method: boolean;
+  payment_method: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  } | null;
 }
 
 interface Transaction {
@@ -39,7 +45,7 @@ const PLANS = [
     name: "Free",
     price: "$0/mo",
     features: [
-      "$1 starter credits",
+      "No included credits",
       "10 requests/min",
       "100 requests/day",
       "Community support",
@@ -106,6 +112,7 @@ export default function BillingPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
   const [topupSaving, setTopupSaving] = useState(false);
   const [topupSuccess, setTopupSuccess] = useState(false);
 
@@ -190,7 +197,8 @@ export default function BillingPage() {
                 auto_topup_enabled: data.auto_topup_enabled,
                 auto_topup_threshold: data.auto_topup_threshold,
                 auto_topup_amount_cents: data.auto_topup_amount_cents,
-                stripe_customer_id: data.has_payment_method ? "exists" : null,
+                has_payment_method: data.has_payment_method,
+                payment_method: data.payment_method ?? null,
               }
             : prev
         );
@@ -206,6 +214,35 @@ export default function BillingPage() {
     }
   };
 
+  const handleSetupPayment = async () => {
+    setSetupLoading(true);
+    setError(null);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/v1/billing/setup-payment", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await res.json();
+
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        setError(data.error?.message || "Failed to set up payment method");
+      }
+    } catch {
+      setError("Failed to set up payment method");
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
   const fetchBilling = useCallback(async () => {
     try {
       const {
@@ -213,12 +250,10 @@ export default function BillingPage() {
       } = await supabase.auth.getSession();
       if (!session) return;
 
-      const [gwRes, txRes] = await Promise.all([
-        supabase
-          .from("gateway_users")
-          .select("credit_balance, plan_slug, auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, stripe_customer_id")
-          .eq("id", session.user.id)
-          .single(),
+      const [settingsRes, txRes] = await Promise.all([
+        fetch("/api/v1/settings", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
         supabase
           .from("credit_transactions")
           .select("id, amount, type, description, balance_after, created_at")
@@ -227,13 +262,19 @@ export default function BillingPage() {
           .limit(50),
       ]);
 
-      setUserInfo(gwRes.data ?? {
-        credit_balance: 0,
-        plan_slug: "free",
-        auto_topup_enabled: false,
-        auto_topup_threshold: 1.0,
-        auto_topup_amount_cents: 1000,
-        stripe_customer_id: null,
+      const settingsJson = await settingsRes.json();
+      if (!settingsRes.ok) {
+        throw new Error(settingsJson.error?.message || "Failed to load billing settings");
+      }
+
+      setUserInfo({
+        credit_balance: settingsJson.credit_balance ?? 0,
+        plan_slug: settingsJson.plan_slug ?? "free",
+        auto_topup_enabled: settingsJson.auto_topup_enabled ?? false,
+        auto_topup_threshold: settingsJson.auto_topup_threshold ?? 1.0,
+        auto_topup_amount_cents: settingsJson.auto_topup_amount_cents ?? 1000,
+        has_payment_method: settingsJson.has_payment_method ?? false,
+        payment_method: settingsJson.payment_method ?? null,
       });
       setTransactions(txRes.data ?? []);
     } catch (err) {
@@ -336,10 +377,26 @@ export default function BillingPage() {
           Auto Top-Up
         </h2>
         <div className="border border-border rounded-lg bg-bg-card p-5 space-y-4">
-          {!userInfo?.stripe_customer_id && (
-            <div className="border border-amber/20 rounded-lg bg-amber/5 px-4 py-3 text-xs text-amber flex items-center gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              No payment method on file. Purchase credits first to enable auto top-up.
+          {!userInfo?.has_payment_method ? (
+            <div className="border border-amber/20 rounded-lg bg-amber/5 px-4 py-3 text-xs text-amber flex flex-wrap items-center gap-3">
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                No reusable payment method on file.
+              </span>
+              <button
+                onClick={handleSetupPayment}
+                disabled={setupLoading}
+                className="ml-auto px-3 py-1.5 rounded bg-amber/15 text-amber border border-amber/30 hover:bg-amber/20 transition-colors disabled:opacity-50"
+              >
+                {setupLoading ? "Redirecting..." : "Add payment method"}
+              </button>
+            </div>
+          ) : (
+            <div className="border border-green/20 rounded-lg bg-green/5 px-4 py-3 text-xs text-green flex items-center gap-2">
+              <Check className="w-3.5 h-3.5 shrink-0" />
+              {userInfo.payment_method
+                ? `${userInfo.payment_method.brand.toUpperCase()} ending in ${userInfo.payment_method.last4} expires ${userInfo.payment_method.exp_month}/${userInfo.payment_method.exp_year}`
+                : "Payment method on file"}
             </div>
           )}
 
@@ -357,7 +414,7 @@ export default function BillingPage() {
                   auto_topup_enabled: !userInfo?.auto_topup_enabled,
                 })
               }
-              disabled={topupSaving || !userInfo?.stripe_customer_id}
+              disabled={topupSaving || !userInfo?.has_payment_method}
               className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 userInfo?.auto_topup_enabled
                   ? "bg-green"
@@ -431,17 +488,17 @@ export default function BillingPage() {
           <div className="flex items-center gap-2 pt-1 border-t border-border/50">
             <span
               className={`w-2 h-2 rounded-full ${
-                userInfo?.auto_topup_enabled && userInfo?.stripe_customer_id
+                userInfo?.auto_topup_enabled && userInfo?.has_payment_method
                   ? "bg-green"
-                  : !userInfo?.stripe_customer_id
+                  : !userInfo?.has_payment_method
                     ? "bg-amber"
                     : "bg-text-muted/30"
               }`}
             />
             <span className="text-[10px] text-text-dim">
-              {userInfo?.auto_topup_enabled && userInfo?.stripe_customer_id
+              {userInfo?.auto_topup_enabled && userInfo?.has_payment_method
                 ? `Active — will add $${((userInfo?.auto_topup_amount_cents ?? 1000) / 100).toFixed(0)} when balance drops below $${(userInfo?.auto_topup_threshold ?? 1).toFixed(2)}`
-                : !userInfo?.stripe_customer_id
+                : !userInfo?.has_payment_method
                   ? "No payment method"
                   : "Inactive"}
             </span>

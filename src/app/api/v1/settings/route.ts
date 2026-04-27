@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession, supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { getPaymentMethodSummary, getStripeClient } from "@/lib/stripe-billing";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +24,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const paymentMethod = await getPaymentMethodSummary(
+      getStripeClient(),
+      data.stripe_customer_id
+    );
+
     return NextResponse.json(
       {
         display_name: data.display_name,
@@ -32,7 +38,8 @@ export async function GET(request: NextRequest) {
         auto_topup_enabled: data.auto_topup_enabled ?? false,
         auto_topup_threshold: data.auto_topup_threshold ?? 1.0,
         auto_topup_amount_cents: data.auto_topup_amount_cents ?? 1000,
-        has_payment_method: !!data.stripe_customer_id,
+        has_payment_method: !!paymentMethod,
+        payment_method: paymentMethod,
       },
       { headers: CORS_HEADERS }
     );
@@ -143,7 +150,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // If enabling auto-topup, verify stripe_customer_id exists
+    // If enabling auto-topup, verify a reusable payment method exists.
     if (updates.auto_topup_enabled === true) {
       const sb = supabaseAdmin();
       const { data: user } = await sb
@@ -152,7 +159,12 @@ export async function PATCH(request: NextRequest) {
         .eq("id", userId)
         .single();
 
-      if (!user?.stripe_customer_id) {
+      const paymentMethod = await getPaymentMethodSummary(
+        getStripeClient(),
+        user?.stripe_customer_id ?? null
+      );
+
+      if (!paymentMethod) {
         return NextResponse.json(
           {
             error: {
@@ -185,6 +197,11 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const paymentMethod = await getPaymentMethodSummary(
+      getStripeClient(),
+      data.stripe_customer_id
+    );
+
     return NextResponse.json(
       {
         display_name: data.display_name,
@@ -193,7 +210,8 @@ export async function PATCH(request: NextRequest) {
         auto_topup_enabled: data.auto_topup_enabled ?? false,
         auto_topup_threshold: data.auto_topup_threshold ?? 1.0,
         auto_topup_amount_cents: data.auto_topup_amount_cents ?? 1000,
-        has_payment_method: !!data.stripe_customer_id,
+        has_payment_method: !!paymentMethod,
+        payment_method: paymentMethod,
       },
       { headers: CORS_HEADERS }
     );
