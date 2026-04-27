@@ -448,6 +448,17 @@ export function generateApiKey(): {
   return { raw, hash, prefix };
 }
 
+export function generateTestApiKey(): {
+  raw: string;
+  hash: string;
+  prefix: string;
+} {
+  const raw = "tr_test_" + randomBytes(20).toString("hex");
+  const hash = hashKey(raw);
+  const prefix = raw.slice(0, 12);
+  return { raw, hash, prefix };
+}
+
 export async function getUserFromSession(
   authHeader: string | null
 ): Promise<{ userId: string; email: string }> {
