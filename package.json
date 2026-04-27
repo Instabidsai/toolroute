@@ -6,26 +6,32 @@
     "dev": "next dev --turbopack -p 3014",
     "build": "next build",
     "start": "next start -p 3014",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@supabase/supabase-js": "2.100.1",
+    "@supabase/ssr": "0.10.2",
+    "@supabase/supabase-js": "2.102.1",
     "lucide-react": "1.7.0",
     "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "recharts": "3.8.1",
     "stripe": "22.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.59.1",
     "@tailwindcss/postcss": "4.2.2",
     "@types/node": "25.5.0",
     "@types/react": "19.2.14",
     "postcss": "8.5.8",
     "tailwindcss": "4.2.2",
-    "typescript": "6.0.2"
+    "typescript": "6.0.2",
+    "vitest": "4.1.5"
   }
 }

@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   Shield,
   X,
+  Pencil,
+  Save,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -89,6 +91,9 @@ export default function KeysPage() {
   // Revoke confirmation
   const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<string | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   const fetchKeys = useCallback(async () => {
     try {
@@ -182,6 +187,48 @@ export default function KeysPage() {
       setError(err instanceof Error ? err.message : "Failed to revoke key");
     } finally {
       setRevoking(false);
+    }
+  }
+
+  function startRename(key: ApiKeyRow) {
+    setRenameTarget(key.id);
+    setRenameName(key.name);
+    setRevokeTarget(null);
+  }
+
+  async function handleRename(keyId: string) {
+    const nextName = renameName.trim();
+    if (!nextName) {
+      setError("Key name is required");
+      return;
+    }
+
+    setRenaming(true);
+    setError(null);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/v1/keys", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ key_id: keyId, name: nextName }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error?.message || "Failed to rename key");
+
+      setRenameTarget(null);
+      setRenameName("");
+      await fetchKeys();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to rename key");
+    } finally {
+      setRenaming(false);
     }
   }
 
@@ -355,7 +402,26 @@ export default function KeysPage() {
                     key={key.id}
                     className="border-b border-border/50 hover:bg-bg-surface/50 transition-colors"
                   >
-                    <td className="p-3 font-medium">{key.name}</td>
+                    <td className="p-3 font-medium">
+                      {renameTarget === key.id ? (
+                        <input
+                          type="text"
+                          value={renameName}
+                          onChange={(e) => setRenameName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleRename(key.id);
+                            if (e.key === "Escape") {
+                              setRenameTarget(null);
+                              setRenameName("");
+                            }
+                          }}
+                          aria-label="Key name"
+                          className="w-full min-w-32 bg-bg border border-border rounded px-2 py-1 text-xs text-text focus:border-accent focus:outline-none"
+                        />
+                      ) : (
+                        key.name
+                      )}
+                    </td>
                     <td className="p-3">
                       <span className="flex items-center gap-1.5">
                         <code className="text-text-dim">
@@ -382,7 +448,30 @@ export default function KeysPage() {
                       </span>
                     </td>
                     <td className="p-3 text-right">
-                      {key.is_active && (
+                      {renameTarget === key.id ? (
+                        <span className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={() => handleRename(key.id)}
+                            disabled={renaming}
+                            className="text-green hover:text-green/80 transition-colors disabled:opacity-50"
+                            title="Save name"
+                            aria-label="Save name"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setRenameTarget(null);
+                              setRenameName("");
+                            }}
+                            className="text-text-muted hover:text-text transition-colors"
+                            title="Cancel rename"
+                            aria-label="Cancel rename"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ) : key.is_active ? (
                         <>
                           {revokeTarget === key.id ? (
                             <span className="flex items-center gap-1.5 justify-end">
@@ -404,16 +493,27 @@ export default function KeysPage() {
                               </button>
                             </span>
                           ) : (
-                            <button
-                              onClick={() => setRevokeTarget(key.id)}
-                              className="text-text-muted hover:text-red transition-colors"
-                              title="Revoke key"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <span className="flex items-center gap-2 justify-end">
+                              <button
+                                onClick={() => startRename(key)}
+                                className="text-text-muted hover:text-accent transition-colors"
+                                title="Rename key"
+                                aria-label="Rename key"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setRevokeTarget(key.id)}
+                                className="text-text-muted hover:text-red transition-colors"
+                                title="Revoke key"
+                                aria-label="Revoke key"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
                           )}
                         </>
-                      )}
+                      ) : null}
                     </td>
                   </tr>
                 ))}
@@ -427,6 +527,7 @@ export default function KeysPage() {
       <div className="text-[10px] text-text-muted space-y-1">
         <p>
           API keys use the format <code className="text-text-dim">tr_live_*</code>.
+          Test keys use the format <code className="text-text-dim">tr_test_*</code>.
           Include them in the <code className="text-text-dim">Authorization: Bearer</code> header.
         </p>
         <p>
