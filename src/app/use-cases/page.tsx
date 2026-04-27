@@ -96,13 +96,14 @@ await toolroute.execute({
     title: "Content Pipeline",
     description:
       "Generate written content with AI, produce video assets with code-driven rendering, and distribute across social channels automatically. Ideal for marketing teams shipping content at scale without manual handoffs.",
-    tools: ["Claude API", "Remotion", "Postiz"],
-    toolSlugs: ["anthropic", "remotion", "postiz"],
-    snippet: `const article = await toolroute.execute({
-  tool: "anthropic/messages",
+    tools: ["Claude (BYOK)", "Remotion", "Postiz"],
+    toolSlugs: ["claude-api", "remotion", "postiz"],
+    snippet: `// Requires BYOK for Claude — see /dashboard/byok
+const article = await toolroute.execute({
+  tool: "claude/chat",
   input: {
     model: "claude-sonnet-4-20250514",
-    prompt: "Write a blog post about MCP tools"
+    messages: [{ role: "user", content: "Write a blog post about MCP tools" }]
   }
 });
 
@@ -125,24 +126,25 @@ await toolroute.execute({
     title: "Lead Outreach",
     description:
       "Find qualified prospects from a contact database, generate personalized outreach emails using AI that references their company and pain points, then send at scale. Each email feels hand-written because it is -- by your agent.",
-    tools: ["Apollo", "Claude API", "Resend"],
-    toolSlugs: ["apollo", "anthropic", "resend"],
+    tools: ["Apollo", "Claude (BYOK)", "Resend (BYOK)"],
+    toolSlugs: ["apollo", "claude-api", "resend"],
     snippet: `const leads = await toolroute.execute({
   tool: "apollo/search-contacts",
   input: { title: "CTO", industry: "SaaS", limit: 50 }
 });
 
 for (const lead of leads.contacts) {
+  // Requires BYOK for Claude + Resend
   const email = await toolroute.execute({
-    tool: "anthropic/messages",
+    tool: "claude/chat",
     input: {
-      prompt: \`Personalized cold email for \${lead.name}
-        at \${lead.company}. Pain: tool sprawl.\`
+      messages: [{ role: "user", content: \`Personalized cold email for \${lead.name}
+        at \${lead.company}. Pain: tool sprawl.\` }]
     }
   });
 
   await toolroute.execute({
-    tool: "resend/send",
+    tool: "resend/send-email",
     input: { to: lead.email, subject: email.subject, html: email.body }
   });
 }`,
@@ -152,7 +154,7 @@ for (const lead of leads.contacts) {
     title: "Customer Support Bot",
     description:
       "Search your documentation for relevant answers, query your database for customer-specific data, and compose accurate replies. Resolves tier-1 tickets instantly while escalating edge cases to humans with full context attached.",
-    tools: ["Context7", "Supabase", "Resend"],
+    tools: ["Context7", "Supabase", "Resend (BYOK)"],
     toolSlugs: ["context7", "supabase", "resend"],
     snippet: `const docs = await toolroute.execute({
   tool: "context7/search",
@@ -169,8 +171,9 @@ const customer = await toolroute.execute({
 
 const reply = await generateReply(docs, customer, ticket);
 
+// Requires BYOK for Resend
 await toolroute.execute({
-  tool: "resend/send",
+  tool: "resend/send-email",
   input: { to: ticket.email, subject: \`Re: \${ticket.subject}\`, html: reply }
 });`,
   },
@@ -239,19 +242,20 @@ for (const domain of domains) {
     title: "Voice AI Agent",
     description:
       "Transcribe incoming audio with speech-to-text, process the transcript through AI to understand intent and generate a response, then convert the reply back to natural speech. Build phone bots, voice assistants, and audio interfaces.",
-    tools: ["ElevenLabs STT", "Claude API", "ElevenLabs TTS"],
-    toolSlugs: ["elevenlabs", "anthropic", "elevenlabs"],
-    snippet: `const transcript = await toolroute.execute({
-  tool: "elevenlabs/speech-to-text",
+    tools: ["Whisper STT (BYOK)", "Claude (BYOK)", "ElevenLabs TTS (BYOK)"],
+    toolSlugs: ["whisper", "claude-api", "elevenlabs"],
+    snippet: `// Requires BYOK for Whisper (STT) + Claude + ElevenLabs
+const transcript = await toolroute.execute({
+  tool: "whisper/transcribe",
   input: { audio: incomingAudioBuffer }
 });
 
 const response = await toolroute.execute({
-  tool: "anthropic/messages",
+  tool: "claude/chat",
   input: {
     model: "claude-sonnet-4-20250514",
     system: "You are a helpful phone assistant.",
-    prompt: transcript.text
+    messages: [{ role: "user", content: transcript.text }]
   }
 });
 
