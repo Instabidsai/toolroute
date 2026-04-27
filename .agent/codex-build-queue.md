@@ -363,3 +363,5 @@ Claude is reading provider ToS for resale clauses.
 [REVIEW-WAIT] lane-1.3 @ 2026-04-27T16:29:01.9746870-04:00 | https://github.com/Instabidsai/toolroute/pull/5
 
 [CLAIMED] lane-1.5 @ 2026-04-27T16:22:25.2072912-04:00
+
+[REVIEW-WAIT] lane-1.5 @ 2026-04-27T16:38:01.5569631-04:00 | https://github.com/Instabidsai/toolroute/pull/6
