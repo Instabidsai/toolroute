@@ -43,7 +43,9 @@ async function findPageFiles(dir: string): Promise<string[]> {
   return out;
 }
 
-const SNIPPET_REGEX = /tool:\s*["']([a-z0-9-]+)\/([a-z0-9-]+)["']/gi;
+// Matches both JS object-literal `tool: "X/Y"` and JSON `"tool": "X/Y"` —
+// the curl examples in /docs use JSON inside `-d '{...}'` string literals.
+const SNIPPET_REGEX = /["']?\btool["']?\s*:\s*["']([a-z0-9-]+)\/([a-z0-9-]+)["']/gi;
 
 /**
  * Legacy broken refs in customer-facing code samples that pre-date this
