@@ -369,3 +369,11 @@ Claude is reading provider ToS for resale clauses.
 [CLAIMED] lane-1.6 @ 2026-04-27T16:24:05.9185946-04:00
 
 [REVIEW-WAIT] lane-1.6 @ 2026-04-27T16:49:50.1940788-04:00 | https://github.com/Instabidsai/toolroute/pull/7
+
+[CLAIMED] lane-3.1 @ 2026-04-27T16:32:52.4917030-04:00
+
+[VERIFIED-NO-CODE] lane-3.1 @ 2026-04-27T16:32:52.4917030-04:00 | Vercel production env has STRIPE_PRICE_CREDITS_5/10/25/50/100, STRIPE_PRICE_PRO, STRIPE_PRICE_ENTERPRISE
+
+[BLOCKED] lane-3.2 @ 2026-04-27T16:32:52.4917030-04:00 | live Stripe purchase E2E requires funded card/customer checkout run; skipping to code-backed lane 3.3
+
+[CLAIMED] lane-3.3 @ 2026-04-27T16:32:52.4917030-04:00
