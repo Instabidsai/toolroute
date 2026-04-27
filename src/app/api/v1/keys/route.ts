@@ -192,6 +192,93 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const { userId } = await getUserFromSession(authHeader);
+
+    let body: { key_id?: string; name?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: { message: "Invalid JSON body", code: "invalid_json" } },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    const keyId = typeof body.key_id === "string" ? body.key_id.trim() : "";
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+
+    if (!keyId) {
+      return NextResponse.json(
+        { error: { message: 'Missing required field: "key_id"', code: "missing_key_id" } },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    if (!name) {
+      return NextResponse.json(
+        { error: { message: 'Missing required field: "name"', code: "missing_name" } },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    if (name.length > 80) {
+      return NextResponse.json(
+        { error: { message: "Key name must be 80 characters or fewer", code: "name_too_long" } },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    const sb = supabaseAdmin();
+
+    const { data: existing } = await sb
+      .from("api_keys")
+      .select("id")
+      .eq("id", keyId)
+      .eq("user_id", userId)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: { message: "API key not found", code: "key_not_found" } },
+        { status: 404, headers: CORS_HEADERS }
+      );
+    }
+
+    const { data: keyRow, error } = await sb
+      .from("api_keys")
+      .update({ name })
+      .eq("id", keyId)
+      .eq("user_id", userId)
+      .select("id, name, key_prefix, allowed_tools, is_active, last_used_at, created_at, expires_at")
+      .single();
+
+    if (error) {
+      return NextResponse.json(
+        { error: { message: "Failed to rename API key", code: "rename_failed" } },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
+    return NextResponse.json({ data: keyRow }, { headers: CORS_HEADERS });
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        { error: { message: err.message, code: err.code } },
+        { status: err.status, headers: CORS_HEADERS }
+      );
+    }
+
+    console.error("Key rename error:", err);
+    return NextResponse.json(
+      { error: { message: "Internal server error", code: "internal_error" } },
+      { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
