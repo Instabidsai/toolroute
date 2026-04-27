@@ -385,3 +385,9 @@ Claude is reading provider ToS for resale clauses.
 [REVIEW-WAIT] lane-3.4 @ 2026-04-27T17:14:39.1054796-04:00 | https://github.com/Instabidsai/toolroute/pull/10
 
 [CLAIMED] lane-5.1 @ 2026-04-27T16:51:57.8398109-04:00
+
+[BLOCKED] lane-5.2 @ 2026-04-27T16:55:08.7402978-04:00 | waiting on Justin-funded provider keys from Lane 0.2 before adding Vercel env vars
+
+[BLOCKED] lane-5.3 @ 2026-04-27T16:55:08.7402978-04:00 | depends on Lane 5.2 provider keys before smoke-testing paid adapters
+
+[CLAIMED] lane-5.4 @ 2026-04-27T16:55:08.7402978-04:00

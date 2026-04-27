@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
 import { listAdapters } from "@/lib/adapters/index";
+import {
+  getToolAvailability,
+  listAvailableAdapters,
+} from "@/lib/adapter-availability";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     // OpenAI function-calling format: generate from adapter registry
     if (format === "openai") {
-      const adapters = listAdapters();
+      const adapters = listAvailableAdapters(listAdapters());
       const functions = [];
 
       for (const adapter of adapters) {
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // MCP tools/list format (JSON-RPC result shape)
     if (format === "mcp") {
-      const adapters = listAdapters();
+      const adapters = listAvailableAdapters(listAdapters());
       const tools = [];
       for (const adapter of adapters) {
         for (const op of adapter.operations) {
@@ -86,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     // Anthropic tool-use format (messages.create tools param)
     if (format === "anthropic") {
-      const adapters = listAdapters();
+      const adapters = listAvailableAdapters(listAdapters());
       const tools = [];
       for (const adapter of adapters) {
         for (const op of adapter.operations) {
@@ -135,24 +139,34 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const formatted = (fallback ?? []).map((t) => ({
-        id: t.slug,
-        name: t.name,
-        description: t.description,
-        operations: t.capabilities ?? [],
-        pricing: parseCostString(t.cost),
-        health: t.status === "active" ? "healthy" : "degraded",
-        avg_latency_ms: null,
-        category: {
-          super: t.super_category,
-          sub: t.sub_category,
-        },
-      }));
+      const formatted = (fallback ?? []).map((t) =>
+        withAvailability({
+          id: t.slug,
+          name: t.name,
+          description: t.description,
+          operations: t.capabilities ?? [],
+          pricing: parseCostString(t.cost),
+          health: t.status === "active" ? "healthy" : "degraded",
+          avg_latency_ms: null,
+          category: {
+            super: t.super_category,
+            sub: t.sub_category,
+          },
+        })
+      );
 
-      return NextResponse.json({ data: formatted }, { headers: CORS_HEADERS });
+      return NextResponse.json(
+        { data: formatted, tools: formatted },
+        { headers: CORS_HEADERS }
+      );
     }
 
-    return NextResponse.json({ data: tools ?? [] }, { headers: CORS_HEADERS });
+    const formatted = (tools ?? []).map(withAvailability);
+
+    return NextResponse.json(
+      { data: formatted, tools: formatted },
+      { headers: CORS_HEADERS }
+    );
   } catch (err) {
     console.error("Tool catalog error:", err);
     return NextResponse.json(
@@ -172,6 +186,26 @@ function parseCostString(cost: string | null): Record<string, unknown> {
     return { model: "per_unit", description: cost, free_tier: 0 };
   }
   return { model: "paid", description: cost, free_tier: 0 };
+}
+
+function withAvailability<
+  T extends { id?: unknown; slug?: unknown; tool_slug?: unknown },
+>(tool: T) {
+  const toolSlug =
+    typeof tool.slug === "string"
+      ? tool.slug
+      : typeof tool.id === "string"
+        ? tool.id
+        : typeof tool.tool_slug === "string"
+          ? tool.tool_slug
+          : null;
+  const availability = getToolAvailability(toolSlug);
+
+  return {
+    ...tool,
+    status: availability.status,
+    adapter_slug: availability.adapter_slug,
+  };
 }
 
 export async function OPTIONS() {
