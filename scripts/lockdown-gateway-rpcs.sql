@@ -6,7 +6,9 @@
 -- when probed with a non-existent user_id. With any real p_user_id, anon can
 -- mint or drain credits at will.
 --
--- Run this in the Supabase SQL editor for project isbratmfnnzipzyoefbo.
+-- This SQL was applied to production isbratmfnnzipzyoefbo at 2026-04-28T16:44Z
+-- via Supabase Mgmt API (Lane 4.92 corrects original arg-type drift). Re-running
+-- it is idempotent (REVOKE on already-revoked grants is a no-op).
 -- Sibling to scripts/lockdown-anon-writers.sql (registry-side).
 --
 -- The Next.js routes (api/v1/execute, api/webhooks/stripe, etc.) all use
@@ -40,24 +42,28 @@ GRANT EXECUTE ON FUNCTION public.add_credits(uuid, numeric, text, text, text)
     TO service_role;
 
 -- 4. deduct_credits — credit drain. CRITICAL. SECURITY DEFINER bypasses RLS.
---    Signature confirmed by Postgrest hint: (p_amount, p_description, p_key_id,
---    p_tool_slug, p_user_id) → declared order (numeric, text, uuid, text, uuid).
-REVOKE EXECUTE ON FUNCTION public.deduct_credits(numeric, text, uuid, text, uuid)
+--    Signature from pg_proc: p_user_id uuid, p_amount numeric, p_tool_slug text,
+--    p_key_id uuid, p_description text → (uuid, numeric, text, uuid, text).
+REVOKE EXECUTE ON FUNCTION public.deduct_credits(uuid, numeric, text, uuid, text)
     FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.deduct_credits(numeric, text, uuid, text, uuid)
+GRANT EXECUTE ON FUNCTION public.deduct_credits(uuid, numeric, text, uuid, text)
     TO service_role;
 
 -- 5. log_gateway_request — usage log poisoning surface.
---    Signature inferred from gateway.ts:300-312 (11 named args). Adjust types
---    if pg_proc disagrees. Common shape:
+--    Signature from pg_proc (13 args, all defaults from p_error onward):
 --      p_user_id uuid, p_key_id uuid, p_tool_slug text, p_provider text,
 --      p_status integer, p_cost_to_us numeric, p_cost_to_user numeric,
---      p_latency_ms integer, p_used_byok boolean, p_error text, p_key_source text
+--      p_latency_ms integer, p_used_byok boolean, p_error text, p_request_params jsonb,
+--      p_response_size integer, p_key_source text
+--
+--    NOTE: A dead 12-arg overload (without p_key_source) was dropped on Apr 28
+--    2026 — it caused PostgREST PGRST203 ambiguity. The 13-arg version is the
+--    only callable form and matches gateway.ts:301 + gateway.ts:345 callers.
 REVOKE EXECUTE ON FUNCTION public.log_gateway_request(
-    uuid, uuid, text, text, integer, numeric, numeric, integer, boolean, text, text
+    uuid, uuid, text, text, integer, numeric, numeric, integer, boolean, text, jsonb, integer, text
 ) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.log_gateway_request(
-    uuid, uuid, text, text, integer, numeric, numeric, integer, boolean, text, text
+    uuid, uuid, text, text, integer, numeric, numeric, integer, boolean, text, jsonb, integer, text
 ) TO service_role;
 
 COMMIT;
