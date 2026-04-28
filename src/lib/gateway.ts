@@ -199,14 +199,25 @@ async function triggerAutoTopup(
   });
 
   if (paymentIntent.status === "succeeded") {
-    // Add credits
-    await sb.rpc("add_credits", {
+    // Add credits. The Stripe webhook (payment_intent.succeeded handler) is
+    // the primary credit-grant path for auto_topup and is idempotent on
+    // stripe_payment_id, so a failure here is recoverable. We still log
+    // loudly because silent failure here means the customer is charged but
+    // sees no immediate balance bump until the webhook arrives.
+    const { error: addCreditsErr } = await sb.rpc("add_credits", {
       p_user_id: userId,
       p_amount: amountCents / 100,
       p_type: "purchase",
       p_stripe_payment_id: paymentIntent.id,
       p_description: `Auto top-up $${(amountCents / 100).toFixed(2)}`,
     });
+    if (addCreditsErr) {
+      console.error("triggerAutoTopup: add_credits failed", addCreditsErr.message, {
+        userId,
+        amountCents,
+        paymentIntentId: paymentIntent.id,
+      });
+    }
   }
 }
 
@@ -358,7 +369,7 @@ export async function executeToolRequest(
 
   // Deduct credits for successful requests
   if (result.success && finalCost > 0) {
-    const { data: deductResult } = await sb.rpc("deduct_credits", {
+    const { data: deductResult, error: deductErr } = await sb.rpc("deduct_credits", {
       p_user_id: ctx.userId,
       p_amount: finalCost,
       p_tool_slug: adapter.slug,
@@ -366,7 +377,20 @@ export async function executeToolRequest(
       p_description: toolPath + " execution",
     });
 
-    if (deductResult && !(deductResult as Record<string, unknown>).success) {
+    // Two distinct silent-failure modes:
+    //  (a) RPC threw — supabase-js returns {data: null, error: <PostgrestError>}.
+    //      The previous code only checked deductResult.success, so this
+    //      branch was invisible: customer received service, no credits deducted,
+    //      no log. This is direct revenue loss.
+    //  (b) RPC returned success=false — handled below as before.
+    if (deductErr) {
+      console.error("deduct_credits RPC errored:", deductErr.message, {
+        userId: ctx.userId,
+        finalCost,
+        toolSlug: adapter.slug,
+        requestId,
+      });
+    } else if (deductResult && !(deductResult as Record<string, unknown>).success) {
       console.error("Credit deduction failed:", deductResult);
     }
 
