@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const TAVILY_BASE_URL = "https://api.tavily.com";
 
@@ -58,10 +59,11 @@ export const tavilyAdapter: ToolAdapter = {
           body.topic = input.topic;
         }
 
-        const res = await fetch(`${TAVILY_BASE_URL}/search`, {
+        const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/search`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
@@ -97,10 +99,11 @@ export const tavilyAdapter: ToolAdapter = {
           urls,
         };
 
-        const res = await fetch(`${TAVILY_BASE_URL}/extract`, {
+        const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/extract`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 60_000,
         });
 
         if (!res.ok) {
@@ -140,7 +143,7 @@ export const tavilyAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${TAVILY_BASE_URL}/search`, {
+      const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,6 +151,7 @@ export const tavilyAdapter: ToolAdapter = {
           query: "test",
           max_results: 1,
         }),
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.firecrawl.dev/v1";
 
@@ -49,10 +50,11 @@ export const firecrawlAdapter: ToolAdapter = {
           body.formats = input.formats;
         }
 
-        const res = await fetch(`${BASE_URL}/scrape`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/scrape`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 60_000,
         });
 
         if (!res.ok) {
@@ -88,10 +90,11 @@ export const firecrawlAdapter: ToolAdapter = {
           body.limit = input.limit;
         }
 
-        const res = await fetch(`${BASE_URL}/crawl`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/crawl`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 90_000,
         });
 
         if (!res.ok) {
@@ -121,10 +124,11 @@ export const firecrawlAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/map`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/map`, {
           method: "POST",
           headers,
           body: JSON.stringify({ url }),
+          timeoutMs: 60_000,
         });
 
         if (!res.ok) {
@@ -164,9 +168,10 @@ export const firecrawlAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(BASE_URL, {
+      const res = await fetchWithTimeout(BASE_URL, {
         method: "GET",
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

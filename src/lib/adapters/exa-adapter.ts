@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const EXA_BASE_URL = "https://api.exa.ai";
 
@@ -71,10 +72,11 @@ export const exaAdapter: ToolAdapter = {
           body.category = input.category;
         }
 
-        const res = await fetch(`${EXA_BASE_URL}/search`, {
+        const res = await fetchWithTimeout(`${EXA_BASE_URL}/search`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
@@ -111,10 +113,11 @@ export const exaAdapter: ToolAdapter = {
           contents: { text: true },
         };
 
-        const res = await fetch(`${EXA_BASE_URL}/findSimilar`, {
+        const res = await fetchWithTimeout(`${EXA_BASE_URL}/findSimilar`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
@@ -151,10 +154,11 @@ export const exaAdapter: ToolAdapter = {
           highlights: true,
         };
 
-        const res = await fetch(`${EXA_BASE_URL}/contents`, {
+        const res = await fetchWithTimeout(`${EXA_BASE_URL}/contents`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
@@ -194,7 +198,7 @@ export const exaAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${EXA_BASE_URL}/search`, {
+      const res = await fetchWithTimeout(`${EXA_BASE_URL}/search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,6 +209,7 @@ export const exaAdapter: ToolAdapter = {
           numResults: 1,
           contents: { text: false },
         }),
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
