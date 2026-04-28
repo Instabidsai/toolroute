@@ -473,3 +473,13 @@ Claude is reading provider ToS for resale clauses.
   4. Promote Codex ticket #23 (Lane 6.5-impl BYOK runtime gate) priority to P0.
 - **Codex follow-up:** ticket #23 expands scope to include the cumulative 26-slug BYOK list documented in the memo (16 forbidden + 10 ambiguous; Resend + ElevenLabs are byok-permitted and pass through naturally without needing a gate). Memo includes the explicit gate logic for `/api/v1/execute`, `/mcp`, `/api/a2a`.
 - **Why this matters for /loop directive:** Lane 4 = security hardening; this is a live active-leak finding gating production-readiness of the financial gateway. Anthropic could revoke ToolRoute's API key on detection (breaks every demo path).
+
+## REVIEW-WAIT — Lane 6.14 (infrastructure providers ToS audit — FINAL master-pool batch)
+- **Branch:** `lane-6.14-infra-providers-tos-audit`
+- **Memo:** `.agent/lane-6.14-infra-providers-tos-audit.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Findings:** 2 confirmed forbidden via verbatim ToS quotes — Stripe (SSA §1.2(a)(viii) "act as service bureau or pass-through agent" + §2.5 "rent, lease, lend, sell, share, redistribute, or sublicense the Stripe Technology, or enable others to do so" + §1.2(a)(v) rights-transfer ban; Connect carve-out exists but is OAuth-per-account not master-pool), Supabase (§2(c) "rent, lease, lend, sell, license, sublicense, assign, distribute, publish, transfer, or otherwise make available the Services or Documentation to any third party"). Both env vars LATENT in prod (NOT set; severity HIGH/latent rather than P0/active).
+- **Architectural finding:** Both adapters are operationally broken-by-design via master pool — Stripe master key returns ToolRoute's OWN customers/products/balance (not downstream user data); Supabase Mgmt token IS the gateway DB owner-DDL credential (master-pool exposure = catastrophic gateway breach). Recommend Codex ticket to DELETE both adapters outright until Justin builds proper Connect / per-user OAuth flows.
+- **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` (per Lane 4.100 / ticket #23) with `stripe`, `supabase`. Final cumulative BYOK list now **28 slugs** (18 forbidden + 10 ambiguous default-to-BYOK).
+- **Cumulative state (29 providers attempted, audit class CLOSED):** 18 verified `forbidden`, 10 ambiguous-default-to-BYOK, 2 byok_only ok. Pattern holds zero-exceptions across entire audit.
+- **Master-pool resale audit class CLOSED with this lane.**
