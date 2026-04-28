@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.openai.com/v1";
 
@@ -53,7 +54,7 @@ export const openaiAdapter: ToolAdapter = {
             ? (input.temperature as number)
             : 0.7;
 
-        const res = await fetch(`${BASE_URL}/chat/completions`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/chat/completions`, {
           method: "POST",
           headers,
           body: JSON.stringify({ model, messages, max_tokens, temperature }),
@@ -94,10 +95,11 @@ export const openaiAdapter: ToolAdapter = {
         const size = (input.size as string) || "1024x1024";
         const n = (input.n as number) || 1;
 
-        const res = await fetch(`${BASE_URL}/images/generations`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/images/generations`, {
           method: "POST",
           headers,
           body: JSON.stringify({ model, prompt, size, n }),
+          timeoutMs: 120_000, // image generation takes longer
         });
 
         if (!res.ok) {
@@ -136,7 +138,7 @@ export const openaiAdapter: ToolAdapter = {
 
         const model = (input.model as string) || "text-embedding-3-small";
 
-        const res = await fetch(`${BASE_URL}/embeddings`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/embeddings`, {
           method: "POST",
           headers,
           body: JSON.stringify({ model, input: inputText }),
@@ -173,7 +175,7 @@ export const openaiAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/moderations`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/moderations`, {
           method: "POST",
           headers,
           body: JSON.stringify({ input: inputText }),
@@ -219,8 +221,9 @@ export const openaiAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/models`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/models`, {
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000, // health check is short
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
