@@ -3,7 +3,7 @@
 **Owner:** Claude (auditor)
 **Status:** in-progress
 **Started:** 2026-04-27
-**Last updated:** 2026-04-27
+**Last updated:** 2026-04-28 (Lane 6.9 added — 4 video/SMS structural bans)
 
 ## Why this matters
 
@@ -169,9 +169,25 @@ Combined with Resend's mechanical incompatibility, the **hybrid** model is not j
 - **Marketing copy** must avoid implying ToolRoute resells Anthropic/Replicate access. "Use your Anthropic key through ToolRoute" is the safe framing.
 - **CRITICAL FINDING**: After 6 of 8 ToS verified, **the launch master-pool surface may be empty** unless OpenAI / Firecrawl / Tavily / Deepgram come back with clear authorizations. Justin must email each of those providers (help@firecrawl.com, sales@tavily.com, sales@deepgram.com, OpenAI enterprise) before claiming "credits work for X" on the pricing page.
 
+## Sibling lanes (continued audit)
+
+- **Lane 6.8** — `.agent/lane-6.8-master-pool-tos-audit.md` — re-classified Tavily + Replicate as **STRUCTURAL BAN** after deeper read. Audited 5 funded master-pool providers.
+- **Lane 6.9** — `.agent/lane-6.9-video-sms-tos-audit.md` — **4 NEW STRUCTURAL BANS confirmed:** Mux, Twilio, HeyGen, Shotstack. All have explicit "no resale", "non-sublicensable", "service bureau forbidden", or "no API white-label" clauses. Creatify flagged `ambiguous_unverified` (JS-rendered SPA, manual browser fetch needed).
+
+**Cumulative master-pool-incompatible list (Lanes 6 + 6.8 + 6.9):**
+1. Anthropic — `forbidden` (D.4, negotiable via enterprise)
+2. Replicate — `forbidden` STRUCTURAL (2.7(c)(iii), service-bureau enumerated)
+3. Tavily — `forbidden` STRUCTURAL (re-classified 6.8)
+4. Mux — `forbidden` (§3.2 + non-sublicensable license)
+5. Twilio — `forbidden` (§2.2(b))
+6. HeyGen — `forbidden` (anti-API-white-label clause + service bureau)
+7. Shotstack — `forbidden` (§4.4 "in any manner whatsoever")
+
+**Pattern:** every commercial-output provider with per-unit COGS audited so far has explicit no-resale clauses. Master-pool fallback for these is a contractual breach the moment a non-Justin user calls them. Default-to-BYOK posture is forced, not optional.
+
 ## Next steps
 
-1. WebFetch each ToS URL and pull the actual resale/sublicense clause.
-2. Replace `_pending_` rows with quoted text + verdicts.
-3. Surface any `forbidden` or `ambiguous_ask_legal` results to Justin for legal review.
-4. Capture each provider's AUP into a shared list ToolRoute's ToS can reference.
+1. ✅ WebFetch each ToS URL and pull the actual resale/sublicense clause. (Lanes 6, 6.8, 6.9 — 12/13 verified, Creatify pending manual.)
+2. Codex ticket: extend BYOK-required Set in `src/lib/byok-slugs.ts` to add `mux`, `twilio`, `heygen`, `shotstack` (Lane 6.5-impl picks this up).
+3. Surface `forbidden` results to Justin for adapter-removal vs BYOK-only-gating decision.
+4. Lane 6.10 candidate (next batch): outscraper, exa, creatomate, dataforseo, deepl.
