@@ -803,3 +803,19 @@ Claude is reading provider ToS for resale clauses.
 6. Lane 4.106 evidence quotes (fabricated; conclusion holds)
 
 The queue describes the *intended* state, not the *live* state. The audit-pattern lesson: every "completed" entry needs a live-probe / grep-confirm anchor before being trusted. This is the ToolRoute-internal generalization of Hard Rule #61 (rows beat artifacts) + #62 (origin/main beats working tree) + the "applied-SQL claims need live-probe proof" rule from `~/.claude-jarvis/projects/.../memory/feedback_applied_sql_live_probe.md`.
+
+### Loop tick 53 — `/api/v1/key` audited fully clean
+
+**2026-04-28** — `src/app/api/v1/key/route.ts` (30 lines) + `getKeyInfo` body in `src/lib/gateway.ts:400-439` read full + 9 live probes.
+
+- **All auth-shape paths return clean 401:** unauth GET → `auth_required`; bogus tr_live_/tr_test_ → `invalid_key`; session-JWT-shape → `invalid_key_format`; empty Bearer → `auth_required`. POST → 405. OPTIONS → 204.
+- **IDOR-via-query-string blocked**: `?user_id=00000000-...` → 401 (auth fires before any param parse). `getKeyInfo()` line 401 `validateRequest(authHeader)` is the FIRST call; `ctx.userId` is the only user scope used downstream — no `request.url` parsing, no body parsing.
+- **Bounded SELECT** (line 411-419): `gateway_usage_log` queries select only `cost_to_user`, `.eq("user_id", ctx.userId)` scoped. Owner-only by design.
+- **Bounded response shape** (line 429-438):
+  - Returns: `key_name`, `plan`, `credit_balance`, `rate_limit.{rpm,rpd}`, `usage.{today,this_month}.{requests,cost}`.
+  - **Deliberately absent**: `user_id`, `email`, `key_prefix`, `key_id`, `created_at`. No IDOR-enabler exposed.
+- **Canary-echo probe**: sent `tr_live_canaryxxxx...` → 401 response body contained 0 occurrences of "canary". Lane 4.18 redactCreds + Lane 4.41 RPC error.message redaction holding for this endpoint.
+- **Class-symmetry vs `/api/v1/keys` (Lane 4.45 audit, ticks 44-45):** tr_live_/tr_test_ for `/api/v1/key` (info), session-only for `/api/v1/keys` (CRUD). Clean separation per Lane 4.105 dual-auth-asymmetry frame — no class-A drift.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **15 endpoint shapes** (added `/api/v1/key`) + 2 admin gates + drift findings unchanged.
+
+**Lane 0.1 + Lane 4.107 status (re-probed):** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS — **6 ticks observed unshipped**.
