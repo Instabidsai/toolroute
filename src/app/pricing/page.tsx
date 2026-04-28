@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { safeJsonLd } from "@/lib/json-ld";
 import {
   Check,
   Zap,
@@ -188,11 +189,11 @@ export default function PricingPage() {
     <div className="space-y-24 pb-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(pricingSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(faqSchema) }}
       />
       {/* Header */}
       <section className="text-center pt-12">

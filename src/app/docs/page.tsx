@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Zap, ArrowRight, ExternalLink } from "lucide-react";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "MCP Gateway API Documentation — Developer Guides | ToolRoute",
@@ -1136,7 +1137,7 @@ export default function DocsPage() {
     <div className="flex gap-8 pb-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(techArticleSchema) }}
       />
       {/* Sidebar TOC */}
       <aside className="hidden lg:block w-56 shrink-0">

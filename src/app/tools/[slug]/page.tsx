@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const revalidate = 60;
 
@@ -96,7 +97,7 @@ export default async function ToolDetailPage({
     <div className="max-w-3xl mx-auto">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <Link
         href="/tools"

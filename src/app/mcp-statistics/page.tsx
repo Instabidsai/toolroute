@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, TrendingUp, Package, Shield, Zap, Users } from "lucide-react";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "MCP Statistics 2026: Ecosystem, Adoption, and Tool Data | ToolRoute",
@@ -112,7 +113,7 @@ export default function MCPStatisticsPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       <div className="pb-16 max-w-4xl mx-auto">
