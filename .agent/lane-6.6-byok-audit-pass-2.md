@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (30 of 43 verified across 9 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
+**Status:** in-progress (33 of 43 verified across 10 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -47,10 +47,10 @@ stripe ✓, twilio ✓, vapi ✓, sendgrid ✓, textbelt ✓, shippo ⏳
 supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ✓, linkedin ✓, twitter ✓, notion ⏳
 
 **Tier C — AI/ML inference (LLM-adjacent):**
-deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack ✓, whisper ✓, removebg ✓, dataforseo, outscraper ✓, postiz, context7 ⏳
+deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ✓, higgsfield, creatomate ✓, shotstack ✓, whisper ✓, removebg ✓, dataforseo, outscraper ✓, postiz, context7 ⏳
 
 **Tier D — stock media (lower risk, often permissive):**
-pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ✓ (Brave), playwright ⏳ (Thum.io), auto (internal ✓), toolroute (internal ✓)
+pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ✓ (Brave), playwright ✓ (Thum.io — NO PUBLIC TOS FOUND), auto (internal ✓), toolroute (internal ✓)
 
 ✓ = verified this tick · ⏳ = WebFetch failed, retry next tick
 
@@ -324,6 +324,23 @@ pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf �
 - **Verdict:** **`ambiguous_ask_legal`** (inherits openai Lane 6.1 verdict). Default byok_only.
 - **Implication:** Treat whisper exactly like the openai adapter — both gated on the same ToS uncertainty.
 
+### HeyGen
+- **Source:** https://www.heygen.com/terms (per `src/lib/adapters/heygen-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§2 anti-API-interface clause (rare and direct):** "Frame, replicate, or develop an interface to access the Services without going directly to the Website (e.g., via an API and/or by white-labeling any portion of the Services), unless we explicitly make such functionality available to you"
+  - **§2 anti-competing-services clause:** "Use any portion of the Services to build any products or services that are competitive to any portion of the Services"
+  - **§2 default API license:** non-sublicensable (standard Tier 2)
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). The "develop an interface to access the Services...via an API" clause is unusually direct — most providers ban resale via license clauses, but HeyGen's clause is drafted specifically against API-interface gateways. ToolRoute's HeyGen adapter is *literally* an API interface to HeyGen's services not authored by HeyGen. Pairing with the anti-competing-services clause (gateway IS competitive in part — ToolRoute markets video tools alongside HeyGen) makes this a stacked, drafted-against-this-pattern breach.
+- **Implication:** Add heygen to `BYOK_REQUIRED_SLUGS`. HeyGen is also a candidate for outright removal — even with BYOK, a customer's HeyGen API call passing through ToolRoute's gateway arguably still "frames" or "develops an interface" to HeyGen. Need legal confirmation that BYOK pass-through (where the customer is the HeyGen contracting party, ToolRoute is just transport) doesn't fall under the §2 ban. This is a new finding class: **anti-API-interface clauses**, distinct from the standard sublicense chain.
+
+### Creatomate
+- **Source:** https://creatomate.com/terms-of-service (per `src/lib/adapters/creatomate-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:** None explicit — no Tier 1/2/3/4 hits. General IP-protection language ("The Service and its original content...will remain the exclusive property of the Company") but no API-resale, sublicense-chain, or service-bureau language.
+- **Verdict:** **`ambiguous_ask_legal`.** Silent ToS — like Outscraper, doesn't grant resale rights but doesn't forbid them either. Default byok_only at launch.
+- **Implication:** Default to BYOK gate. Justin should email Creatomate for explicit aggregator/gateway clearance — silent ToS is risk-shifting (no clear permission, but also no clear ban).
+
 ### Shotstack
 - **Source:** https://shotstack.io/terms/ (per `src/lib/adapters/shotstack-adapter.ts`)
 - **Date checked:** 2026-04-28
@@ -343,6 +360,16 @@ pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf �
   - No explicit credential-sharing or service-bureau language
 - **Verdict:** **`ambiguous_ask_legal`.** §3's "redistributing...access" is a clean Tier 2 hit — sufficient to default byok_only. §6's "build competing products" is the more interesting clause for ToolRoute specifically: a unified-tools gateway that includes background removal arguably uses remove.bg's infrastructure as part of building a competing background-removal-as-a-service offering, even if the actual processing is delegated. This is structurally similar to apollo §3(g)(1) but softer language.
 - **Implication:** Default to BYOK gate. Justin should email remove.bg/Kaleido to confirm whether ToolRoute's positioning constitutes a "competing product" under §6. Note also that the canonical remove.bg/api domain returned no /terms response — this ambiguity should be resolved by direct email contact, not assumption.
+
+### playwright → Thum.io (slug-name reclassification, NO PUBLIC TOS FOUND)
+- **Source:** No public ToS at https://www.thum.io/, /terms, /tos, /legal, or thumio.com (different vendor). Homepage has no legal links. Per `src/lib/adapters/playwright-adapter.ts` — `THUM_BASE = "https://image.thum.io/get"`.
+- **Date checked:** 2026-04-28
+- **Resale clauses found:** N/A — vendor publishes no enforceable Terms of Service that I could locate.
+- **Verdict:** **`silent_no_tos_findable`** — treat as `ambiguous_ask_legal` with elevated concern. A vendor without a public ToS is a separate risk class: ToolRoute has no enforceable contract with thum.io to point at if a dispute arises, AND thum.io retains unilateral right to change terms or terminate access without notice. Master-pool routing through a no-ToS vendor is operationally fragile in a way that's distinct from ToS-explicit bans.
+- **Implication:** **Treble concern:**
+  1. Default to BYOK gate (no grant of resale rights = treat as forbidden by default)
+  2. The slug name `playwright` actively misleads customers expecting Microsoft Playwright headless-browser automation; they get screenshot URLs from a no-ToS vendor instead. This is a separate Hard Rule #57 violation.
+  3. Justin should email Thum.io support@thum.io for explicit aggregator clearance + a written API agreement, or remove the adapter entirely.
 
 ### YouTube (Data API v3)
 - **Source:** https://developers.google.com/youtube/terms/api-services-terms-of-service
@@ -403,6 +430,7 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **image-gen → Fal.ai (Lane 6.6 t7, "timesharing, service bureau" + outsourcing-business ban + "Client will not expose any of the Services APIs directly to any End Users" — strongest API-exposure clause in audit)**
 - **search → Brave Search API (Lane 6.6 t8, Tier 2+3 stack: full sublicense chain + key-sharing ban + storage ban + anti-circumvention + anti-integration — strongest combined hit in audit)**
 - **shotstack (Lane 6.6 t9, Tier 2 + Tier 3 + explicit multi-account anti-pooling clause "Rendering large volumes of video on multiple accounts" — most directly drafted anti-aggregator clause in audit)**
+- **heygen (Lane 6.6 t10, §2 anti-API-interface clause "Frame, replicate, or develop an interface to access the Services...via an API" + anti-competing-services — first NEW finding class: clauses drafted specifically against API gateways, not just resale)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
@@ -419,8 +447,10 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **screenshot → ScreenshotOne (Lane 6.6 t7, isolated "non-sublicensable" Tier 2 hit)**
 - **pexels (Lane 6.6 t8, "competing service" clause concerns but no explicit key-sharing ban)**
 - **removebg (Lane 6.6 t9, §3 redistribute/sublicense + §6 "build competing products" — ToolRoute positioning may itself trigger §6)**
+- **creatomate (Lane 6.6 t10, silent ToS — no explicit ban or grant)**
+- **playwright → Thum.io (Lane 6.6 t10, NO PUBLIC TOS FOUND — vendor publishes no enforceable Terms; default forbidden + elevated concern; slug name actively misleads customers re: Microsoft Playwright)**
 
-That's **24 confirmed + 1 forbidden + 14 ambiguous = 39 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **9.75x the gate set — 76% of the catalog.**
+That's **25 confirmed + 1 forbidden + 16 ambiguous (including Thum.io no-ToS) = 42 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **10.5x the gate set — 82% of the catalog.**
 
 If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 19 additional confirmed-structural adapters at minimum, plus apollo (BYOK alone may not save) and unsplash (BYOK may require per-customer dev app registration).
 
@@ -431,6 +461,10 @@ If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRout
 **Protocol-level OAuth-per-customer count:** 4 Google-family adapters (drive, calendar, sheets, youtube) plus likely linkedin (anti-pooling §3.1(20)). For these, the OAuth flow itself blocks pooling — different adapter shape entirely (per-customer tokens, not a single API key).
 
 **Slug-name-hides-provider count:** 5 adapters where the slug name doesn't match the upstream provider — `image-gen` (Fal.ai), `pdf` (Html2PDF), `screenshot` (ScreenshotOne), `search` (Brave), `playwright` (Thum.io). This is a separate Hard Rule #57 (pre-launch copy audit) issue: the `playwright` slug is actively misleading because customers expect headless-browser automation but get Thum.io screenshot URLs. Marketing copy and `BYOK_REQUIRED_SLUGS` documentation must surface the upstream provider names so customers know what they're being asked to BYOK.
+
+**Anti-API-interface clauses (NEW finding class, t10):** HeyGen §2 contains language drafted specifically against API gateways: "Frame, replicate, or develop an interface to access the Services...via an API." Distinct from generic resale bans, this clause specifically targets API-interface products like ToolRoute. Worth adding to the Tier 1 grep checklist for future audits — search for "develop an interface", "API interface", "gateway", "white-label" in addition to existing service-bureau/timesharing/sublicense terms.
+
+**No-public-ToS count (NEW finding class, t10):** 1 adapter — `playwright` → Thum.io. Vendor publishes no findable Terms of Service. This is structurally distinct from a silent ToS (where one exists but is silent on resale): no ToS at all means no enforceable contract, and the vendor retains unilateral termination/modification rights. Master-pool routing through such a vendor is operationally fragile regardless of ToS. Should be flagged in pre-launch audit — vendors without ToS should require a written API agreement before any production routing.
 
 ---
 
