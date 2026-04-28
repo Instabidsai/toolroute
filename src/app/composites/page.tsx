@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getComposites, getTools } from "@/lib/api";
 import Link from "next/link";
 import { Layers, ArrowRight } from "lucide-react";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "MCP Tool Combinations — Multi-Tool Composites | ToolRoute",
@@ -58,7 +59,7 @@ export default async function CompositesPage() {
     <div>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionSchema) }}
       />
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Composites</h1>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getSkills } from "@/lib/api";
 import type { Skill } from "@/lib/types";
 import Link from "next/link";
+import { safeJsonLd } from "@/lib/json-ld";
 import {
   Sparkles,
   ExternalLink,
@@ -121,7 +122,7 @@ export default async function SkillsPage({
     <div className="space-y-12 pb-16 animate-slide-up">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionSchema) }}
       />
       {/* Hero */}
       <section className="text-center pt-8 pb-2">

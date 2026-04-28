@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTools } from "@/lib/api";
 import { getInventory } from "@/lib/api-server";
 import { ToolsClient } from "./ToolsClient";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "MCP Tools Catalog — Browse 70+ Curated AI Tools | ToolRoute",
@@ -53,7 +54,7 @@ export default async function ToolsPage() {
     <div>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionSchema) }}
       />
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">Tool Registry</h1>

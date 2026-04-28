@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Zap, ArrowRight, Check, X, Minus } from "lucide-react";
+import { safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "ToolRoute vs Alternatives — MCP Gateway Comparison",
@@ -191,7 +192,7 @@ export default function ComparePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd()) }}
       />
 
       <div className="space-y-24 pb-16">

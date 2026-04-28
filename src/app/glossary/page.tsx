@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookMarked } from "lucide-react";
+import { safeJsonLd } from "@/lib/json-ld";
 
 /* ---------- Metadata ---------- */
 export const metadata: Metadata = {
@@ -293,7 +294,7 @@ export default function GlossaryPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       <div className="pb-16 max-w-3xl mx-auto">
