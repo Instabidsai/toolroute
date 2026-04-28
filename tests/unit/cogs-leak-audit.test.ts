@@ -53,8 +53,19 @@ describe("Lane 4.10 — gateway COGS (cost_to_us) leak-class audit", () => {
       resolve(process.cwd(), "src/app/api/admin/stats/route.ts"),
       "utf-8"
     );
+    // Route imports + calls validateAdmin (the helper holds the secret check).
+    expect(adminRoute).toMatch(/from\s+["']@\/lib\/admin-auth["']/);
     expect(adminRoute).toMatch(/validateAdmin\(request\)/);
-    expect(adminRoute).toMatch(/x-admin-secret/);
-    expect(adminRoute).toMatch(/timingSafeEqual/);
+
+    // Helper is the single source of truth for x-admin-secret + timingSafeEqual
+    // (extracted in Lane 4.11). Assert it here so a refactor that drops the
+    // header check OR the timing-safe compare fails this test, not a duplicated
+    // assertion against the stale inline pattern.
+    const adminAuth = readFileSync(
+      resolve(process.cwd(), "src/lib/admin-auth.ts"),
+      "utf-8"
+    );
+    expect(adminAuth).toMatch(/x-admin-secret/);
+    expect(adminAuth).toMatch(/timingSafeEqual/);
   });
 });
