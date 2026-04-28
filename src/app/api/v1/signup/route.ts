@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { CORS_HEADERS, supabaseAdmin } from "@/lib/gateway";
+import { AUTHED_RESPONSE_HEADERS, supabaseAdmin } from "@/lib/gateway";
 import { getEmailDomain, isDisposableEmail } from "@/lib/disposable-domains";
 
 type SignupBody = {
@@ -15,7 +15,7 @@ const DEFAULT_FROM_EMAIL = "ToolRoute <onboarding@resend.dev>";
 function jsonError(message: string, code: string, status: number) {
   return NextResponse.json(
     { error: { message, code } },
-    { status, headers: CORS_HEADERS }
+    { status, headers: AUTHED_RESPONSE_HEADERS }
   );
 }
 
@@ -208,10 +208,10 @@ export async function POST(request: NextRequest) {
       api_key: apiKey.raw,
       key_prefix: apiKey.prefix,
     },
-    { status: 201, headers: CORS_HEADERS }
+    { status: 201, headers: AUTHED_RESPONSE_HEADERS }
   );
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

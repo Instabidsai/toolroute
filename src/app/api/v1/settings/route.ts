@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromSession, supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import { getPaymentMethodSummary, getStripeClient } from "@/lib/stripe-billing";
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     if (error || !data) {
       return NextResponse.json(
         { error: { message: "User not found", code: "user_not_found" } },
-        { status: 404, headers: CORS_HEADERS }
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -41,19 +41,19 @@ export async function GET(request: NextRequest) {
         has_payment_method: !!paymentMethod,
         payment_method: paymentMethod,
       },
-      { headers: CORS_HEADERS }
+      { headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
     console.error("Settings GET error:", err);
     return NextResponse.json(
       { error: { message: "Failed to fetch settings", code: "settings_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest) {
               code: "invalid_field",
             },
           },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400, headers: AUTHED_RESPONSE_HEADERS }
         );
       }
 
@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest) {
           if (typeof value !== "boolean") {
             return NextResponse.json(
               { error: { message: "auto_topup_enabled must be a boolean", code: "invalid_value" } },
-              { status: 400, headers: CORS_HEADERS }
+              { status: 400, headers: AUTHED_RESPONSE_HEADERS }
             );
           }
           updates[key] = value;
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest) {
                   code: "invalid_value",
                 },
               },
-              { status: 400, headers: CORS_HEADERS }
+              { status: 400, headers: AUTHED_RESPONSE_HEADERS }
             );
           }
           updates[key] = value;
@@ -125,7 +125,7 @@ export async function PATCH(request: NextRequest) {
                   code: "invalid_value",
                 },
               },
-              { status: 400, headers: CORS_HEADERS }
+              { status: 400, headers: AUTHED_RESPONSE_HEADERS }
             );
           }
           updates[key] = value;
@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest) {
           if (typeof value !== "string" || value.length < 1 || value.length > 100) {
             return NextResponse.json(
               { error: { message: "display_name must be a string between 1 and 100 characters", code: "invalid_value" } },
-              { status: 400, headers: CORS_HEADERS }
+              { status: 400, headers: AUTHED_RESPONSE_HEADERS }
             );
           }
           updates[key] = value;
@@ -146,7 +146,7 @@ export async function PATCH(request: NextRequest) {
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
         { error: { message: "No valid fields to update", code: "no_updates" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -172,7 +172,7 @@ export async function PATCH(request: NextRequest) {
               code: "no_payment_method",
             },
           },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400, headers: AUTHED_RESPONSE_HEADERS }
         );
       }
     }
@@ -193,7 +193,7 @@ export async function PATCH(request: NextRequest) {
       console.error("Settings update error:", error);
       return NextResponse.json(
         { error: { message: "Failed to update settings", code: "update_error" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -213,23 +213,23 @@ export async function PATCH(request: NextRequest) {
         has_payment_method: !!paymentMethod,
         payment_method: paymentMethod,
       },
-      { headers: CORS_HEADERS }
+      { headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
     console.error("Settings PATCH error:", err);
     return NextResponse.json(
       { error: { message: "Failed to update settings", code: "settings_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

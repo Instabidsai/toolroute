@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getUserFromSession, CORS_HEADERS } from "@/lib/gateway";
+import { getUserFromSession, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 
 const CREDIT_PRICES: Record<string, { amount: number; priceId: string }> = {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (!type) {
       return NextResponse.json(
         { error: { message: "Missing type: 'credits' or 'subscription'", code: "missing_type" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       if (!credit) {
         return NextResponse.json(
           { error: { message: "Invalid amount. Choose: 5, 10, 25, 50, or 100", code: "invalid_amount" } },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400, headers: AUTHED_RESPONSE_HEADERS }
         );
       }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { checkout_url: session.url },
-        { headers: CORS_HEADERS }
+        { headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       if (!priceId) {
         return NextResponse.json(
           { error: { message: "Invalid plan. Choose: pro or enterprise", code: "invalid_plan" } },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400, headers: AUTHED_RESPONSE_HEADERS }
         );
       }
 
@@ -102,29 +102,29 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { checkout_url: session.url },
-        { headers: CORS_HEADERS }
+        { headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     return NextResponse.json(
       { error: { message: "type must be 'credits' or 'subscription'", code: "invalid_type" } },
-      { status: 400, headers: CORS_HEADERS }
+      { status: 400, headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
     console.error("Checkout error:", err);
     return NextResponse.json(
       { error: { message: "Failed to create checkout session", code: "checkout_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

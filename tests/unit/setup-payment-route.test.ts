@@ -23,6 +23,8 @@ vi.mock("@/lib/stripe-billing", () => ({
 
 vi.mock("@/lib/gateway", () => ({
   CORS_HEADERS: {},
+  AUTHED_RESPONSE_HEADERS: {},
+  NO_STORE_HEADERS: {},
   getUserFromSession: mocks.getUserFromSession,
   supabaseAdmin: mocks.supabaseAdmin,
 }));

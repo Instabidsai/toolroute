@@ -3,7 +3,7 @@ import {
   validateRequest,
   checkRateLimit,
   executeToolRequest,
-  CORS_HEADERS,
+  AUTHED_RESPONSE_HEADERS,
 } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import type { ExecuteRequest } from "@/lib/gateway-types";
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: { message: "Invalid JSON body", code: "invalid_json" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             code: "missing_tool",
           },
         },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
             code: "missing_input",
           },
         },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
             latency_ms: result.latency_ms,
           },
         },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -83,11 +83,11 @@ export async function POST(request: NextRequest) {
           latency_ms: result.latency_ms,
         },
       },
-      { status: 200, headers: CORS_HEADERS }
+      { status: 200, headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
-      const headers = { ...CORS_HEADERS };
+      const headers = { ...AUTHED_RESPONSE_HEADERS };
       if (
         err.status === 429 &&
         "retryAfter" in (err as GatewayError & { retryAfter?: number })
@@ -110,11 +110,11 @@ export async function POST(request: NextRequest) {
           code: "internal_error",
         },
       },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

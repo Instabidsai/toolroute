@@ -4,7 +4,7 @@ import {
   generateApiKey,
   generateTestApiKey,
   supabaseAdmin,
-  CORS_HEADERS,
+  AUTHED_RESPONSE_HEADERS,
 } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (planError || !planRow) {
       return NextResponse.json(
         { error: { message: "User not found", code: "user_not_found" } },
-        { status: 404, headers: CORS_HEADERS }
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       console.error("API key creation error:", error);
       return NextResponse.json(
         { error: { message: "Failed to create API key", code: "key_creation_failed" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -81,20 +81,20 @@ export async function POST(request: NextRequest) {
         created_at: keyRow.created_at,
         warning: "Store this key securely. It cannot be retrieved again.",
       },
-      { status: 201, headers: CORS_HEADERS }
+      { status: 201, headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Key creation error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
@@ -117,23 +117,23 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.json(
         { error: { message: "Failed to list API keys", code: "list_keys_failed" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
-    return NextResponse.json({ data: keys ?? [] }, { headers: CORS_HEADERS });
+    return NextResponse.json({ data: keys ?? [] }, { headers: AUTHED_RESPONSE_HEADERS });
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Key list error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
@@ -149,14 +149,14 @@ export async function DELETE(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: { message: "Invalid JSON body", code: "invalid_json" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     if (!body.key_id) {
       return NextResponse.json(
         { error: { message: 'Missing required field: "key_id"', code: "missing_key_id" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -172,7 +172,7 @@ export async function DELETE(request: NextRequest) {
     if (!existing) {
       return NextResponse.json(
         { error: { message: "API key not found", code: "key_not_found" } },
-        { status: 404, headers: CORS_HEADERS }
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -185,26 +185,26 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return NextResponse.json(
         { error: { message: "Failed to revoke API key", code: "revoke_failed" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     return NextResponse.json(
       { message: "API key revoked", key_id: body.key_id },
-      { headers: CORS_HEADERS }
+      { headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Key revoke error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
@@ -220,7 +220,7 @@ export async function PATCH(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: { message: "Invalid JSON body", code: "invalid_json" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -230,21 +230,21 @@ export async function PATCH(request: NextRequest) {
     if (!keyId) {
       return NextResponse.json(
         { error: { message: 'Missing required field: "key_id"', code: "missing_key_id" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     if (!name) {
       return NextResponse.json(
         { error: { message: 'Missing required field: "name"', code: "missing_name" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     if (name.length > 80) {
       return NextResponse.json(
         { error: { message: "Key name must be 80 characters or fewer", code: "name_too_long" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -260,7 +260,7 @@ export async function PATCH(request: NextRequest) {
     if (!existing) {
       return NextResponse.json(
         { error: { message: "API key not found", code: "key_not_found" } },
-        { status: 404, headers: CORS_HEADERS }
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -275,27 +275,27 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       return NextResponse.json(
         { error: { message: "Failed to rename API key", code: "rename_failed" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
-    return NextResponse.json({ data: keyRow }, { headers: CORS_HEADERS });
+    return NextResponse.json({ data: keyRow }, { headers: AUTHED_RESPONSE_HEADERS });
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Key rename error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

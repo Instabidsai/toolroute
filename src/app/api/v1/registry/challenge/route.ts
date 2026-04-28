@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateRequest, checkRateLimit, supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { validateRequest, checkRateLimit, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 
 const SCORE_DIMS = [
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!body || typeof body !== "object") {
       return NextResponse.json(
         { error: { message: "Invalid JSON body", code: "invalid_json" } },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
             code: "missing_fields",
           },
         },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
     const s = scores as Record<string, number>;
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
               code: "invalid_score",
             },
           },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400, headers: AUTHED_RESPONSE_HEADERS }
         );
       }
     }
@@ -65,28 +65,28 @@ export async function POST(request: NextRequest) {
       console.error("registry/challenge RPC error:", error.message);
       return NextResponse.json(
         { error: { message: "Challenge failed", code: "rpc_error" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     return NextResponse.json(
       { ok: true, challenged_by: ctx.keyId, data },
-      { status: 200, headers: CORS_HEADERS }
+      { status: 200, headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
     return NextResponse.json(
       { error: { message: "Internal error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { validateAdmin } from "@/lib/admin-auth";
 
-const ADMIN_HEADERS = { ...CORS_HEADERS, "Content-Type": "application/json" };
+const ADMIN_HEADERS = { ...AUTHED_RESPONSE_HEADERS, "Content-Type": "application/json" };
 
 /**
  * GET /api/admin/stats — Platform-wide revenue, COGS, margin, and usage breakdown

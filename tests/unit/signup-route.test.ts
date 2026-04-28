@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/gateway", () => ({
   CORS_HEADERS: {},
+  AUTHED_RESPONSE_HEADERS: {},
+  NO_STORE_HEADERS: {},
   supabaseAdmin: mocks.supabaseAdmin,
 }));
 

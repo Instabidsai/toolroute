@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getKeyInfo, CORS_HEADERS } from "@/lib/gateway";
+import { getKeyInfo, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 
 export async function GET(request: NextRequest) {
@@ -7,23 +7,23 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const info = await getKeyInfo(authHeader);
 
-    return NextResponse.json(info, { headers: CORS_HEADERS });
+    return NextResponse.json(info, { headers: AUTHED_RESPONSE_HEADERS });
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Key info error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }
