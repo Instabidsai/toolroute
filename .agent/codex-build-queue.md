@@ -459,3 +459,17 @@ Claude is reading provider ToS for resale clauses.
 - **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` with `linkedin`, `hubspot`, `slack`, `github`, `notion`. Cumulative 20-slug Codex single-shot ticket now ready (mux, twilio, heygen, shotstack, deepl, apollo, linear, sendgrid, sentry, linkedin, hubspot, slack, github, outscraper, creatomate, dataforseo, exa, creatify, shippo, notion).
 - **Cumulative state (27 providers attempted):** 16 verified `forbidden`, 10 ambiguous-default-to-BYOK, 2 byok_only ok. Zero providers have unambiguous master-pool authorization.
 - **Audit class effectively exhausted:** only Stripe + Supabase remain (Lane 6.14, infrastructure providers — qualitatively different resale terms).
+
+## REVIEW-WAIT — Lane 4.100 (ACTIVE LEAK escalation: Anthropic + OpenAI master-pool keys live in prod)
+- **Branch:** `lane-4.100-master-pool-active-leak-audit`
+- **Memo:** `.agent/lane-4.100-master-pool-active-leak-audit.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** P0 / CRITICAL
+- **Finding:** Vercel prod env-var inventory (verified via `/v10/projects/$PROJ/env` API 2026-04-28) confirms `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are SET as `production`-target. Combined with `/api/v1/execute` having NO BYOK enforcement gate (verified via full route read; `src/lib/byok-slugs.ts` does NOT exist), any `tr_live_` key holder calling `{tool:"claude"|"openai",...}` without BYOK falls through to ToolRoute's pooled inference — direct ToS breach (Anthropic) + COGS leak (both). 16 of 18 verified-forbidden master-pool env vars are NOT set in prod (latent), 2 ARE set (active leak).
+- **Justin actions (immediate):**
+  1. `vercel env rm ANTHROPIC_API_KEY production --yes` (or DELETE via API).
+  2. `vercel env rm OPENAI_API_KEY production --yes`.
+  3. Force redeploy: empty commit on `main` + push, OR `vercel deploy --prod --yes` from `.vercel/` dir.
+  4. Promote Codex ticket #23 (Lane 6.5-impl BYOK runtime gate) priority to P0.
+- **Codex follow-up:** ticket #23 expands scope to include the cumulative 26-slug BYOK list documented in the memo (16 forbidden + 10 ambiguous; Resend + ElevenLabs are byok-permitted and pass through naturally without needing a gate). Memo includes the explicit gate logic for `/api/v1/execute`, `/mcp`, `/api/a2a`.
+- **Why this matters for /loop directive:** Lane 4 = security hardening; this is a live active-leak finding gating production-readiness of the financial gateway. Anthropic could revoke ToolRoute's API key on detection (breaks every demo path).
