@@ -82,8 +82,10 @@ server.tool(
     const { data, error } = await supabase.rpc("check_before_build", {
       p_task: task,
     });
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    if (error) {
+      console.error("mcp:check_before_build RPC error:", error.message);
+      return { content: [{ type: "text", text: "Error: check_before_build failed" }] };
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     };
@@ -103,8 +105,10 @@ server.tool(
       p_query: query,
       p_limit: limit,
     });
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    if (error) {
+      console.error("mcp:search_tools RPC error:", error.message);
+      return { content: [{ type: "text", text: "Error: search_tools failed" }] };
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     };
@@ -130,8 +134,10 @@ server.tool(
       p_super: super_category,
       p_sub: sub_category,
     });
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    if (error) {
+      console.error("mcp:get_category_champion RPC error:", error.message);
+      return { content: [{ type: "text", text: "Error: get_category_champion failed" }] };
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     };
@@ -145,8 +151,10 @@ server.tool(
   {},
   async () => {
     const { data, error } = await supabase.rpc("librarian_startup");
-    if (error)
-      return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    if (error) {
+      console.error("mcp:librarian_status RPC error:", error.message);
+      return { content: [{ type: "text", text: "Error: librarian_status failed" }] };
+    }
     return {
       content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     };
