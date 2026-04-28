@@ -706,3 +706,28 @@ Claude is reading provider ToS for resale clauses.
   - **Codex follow-up:** add `case "customer.subscription.updated"` that pulls new `items.data[0].price.id`, maps to plan_slug, updates `gateway_users.plan_slug + plan_id`. Sibling pattern to Lane 4.86 (cancel doesn't revoke tr_live_) — same "Stripe-side state changes ↔ DB drift" class.
 - **No leakage observed across all 7 case branches** — every error path uses console.error + generic 500, no Stripe payload echoed back to caller, no PII logged beyond customerId.
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **11 endpoint shapes** (added `/api/webhooks/stripe`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + schema-dir verified.
+
+### Loop tick 50 — `/api/v1/signup` deep-audit; rate-limit gap discovered
+
+**2026-04-28** — `src/app/api/v1/signup/route.ts` read full (218 lines) + 5 live validation-gate probes + grep-confirmed rate-limit gap.
+
+- **Validation chain exemplary** (lines 105-127): `EMAIL_PATTERN` → `isDisposableEmail` → `password.length≥8` → `accepted_tos===true`. All 5 live probes return clean 400s with bounded error codes:
+  - `=== invalid_json ===` → HTTP 400
+  - `=== missing_email ===` → HTTP 400 (`invalid_email`)
+  - `=== disposable ===` → HTTP 400 (`disposable_email`, against `mailinator.com`)
+  - `=== weak_password ===` → HTTP 400 (`weak_password`, `<8 chars`)
+  - `=== tos_missing ===` → HTTP 400 (`tos_required`)
+- **Lane 1.2 compliant**: `generateSignupApiKey()` line 18-22 emits `tr_test_` prefix only — no live-key issuance from public signup.
+- **Lane 1.D compliant**: new accounts insert with `credit_balance: 0`, `lifetime_credits: 0` (line 188-191) — no free-credit grant.
+- **Lane 4.24 sibling**: `VERIFY_ORIGIN = "https://toolroute.ai"` hardcoded (line 28) → magic-link redirect immune to `request.url` host-header / CNAME-based account-takeover.
+- **`rate_limit_rpm: 10`** stamped on new key (line 186) → gates the new KEY's runtime, NOT the signup endpoint itself.
+- **NEW LOW-LATENT finding — signup endpoint has NO per-IP rate limit** despite task #42 (Lane 4.27) being marked complete in the queue:
+  - `grep -nR "checkRateLimit"` across `src/` → only `execute/route.ts:19`, `registry/usage/route.ts:8`, `a2a/route.ts:132`, `registry/request/route.ts:8`, `registry/challenge/route.ts:19`, `mcp/route.ts:130`, `gateway.ts:99` — **NOT in `signup/route.ts`**.
+  - Lane 4.27 audit memo proposed the fix; implementation never shipped. Same drift class as Lane 4.107 (SQL committed, never executed).
+  - **Reachable today?** Yes — anonymous attacker can pump signup attempts unbounded. Each successful signup triggers Supabase `auth.signUp` (subject to Supabase's own per-IP throttle, ~30 req/hour anon) so the practical floor is bounded by Supabase, not ToolRoute. Severity: **LOW-LATENT** — Supabase shoulders the load today; if Justin migrates auth backends or raises Supabase throttles, surface area expands.
+  - **Codex follow-up:** wrap `POST /api/v1/signup` in `checkRateLimit(request, "signup", { rpm: 5 })` keyed on IP. Mirror Lane 4.27 audit-memo's proposed shape.
+- **MINOR observation:** `getVerifyOrigin(_request: NextRequest)` (line 30) takes a request param it never reads. Today the `_` prefix telegraphs intent; a future refactor that drops the prefix and re-introduces `request.headers.get("origin")` would silently re-open the open-redirect class. **Codex follow-up (cosmetic):** drop the parameter entirely, or add `// SECURITY: do NOT reintroduce request-derived origin — see Lane 4.24` comment.
+- **Email-enumeration**: signup returns `{error: "email_exists", code: 409}` when email is already in use (line 142-148). Industry-standard tradeoff acknowledged — UX vs. enumeration. Lane 4.27 audit memo accepted this; not flagging.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **12 endpoint shapes** (added `/api/v1/signup`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + schema-dir verified.
+
+**Drift-pattern observation across ticks 47-50:** four lanes audited this session (4.107 SQL, 4.27 rate-limit, gateway_enabled DB column, customer.subscription.updated handler) all fit the same shape: *task marked done in queue/audit memo + implementation absent from production*. Sibling to Hard Rule #61 (table row counts beat artifact existence) and #62 (read origin/main not working tree). **The queue itself is not authoritative** — only live-probe + grep-confirmed presence is.
