@@ -307,9 +307,12 @@ export async function executeToolRequest(
     const latencyMs = Date.now() - start;
     const errMsg = redactCreds(err instanceof Error ? err.message : String(err));
 
-    // Log the failed request
+    // Log the failed request. Don't throw if logging itself fails — the
+    // request already errored, and we still want to return a clean error
+    // shape to the caller. But do log loudly so missing usage rows don't
+    // become invisible billing-reconciliation gaps.
     const sb = supabaseAdmin();
-    await sb.rpc("log_gateway_request", {
+    const { error: logErr } = await sb.rpc("log_gateway_request", {
       p_user_id: ctx.userId,
       p_key_id: ctx.keyId,
       p_tool_slug: adapter.slug,
@@ -322,6 +325,13 @@ export async function executeToolRequest(
       p_error: errMsg,
       p_key_source: keySource,
     });
+    if (logErr) {
+      console.error("log_gateway_request failed (error path):", logErr.message, {
+        userId: ctx.userId,
+        toolSlug: adapter.slug,
+        requestId,
+      });
+    }
 
     return {
       success: false,
@@ -352,8 +362,13 @@ export async function executeToolRequest(
 
   const sb = supabaseAdmin();
 
-  // Log the request with key source and COGS
-  await sb.rpc("log_gateway_request", {
+  // Log the request with key source and COGS. If logging fails the request
+  // still completed successfully from the customer's perspective; we just
+  // lose the usage event — log_gateway_request feeds /admin/health, billing
+  // reconciliation, and per-tool COGS audits, so a silent loss here creates
+  // ghost revenue (we charged credits via deduct_credits below but no usage
+  // row exists to reconcile against). Log loudly.
+  const { error: logErr } = await sb.rpc("log_gateway_request", {
     p_user_id: ctx.userId,
     p_key_id: ctx.keyId,
     p_tool_slug: adapter.slug,
@@ -366,6 +381,15 @@ export async function executeToolRequest(
     p_error: result.error ? redactCreds(result.error) : null,
     p_key_source: keySource,
   });
+  if (logErr) {
+    console.error("log_gateway_request failed (success path):", logErr.message, {
+      userId: ctx.userId,
+      toolSlug: adapter.slug,
+      requestId,
+      finalCost,
+      costToUs,
+    });
+  }
 
   // Deduct credits for successful requests
   if (result.success && finalCost > 0) {
