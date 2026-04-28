@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (33 of 43 verified across 10 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
+**Status:** in-progress (38 of 43 verified across 11 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -41,13 +41,13 @@ This was a **classification blind spot in the original Lane 6 audit** — 5 adap
 ### Pass-2 audit queue (43, prioritized by structural-resale risk)
 
 **Tier A — payments + voice/comms (highest enforcement risk):**
-stripe ✓, twilio ✓, vapi ✓, sendgrid ✓, textbelt ✓, shippo ⏳
+stripe ✓, twilio ✓, vapi ✓, sendgrid ✓, textbelt ✓, shippo ⏳ (4 fetch attempts failed; partner-program pattern suggests default-forbidden — flagged below)
 
 **Tier B — data infra + auth-gated business APIs:**
 supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ✓, linkedin ✓, twitter ✓, notion ⏳
 
 **Tier C — AI/ML inference (LLM-adjacent):**
-deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ✓, higgsfield, creatomate ✓, shotstack ✓, whisper ✓, removebg ✓, dataforseo, outscraper ✓, postiz, context7 ⏳
+deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ✓, higgsfield ✓, creatomate ✓, shotstack ✓, whisper ✓, removebg ✓, dataforseo ✓, outscraper ✓, postiz ✓, context7 ✓
 
 **Tier D — stock media (lower risk, often permissive):**
 pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ✓ (Brave), playwright ✓ (Thum.io — NO PUBLIC TOS FOUND), auto (internal ✓), toolroute (internal ✓)
@@ -324,6 +324,52 @@ pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf �
 - **Verdict:** **`ambiguous_ask_legal`** (inherits openai Lane 6.1 verdict). Default byok_only.
 - **Implication:** Treat whisper exactly like the openai adapter — both gated on the same ToS uncertainty.
 
+### Higgsfield
+- **Source:** https://higgsfield.ai/terms-of-use-agreement (per `src/lib/adapters/higgsfield-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§1.2 (License) Tier 2:** "non-exclusive, non-transferable, **non-sublicensable**, revocable license"
+  - **§5.2(i) Tier 2 stacked:** "license, sell, rent, lease, transfer, assign, reproduce, distribute, host or otherwise commercially exploit the Service"
+  - **§5.1(iii) Tier 6 anti-competing:** "use or access the Service or any Outputs to develop, modify, fine-tune or improve any products or services that compete with our Services"
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). Triple-tier stack: non-sublicensable (Tier 2 isolated) + full sublicense chain enumerated (Tier 2 stacked) + Tier 6 anti-competing. The "host or otherwise commercially exploit" wording in §5.2(i) is the closest direct hit on gateway routing patterns.
+- **Implication:** Add higgsfield to `BYOK_REQUIRED_SLUGS`. The §5.1(iii) anti-competing clause is concerning even on a BYOK shape if ToolRoute markets video-generation tools alongside Higgsfield's offering — same shape as HeyGen.
+
+### Postiz
+- **Source:** https://postiz.com/terms-of-service (per `src/lib/adapters/postiz-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§7 (Acceptable Use) Tier 2 + Tier 6 stacked:** "resell, sublicense, white-label or otherwise commercialise the Service except under a written agreement with Gitroom Limited"
+  - **§10 IP grant:** "limited, non-exclusive, **non-transferable**, revocable licence to access and use the Service for its intended purpose during your subscription"
+  - **Open-source carve-out:** Component-level open-source licenses retained — this is informational, not a permission for ToolRoute (Postiz is hosted SaaS for paid customers).
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). The §7 "white-label or otherwise commercialise...except under a written agreement" clause is one of the cleanest direct anti-aggregator drafts seen — it explicitly enumerates white-label (Tier 6) AND requires a written agreement, leaving no room for tacit interpretation.
+- **Implication:** Add postiz to `BYOK_REQUIRED_SLUGS`. Justin should consider pursuing the §7 written-agreement path with Gitroom Limited if Postiz integration is strategic (similar to LinkedIn's "Marketing Developer Program" path). Without a written agreement, master-pool routing is direct breach.
+
+### Context7 (Upstash)
+- **Source:** https://upstash.com/trust/terms.pdf — main Upstash Terms apply per Context7 Addendum (https://upstash.com/trust/context7addendum.pdf). Per `src/lib/adapters/context7-adapter.ts`.
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§2.2 Tier 2+3 stacked (single sentence):** "You may not **resell, sublicense, lease, rent, loan, transfer, assign or otherwise commercially exploit** the Services or **make the Services available to any third party**."
+  - **§2.2 Tier 3 credential-sharing ban:** "You may not share your credentials or API keys with any third party except as necessary for your employees or contractors who have a legitimate need to access the Services."
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). Single-sentence Tier 2 stacked hit ("resell, sublicense, lease, rent, loan, transfer, assign or otherwise commercially exploit") + explicit "make the Services available to any third party" + explicit credential-sharing ban with employee/contractor narrow exception (master-pool customers are neither). Three independent breach vectors in two consecutive sentences.
+- **Implication:** Add context7 to `BYOK_REQUIRED_SLUGS`. Notably, Context7 is one of ToolRoute's listed Global Tools (per CLAUDE.md "Global Tools" table). ToolRoute *consuming* Context7 internally is fine — that's normal customer use. But shipping Context7 as a gateway-routed adapter for third-party customers triggers all three §2.2 breach vectors simultaneously.
+
+### DataForSEO
+- **Source:** https://dataforseo.com/terms-of-service (per `src/lib/adapters/dataforseo-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§7.1 (Data Usage Restrictions):** "any search engine results page (SERP) data or content obtained through the Service...shall not be used to compete with or adversely affect the business interests of the search engine providers"
+  - **§7.2:** Indemnification for §7.1 violations
+  - No explicit Tier 1/2/3/4/6 hits — silent on resale, sublicense, key-sharing, service bureau, white-label
+- **Verdict:** **`ambiguous_ask_legal`.** §7.1 is interesting because it's an *indirect* concern — DataForSEO data passed through a gateway to ToolRoute customers building SERP-tracking tools could be argued to "compete with or adversely affect" Google/Bing/etc. business interests, making DataForSEO indirectly liable. But this is a layered argument, not a direct resale ban. Default byok_only at launch.
+- **Implication:** Default to BYOK gate. The §7.1 search-engine-competition clause is a concern for DataForSEO's *upstream* relationship with Google rather than for ToolRoute's relationship with DataForSEO — but indirectly affects whether DataForSEO would tolerate ToolRoute's gateway pattern.
+
+### Shippo (NO TOS FETCHED — 4 attempts)
+- **Source attempted:** https://goshippo.com/legal (404), goshippo.com/legal/api-services-agreement (404), goshippo.com/legal/terms (404), prior tick attempts also 404.
+- **Date checked:** 2026-04-28
+- **Indirect signal:** Shippo publishes a dedicated **"Shippo for Software Providers"** partner program (https://goshippo.com/shippo-for-software-providers — found via search). The existence of a separate software-provider partnership tier is a strong implicit signal that **default ToS does NOT authorize aggregator routing** — vendors who publish dedicated partner programs typically structure default ToS to exclude the partnership pattern, requiring opt-in to the program for compliant aggregator routing.
+- **Verdict:** **`ambiguous_ask_legal`** with elevated concern (verdict pending direct ToS read once locatable). Default byok_only at launch. **PRIORITY:** Justin should request Shippo's API Services Agreement directly from sales@goshippo.com OR investigate Software Providers partner program eligibility/cost.
+- **Implication:** Add shippo to `BYOK_REQUIRED_SLUGS` defensively. The implicit signal from the partner-program structure (LinkedIn-style: tiered authorization) strongly suggests master-pool routing requires partner agreement — this matches the structural-ban pattern even though I couldn't read the actual ToS.
+
 ### HeyGen
 - **Source:** https://www.heygen.com/terms (per `src/lib/adapters/heygen-adapter.ts`)
 - **Date checked:** 2026-04-28
@@ -431,6 +477,9 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **search → Brave Search API (Lane 6.6 t8, Tier 2+3 stack: full sublicense chain + key-sharing ban + storage ban + anti-circumvention + anti-integration — strongest combined hit in audit)**
 - **shotstack (Lane 6.6 t9, Tier 2 + Tier 3 + explicit multi-account anti-pooling clause "Rendering large volumes of video on multiple accounts" — most directly drafted anti-aggregator clause in audit)**
 - **heygen (Lane 6.6 t10, §2 anti-API-interface clause "Frame, replicate, or develop an interface to access the Services...via an API" + anti-competing-services — first NEW finding class: clauses drafted specifically against API gateways, not just resale)**
+- **higgsfield (Lane 6.6 t11, §1.2 non-sublicensable + §5.2(i) full sublicense chain stacked + §5.1(iii) anti-competing — three-tier stack)**
+- **postiz (Lane 6.6 t11, §7 "resell, sublicense, white-label or otherwise commercialise...except under a written agreement" — clean Tier 2 + Tier 6 stacked single sentence)**
+- **context7 → Upstash (Lane 6.6 t11, §2.2 Tier 2 stacked + "make the Services available to any third party" + explicit credential-sharing ban — three independent breach vectors in two sentences)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
@@ -449,8 +498,10 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **removebg (Lane 6.6 t9, §3 redistribute/sublicense + §6 "build competing products" — ToolRoute positioning may itself trigger §6)**
 - **creatomate (Lane 6.6 t10, silent ToS — no explicit ban or grant)**
 - **playwright → Thum.io (Lane 6.6 t10, NO PUBLIC TOS FOUND — vendor publishes no enforceable Terms; default forbidden + elevated concern; slug name actively misleads customers re: Microsoft Playwright)**
+- **dataforseo (Lane 6.6 t11, silent ToS — only §7.1 indirect anti-search-engine-competition clause, no direct resale ban)**
+- **shippo (Lane 6.6 t11, NO TOS FETCHABLE — 4 attempts 404; Software Providers partner program exists, implies default ToS excludes aggregator routing; defensive byok_only)**
 
-That's **25 confirmed + 1 forbidden + 16 ambiguous (including Thum.io no-ToS) = 42 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **10.5x the gate set — 82% of the catalog.**
+That's **28 confirmed + 1 forbidden + 18 ambiguous (incl. 1 no-ToS + 1 unfetchable) = 47 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **11.75x the gate set — 92% of the catalog.**
 
 If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 19 additional confirmed-structural adapters at minimum, plus apollo (BYOK alone may not save) and unsplash (BYOK may require per-customer dev app registration).
 
@@ -465,6 +516,8 @@ If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRout
 **Anti-API-interface clauses (NEW finding class, t10):** HeyGen §2 contains language drafted specifically against API gateways: "Frame, replicate, or develop an interface to access the Services...via an API." Distinct from generic resale bans, this clause specifically targets API-interface products like ToolRoute. Worth adding to the Tier 1 grep checklist for future audits — search for "develop an interface", "API interface", "gateway", "white-label" in addition to existing service-bureau/timesharing/sublicense terms.
 
 **No-public-ToS count (NEW finding class, t10):** 1 adapter — `playwright` → Thum.io. Vendor publishes no findable Terms of Service. This is structurally distinct from a silent ToS (where one exists but is silent on resale): no ToS at all means no enforceable contract, and the vendor retains unilateral termination/modification rights. Master-pool routing through such a vendor is operationally fragile regardless of ToS. Should be flagged in pre-launch audit — vendors without ToS should require a written API agreement before any production routing.
+
+**Partner-program-as-implicit-signal (NEW finding pattern, t11):** Shippo publishes a dedicated "Shippo for Software Providers" partner tier (https://goshippo.com/shippo-for-software-providers). Vendors who maintain dedicated software-provider partner programs typically structure default ToS to *exclude* aggregator routing, requiring opt-in to the partner program for compliance. This matches the LinkedIn-style "Marketing Developer Program" pattern and X's "Enterprise" tier — tiered authorization is itself an implicit ban on master-pool routing under the default tier. Worth grepping target providers' websites for /partners/, /software-providers/, /isv/, /marketplace/ paths during audit pre-work — finding such a program should escalate the verdict to byok_only or forbidden even before reading the ToS itself.
 
 ---
 
