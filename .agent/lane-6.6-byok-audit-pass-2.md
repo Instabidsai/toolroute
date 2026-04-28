@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (17 of 43 verified across 4 ticks)
+**Status:** in-progress (20 of 43 verified across 5 ticks)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -30,7 +30,7 @@ claude, deepgram, elevenlabs, firecrawl, openai, replicate, resend, tavily
 ### Pass-2 audit queue (43, prioritized by structural-resale risk)
 
 **Tier A — payments + voice/comms (highest enforcement risk):**
-stripe ✓, twilio ✓, vapi ✓, sendgrid ⏳, textbelt, shippo
+stripe ✓, twilio ✓, vapi ✓, sendgrid ✓, textbelt, shippo
 
 **Tier B — data infra + auth-gated business APIs:**
 supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ✓, linkedin ✓, twitter ✓, notion ⏳
@@ -39,13 +39,13 @@ supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar
 deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7
 
 **Tier D — stock media (lower risk, often permissive):**
-pexels, unsplash, youtube, playwright, linear, pdf, screenshot, image-gen, search, auto, toolroute
+pexels ⏳, unsplash ✓, youtube ✓, playwright, linear, pdf, screenshot, image-gen, search, auto, toolroute
 
 ✓ = verified this tick · ⏳ = WebFetch failed, retry next tick
 
 ---
 
-## Per-provider verdicts (6 verified this tick)
+## Per-provider verdicts (cumulative across 5 ticks)
 
 ### Stripe
 - **Source:** https://stripe.com/legal/ssa
@@ -210,6 +210,37 @@ pexels, unsplash, youtube, playwright, linear, pdf, screenshot, image-gen, searc
 - **Verdict:** **`ambiguous_ask_legal`.** Default byok_only at launch — Creatify's API access tier may be limited to authorized partners; need to confirm with Creatify business team whether master-pool is permitted.
 - **Implication:** Default to BYOK gate; ask Justin to email Creatify legal/partnerships before promoting master-pool path.
 
+### SendGrid (via Twilio parent ToS)
+- **Source:** https://www.twilio.com/en-us/legal/tos (SendGrid is owned by Twilio; Twilio MSA governs absent SendGrid-specific terms)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **Direct ban:** "not transfer, resell, lease, license, or otherwise make available the Services to third parties"
+  - **End User carve-out:** services may be made available "to make the Services available to your End Users" as part of your own products/services
+  - **§2.2:** "use commercially reasonable efforts to prevent unauthorized access" + "solely responsible for all use of the Services...under your account"
+- **Verdict:** **`byok_only`.** Tier 2 phrase hit — "transfer, resell, lease, license, or otherwise make available the Services to third parties" is the canonical sublicense ban. The "End User" carve-out covers ToolRoute's *own* transactional emails (Lane 6.1 already confirmed this), but does NOT cover ToolRoute customers sending email through a pooled SendGrid account.
+- **Implication:** Add sendgrid to `BYOK_REQUIRED_SLUGS`. Note: this same Twilio MSA also governs the twilio adapter (already audited Lane 6.6 t1) and is likely the legal basis for the vapi audit reading.
+
+### Unsplash
+- **Source:** https://unsplash.com/api-terms
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§2 (Credentials):** "You may not share your Credentials with any third party" + "You will not use the developer credentials assigned to a different individual or entity"
+  - **§2 (Account binding):** "You may only link your API account with your Developer Apps, and not link your API account to any third-party products or services"
+  - **§4 (Aggregation):** "You must not aggregate Content received via the APIs with any third-party content such that users of your Developer Apps cannot attribute the Content to Unsplash"
+  - **§8 (Sublicensing):** sublicensing requires Unsplash's prior written consent
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). Tier 1 + Tier 3 hits. The §2 credential-sharing ban + the §2 prohibition on linking the API account to "third-party products or services" together ban the gateway-adapter pattern at credential layer. Even BYOK has a wrinkle: each ToolRoute customer must run their own Developer App, not share a ToolRoute-owned one.
+- **Implication:** Add unsplash to `BYOK_REQUIRED_SLUGS`. Consider whether even BYOK passes muster — Unsplash credentials are bound to "your Developer Apps", which suggests each customer needs their own registered developer app, not just a credential within ToolRoute's app.
+
+### YouTube (Data API v3)
+- **Source:** https://developers.google.com/youtube/terms/api-services-terms-of-service
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§10.1 (License):** "non-sublicensable" license grant — explicit anti-sublicense
+  - **§1 (Definitions):** "credentials assigned to you and your API Client(s)" — non-transferable, tied to specific developer + apps
+  - **§3.1 (Use):** "You...will only access (or attempt to access) the YouTube API Services to develop and operate your API Client(s)" — implies direct, not intermediary, access
+- **Verdict:** **`forbidden`** at protocol layer (Tier 5). Like Google Drive/Calendar/Sheets, YouTube Data API uses Google OAuth scopes that bind to per-customer consent flows. The non-sublicensable license + credential-binding to specific API Clients structurally blocks master-pool routing. Master-pool would also breach §3.1's "develop and operate your API Client(s)" wording.
+- **Implication:** Same shape as drive/calendar/sheets — adapter must run per-customer OAuth, not a pooled API key. Add youtube to `BYOK_REQUIRED_SLUGS` AND verify the adapter implementation uses OAuth-per-customer (not a master Google API key).
+
 ---
 
 ## Cross-cutting finding — ToolRoute-as-customer vs. adapter-as-gateway
@@ -252,30 +283,36 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - hubspot (Lane 6.6 t3, AUP §5.5(vii) "timesharing or service bureau purposes")
 - **deepl (Lane 6.6 t4, §8.1.4 "repackage or resell access credentials" + §5.2 explicit anti-aggregator policy)**
 - **mux (Lane 6.6 t4, §3.2(2) anti-resale + §2.1 non-sublicensable license)**
+- **sendgrid (Lane 6.6 t5, Twilio MSA "transfer, resell, lease, license, or otherwise make available...to third parties")**
+- **unsplash (Lane 6.6 t5, §2 credential-sharing ban + §2 third-party product binding ban + §4 aggregation ban)**
+- **youtube (Lane 6.6 t5, §10.1 non-sublicensable + §3.1 develop-and-operate-your-API-Client requirement; protocol-level OAuth-per-customer)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
+- **unsplash partial-forbidden risk (Lane 6.6 t5, §2 binds credentials to "your Developer Apps" — even BYOK may require each customer to register their own Unsplash dev app, not share ToolRoute's app)**
 
 **Ambiguous — default byok_only at launch pending Justin outreach:**
 - openai, firecrawl, tavily, deepgram (Lane 6.1)
 - twilio, github (Lane 6.6 t1)
 - **creatify (Lane 6.6 t4, no explicit ban but minimal API terms — confirm authorization tier)**
 
-That's **17 confirmed + 1 forbidden + 7 ambiguous = 25 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **6.25x the gate set — nearly half the catalog.**
+That's **20 confirmed + 1 forbidden + 7 ambiguous = 28 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **7x the gate set — over half the catalog.**
 
-If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 13 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save).
+If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 16 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save) and unsplash (where even BYOK may require per-customer dev app registration).
 
 **Service-bureau-by-name count:** 4 providers explicitly use the phrase "service bureau" in their ToS as a banned pattern: stripe, sentry (implicit via "on behalf of"), twitter (most explicit), hubspot. ToolRoute's pooled adapter pattern is exactly this anti-pattern.
 
 **Anti-aggregator-by-policy count:** 2 providers go beyond ToS to publish corporate policy refusing aggregator contracts: DeepL §5.2 ("rejects contracts with customers providing machine translation services") and apollo §3(g)(1). These are the hardest cases — even legal outreach is unlikely to clear master-pool routing.
 
+**Protocol-level OAuth-per-customer count:** 4 Google-family adapters (drive, calendar, sheets, youtube) plus likely linkedin (anti-pooling §3.1(20)). For these, the OAuth flow itself blocks pooling — different adapter shape entirely (per-customer tokens, not a single API key).
+
 ---
 
 ## Next steps (subsequent loop ticks)
 
-1. Retry notion + sendgrid + exa + heygen with alternate fetch paths (multiple have SPA-rendered ToS pages blocking WebFetch — try docs subdomain or app subdomain)
-2. Audit Tier C remainder (higgsfield, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7)
-3. Audit Tier D remaining (pexels, unsplash, youtube, textbelt, shippo)
+1. Retry notion + exa + heygen + pexels with alternate fetch paths (multiple have SPA-rendered ToS pages blocking WebFetch — try docs subdomain, app subdomain, or web archive)
+2. Audit Tier C remainder (higgsfield, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7) — most of these returned 404 on canonical /terms paths; need WebSearch for actual ToS URL
+3. Audit Tier D remaining (textbelt, shippo, plus playwright/linear which are the only Tier D third-party adapters left)
 4. Confirm which ToolRoute-internal aggregators (auto, image-gen, search, toolroute, pdf, screenshot, playwright, linear) wrap upstream providers vs. are pure aggregators
 5. After all 43 done: emit a single PR updating `BYOK_REQUIRED_SLUGS` candidate set in Lane 6.5's patch proposal with the verified list
 
