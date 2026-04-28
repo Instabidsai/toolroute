@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { assertSafePublicUrl, SSRFError } from "../ssrf-guard";
 
 const THUM_BASE = "https://image.thum.io/get";
 
@@ -54,6 +55,19 @@ export const playwrightAdapter: ToolAdapter = {
             error: "Missing required field: url",
             provider: "playwright",
           };
+        }
+
+        try {
+          assertSafePublicUrl(url);
+        } catch (err) {
+          if (err instanceof SSRFError) {
+            return {
+              success: false,
+              error: `Refused to fetch: ${err.message}`,
+              provider: "playwright",
+            };
+          }
+          throw err;
         }
 
         const res = await fetch(url, {
