@@ -213,7 +213,8 @@ async function triggerAutoTopup(
 export async function executeToolRequest(
   ctx: GatewayContext,
   toolPath: string,
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
+  options?: { max_price?: number }
 ): Promise<ToolResult> {
   if (ctx.allowedTools && !ctx.allowedTools.includes(toolPath)) {
     throw new GatewayError(
@@ -225,6 +226,21 @@ export async function executeToolRequest(
 
   const { adapter, operation } = resolveAdapter(toolPath);
   const estimatedCost = adapter.estimateCost(operation, input);
+
+  if (
+    typeof options?.max_price === "number" &&
+    options.max_price >= 0 &&
+    estimatedCost > options.max_price
+  ) {
+    throw new GatewayError(
+      "Estimated cost $" +
+        estimatedCost.toFixed(4) +
+        " exceeds requested max_price $" +
+        options.max_price.toFixed(4),
+      402,
+      "max_price_exceeded"
+    );
+  }
 
   if (ctx.creditBalance < estimatedCost && estimatedCost > 0) {
     throw new GatewayError(
