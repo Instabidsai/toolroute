@@ -757,3 +757,49 @@ Claude is reading provider ToS for resale clauses.
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **13 endpoint shapes** (added `/api/v1/billing/setup-payment`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + 2 setup-payment-low-latent + schema-dir verified.
 
 **Lane 0.1 + Lane 4.107 status (re-probed this tick):** `usage_events` 401 LOCKED (Lane 0.1 holds), `tool_providers` 200 [] AMBIGUOUS, `rate_limit_windows` 200 [] AMBIGUOUS — Lane 4.107 SQL still unshipped. Justin blocker persists.
+
+### Loop tick 52 — `/api/admin/providers` deep-audit; Lane 4.106 citation-drift correction
+
+**2026-04-28** — `src/app/api/admin/providers/route.ts` read full (179 lines) + `src/lib/admin-auth.ts` read full (22 lines) + 9 live probes + Lane 4.106 evidence-quote cross-check vs `git show 7e4b09e:` (the commit that landed Lane 4.106).
+
+**Auth surface (positive):**
+- `validateAdmin` (admin-auth.ts:15-21) is the FIRST line of both POST and GET handlers (line 11, 129). Body parsing happens AFTER auth.
+- 9 live probes confirm 401-before-everything: unauth GET/POST, bogus secret, empty secret, wrong-shape session JWT, 100KB unauth POST → all 401 `admin_auth_required`.
+- `crypto.timingSafeEqual` with explicit length-pre-check (line 19-20) — Lane 4.44 timing-safe HMAC pattern correctly applied. Length-mismatch returns false WITHOUT calling timingSafeEqual (which would throw).
+- `expected = process.env.TOOLROUTE_ADMIN_SECRET`; if env var unset → fail closed (line 18).
+- Method coverage tight: PUT/DELETE/PATCH all 405 (Next.js default). Only POST/GET/OPTIONS exported.
+- OPTIONS preflight 204 with `AUTHED_RESPONSE_HEADERS`.
+
+**GET response shape (positive):**
+- Explicit SELECT column allowlist (line 142-145) — `auth_key_encrypted` deliberately NOT in the projected columns. Confirmed by reading the field list.
+- `has_master_key: true` flag added unconditionally for any returned row (line 160) — no key value ever leaves the server through GET.
+- Response includes provider configuration + health metrics, no credentials.
+
+**POST write path (Lane 4.106 finding holds at substance):**
+- Line 59 (UPDATE branch) and line 96 (INSERT branch) both write `auth_key_encrypted: api_key` plaintext. Column-naming-as-lie still active. Lane 4.106 conclusion is correct.
+- POST has TOCTOU between line 50-54 SELECT and line 91 INSERT (two admins racing on same `tool_slug` could both INSERT). Class-match to Lane 4.88, severity VERY-LOW (admin-only write surface, internal HMAC-gated).
+
+**NEW finding — Lane 4.106 has citation drift (Hard Rule #62 sibling):**
+- Lane 4.106 line 22-30 quoted the write path as `.from("tool_providers").upsert({...})`. **Actual code uses `.from("tool_providers").update(updateFields)` after a SELECT-then-decide branch (route.ts line 50-87).**
+- Lane 4.106 line 33-35 quoted a PATCH handler at line 96 with `if (api_key !== undefined) updateBody.auth_key_encrypted = api_key`. **Route has no PATCH method; only POST/GET/OPTIONS.** Variable `updateBody` doesn't exist in the file.
+- Verified: `git show 7e4b09e:src/app/api/admin/providers/route.ts` (the commit that landed Lane 4.106) shows the SAME current code — INSERT-or-UPDATE, no PATCH, no upsert. So this isn't post-write drift; the audit memo's evidence quotes were FABRICATED at write-time.
+- **Severity: HIGH for audit-pattern hygiene; LOW for substance** — Lane 4.106's conclusion (plaintext write + anon-AMBIGUOUS read class) is correct via the actual lines 59 + 96, just not via the lines the memo cited.
+- **Codex follow-up (memo amendment):** PR to amend `lane-4.106-master-pool-plaintext-and-anon-read.md` lines 22-35 to quote the actual `update(updateFields)` and INSERT branches. Sibling memo to Hard Rule #62 (read origin/main, not working tree) — extension: read the FILE not your own past prose.
+- **Pattern-level lesson for /loop:** the audit-pattern checklist for new memos should include "open the cited file:line and confirm the code matches before write" — for Lane 4.106 this would have caught the upsert/update + missing-PATCH fabrication in <30s. Adds to the same drift class as Lane 4.107 (`scripts/lockdown-anon-writes-and-admin-tables.sql` claimed shipped, actually not run).
+
+**Body-size guard status:** task #79 (Lane 4.60) marked complete claims a 16KB body-size guard on admin/providers. **Live grep `readBoundedJson|MAX_BODY|content-length` on route.ts → ZERO matches.** This is a third instance of audit-marked-complete-but-implementation-absent, joining Lane 4.107 (SQL unshipped) + Lane 4.27 (signup rate-limit unshipped). Severity here is LOW because admin auth fires before body parse, so DoS surface is bounded by HMAC-secret discipline.
+- **Codex follow-up:** add `await readBoundedJson(request, 16 * 1024)` after `validateAdmin()` in POST. Mirrors Lane 4.59 trio pattern.
+
+**Cumulative session probe-matrix:** 26 tables + 7 RPCs + **14 endpoint shapes** (added `/api/admin/providers`) + 2 admin gates (now deeply audited) + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + 2 setup-payment-low-latent + 1 fabricated-citations-finding + 1 admin-body-guard-missing + schema-dir verified.
+
+**Lane 0.1 + Lane 4.107 still outstanding:** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS. Justin SQL still unshipped (now 5 ticks observed in this state).
+
+**Drift-meta-pattern this session (ticks 47-52):** SIX completed-task entries in the queue have no production implementation:
+1. Lane 4.107 (`scripts/lockdown-anon-writes-and-admin-tables.sql` — committed, never run)
+2. Lane 4.27 (signup rate-limit — audit-memo-only)
+3. `tools.gateway_enabled` DB column (uniformly false, runtime ignores)
+4. `customer.subscription.updated` Stripe handler (missing case)
+5. Lane 4.60 (admin/providers body-size guard — task #79 marked complete, no `readBoundedJson` in file)
+6. Lane 4.106 evidence quotes (fabricated; conclusion holds)
+
+The queue describes the *intended* state, not the *live* state. The audit-pattern lesson: every "completed" entry needs a live-probe / grep-confirm anchor before being trusted. This is the ToolRoute-internal generalization of Hard Rule #61 (rows beat artifacts) + #62 (origin/main beats working tree) + the "applied-SQL claims need live-probe proof" rule from `~/.claude-jarvis/projects/.../memory/feedback_applied_sql_live_probe.md`.
