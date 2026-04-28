@@ -512,3 +512,13 @@ Claude is reading provider ToS for resale clauses.
 - **Finding:** `listAvailableAdapters` (`src/lib/adapter-availability.ts:133-137`) is env-var-binary only — no Class-A awareness. Same filter feeds 4 catalog endpoints (default, openai, mcp, anthropic) AND auto-router (`auto-adapter.ts` `availableSlugs`). Setting any of 12 Class-A env vars (apollo/hubspot/linear/linkedin/mux/notion/sendgrid/sentry/slack/stripe/supabase/twilio) immediately publishes that adapter to 4 catalog formats AND adds it to auto-router routing pool. AI agents discover + call → master-pool fall-through → Class-A leak.
 - **Codex follow-up:** extend ticket #23 scope: add `requires_byok` flag to availability response + filter Class-A from anonymous catalog (Option A) + auto-router post-resolution gate (resolves `auto/route` → final slug, then checks BYOK, falls through to next match if Class-A + no BYOK).
 - **Why this matters for /loop directive:** catalog is the discovery/advertising surface — agents fetch `?format=openai|mcp|anthropic` to know what tools exist. Without Class-A awareness, the catalog is a honeypot. Lane 4.102's launch-readiness rule reinforced.
+
+## REVIEW-WAIT — Lane 4.104 (github master-pool PAT silently leaks private repos via "public" ops)
+- **Branch:** `lane-4.104-github-pat-scope-leak`
+- **Memo:** `.agent/lane-4.104-github-pat-scope-leak.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** HIGH-LATENT (`GITHUB_TOKEN` not set in Vercel prod)
+- **Finding:** Lane 4.102 classified github as Class-C "public-data, no leak" — incorrect. Adapter has no visibility filter. PAT with `repo` scope → search-repos returns private repos org token can see; get-readme returns private repo READMEs; list-issues returns private repo issues. Whatever scope the token holds, response inherits.
+- **Class-C taxonomy refined:** eligibility now requires (a) public-data ops AND (b) verifiably-scoped credential. github fails (b); dataforseo passes (verified); outscraper unverified.
+- **Class-A list extended to 13:** add `github`. Refined launch-readiness rule: "No Class-A master-pool env var (13 listed) set in prod until gate ships AND `GITHUB_TOKEN` (if ever set) is verified fine-grained PAT, public_repo-only."
+- **Codex follow-up:** github is already implied in Codex #23 BYOK list (Lane 6.13 forbidden); add defensive `GET /user` scope-check OR enforce BYOK-only as P0.
