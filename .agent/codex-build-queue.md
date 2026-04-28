@@ -314,6 +314,30 @@ Claude is reading provider ToS for resale clauses.
 
 ---
 
+## Lane 4.52-inspect — credit deduction TOCTOU audit (READ-ONLY)
+
+**Ticket:** dump `deduct_credits` and `add_credits` SQL function bodies via `mcp__supabase` so Claude's Lane 4.52 audit (`.agent/lane-4.52-credit-deduction-toctou-audit.md`) can resolve to atomic / non-atomic / row-locked.
+
+**Steps:**
+1. `mcp__supabase__execute_sql` (project ref `isbratmfnnzipzyoefbo`):
+   ```sql
+   SELECT p.proname, pg_get_functiondef(p.oid) AS def
+     FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid
+    WHERE n.nspname = 'public'
+      AND p.proname IN ('deduct_credits', 'add_credits')
+    ORDER BY p.proname;
+   ```
+2. Paste both bodies verbatim into the PR description.
+3. Append a `## Live RPC body (Codex inspection YYYY-MM-DD)` section to `.agent/lane-4.52-credit-deduction-toctou-audit.md` with the bodies + outcome label `(a)` atomic / `(b)` non-atomic / `(c)` row-locked.
+4. **Do NOT modify either function.** This is read-only inspection.
+5. PR title: `[lane-4.52-inspect] dump deduct_credits / add_credits bodies for TOCTOU audit`.
+
+**Estimate:** 0.25 hr.
+
+**Why this matters:** if outcome (b), there's a real concurrent-call double-spend. If (a) or (c), the audit closes with a spec-locking vitest only.
+
+---
+
 ## Working order (suggested)
 
 1. Lane 1 (1.1 → 1.2 → 1.4 → 1.3 → 1.5 → 1.6) — gates everything.
