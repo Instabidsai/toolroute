@@ -871,3 +871,80 @@ The queue describes the *intended* state, not the *live* state. The audit-patter
 **Lane 0.1 + Lane 4.107 still outstanding:** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS — **7 ticks observed unshipped**. SQL is the smaller blocker; the 67-PR merge gap is the bigger one.
 
 **Loop status:** NOT stopping per the standing directive ("Stop loop only if you hit a real blocker that needs Justin"). Justin owns merge throughput; I can keep auditing the staged work in feature branches in the meantime, but **future ticks should anchor each finding to whether it's in master or in a staged branch.** Updated audit ritual proposed for tick 55+.
+
+---
+
+## Loop tick 55 (2026-04-28 ~18:30Z) — PR backlog severity triage for Justin
+
+State unchanged since tick 54: master HEAD `988d815` (Lane 4.49), 67 PRs unmerged, Lane 0.1 still LOCKED, Lane 4.107 SQL still unshipped (`tool_providers` + `rate_limit_windows` still 200+`[]` AMBIGUOUS).
+
+Tick-55 audit pick `/api/check` against `git show origin/master:src/app/api/check/route.ts`: confirms bad-JSON path returns raw V8 parse error to public callers (HTTP 500 + `"Unexpected token 'o'..."`); fix is in PR #95 (Lane 4.71) — UNMERGED. **No new finding class.** Same shape as tick 54: every drift I find is already patched in an open feature branch.
+
+### Triage table — cherry-pick by severity, not by number
+
+**P0 — stop-the-bleed (merge today, real fixes shipping SQL or code):**
+| PR | Lane | What it stops | Type |
+|----|------|---------------|------|
+| #122 | 4.97 | authenticated WRITE REVOKE + backdoor-policy DROP (self-mint surface) | SQL |
+| #121 | 4.96 | anon WRITE REVOKE on financial tables | SQL |
+| #117 | 4.92 | gateway RPC EXECUTE lockdown applied to prod | SQL |
+| #119 | 4.94 | orphan SECDEF RPC lockdown (get_user_dashboard IDOR closed) | SQL |
+| #118 | 4.93 | credit RPC input validation (mint-attack vector closed) | code |
+| #114 | 4.89 | A2A tasks/get + tasks/cancel unauthenticated IDORs | code |
+| #115 | 4.90 | /api/v1/checkout creates 2nd Stripe sub on plan change (HIGH financial) | code |
+
+**P1 — high (merge this week):**
+| PR | Lane | Type |
+|----|------|------|
+| #111 | 4.86 | sub cancel doesn't revoke tr_live_ keys (premium-feature leak) — code |
+| #124 | 4.99 | REVOKE writes on 8 one-policy SELECT tables — SQL |
+| #123 | 4.98 | REVOKE writes on 8 zero-policy registry tables — SQL |
+| #101 | 4.77 | RPC SECDEF hotfix to unbreak /discover post-lockdown — code |
+| #102 | 4.76 | Tavily cred body-leak + redactCreds widening — code |
+| #100 | 0.1 | record anon-read lockdown completion — SQL/admin |
+
+**P2 — medium defense-in-depth (batchable):**
+- #79-#85: body-size guards (DoS class, 4 routes)
+- #95 (Lane 4.71): /api/check error redaction
+- #94 (Lane 4.70): gateway.ts silent-error sweep (4 sites)
+- #92 (Lane 4.68): byok DELETE silent-failure fix
+- #91 (Lane 4.67): getUserFromSession silent-error capture
+- #90 (Lane 4.66): auth/callback silent-error capture
+- #89 (Lane 4.65): Stripe webhook add_credits RPC error handling
+- #96-#99 (Lane 4.72-4.75): adapter fetch timeouts (4 batches)
+- #103, #104 (Lane 4.78-4.79): redact body-cred class
+
+**P3 — audit memos (no code, can defer or close-as-info):**
+- #129 (Lane 4.100), #136 (Lane 4.106), #137 (Lane 4.107) — these document blockers that need **Justin action** (Vercel env yank + Supabase SQL run); merging the memo doesn't ship the fix
+- #110 (4.85), #109 (4.84), #108 (4.83), #107 (4.82), #105 (4.80), #113 (4.88), #112 (4.87): audit memos pointing at Codex tickets
+- Lane 6.x ToS audits (#88, #125-128, #130, #133): doc-only
+
+**P4 — drift guards / tests (low security impact, but ratchet quality):**
+- #71-#76 (Lane 4.50-4.55): test fixes + drift guards
+- #83 (Lane 4.61), #82 (Lane 4.59), #81 (Lane 4.58), #80 (Lane 4.57): body-guard chain tests
+- #78 (Lane 6.10), #77 (Lane 6.8.1): copy/data drift guards
+- #106 (Lane 4.81): URL-cred-leak drift test
+
+### Recommended merge order (P0 only, ~7 PRs to flip prod)
+
+```
+gh pr merge 122 --squash   # authenticated WRITE REVOKE
+gh pr merge 121 --squash   # anon WRITE REVOKE
+gh pr merge 117 --squash   # gateway RPC EXECUTE lockdown
+gh pr merge 119 --squash   # orphan SECDEF lockdown
+gh pr merge 118 --squash   # credit RPC input val
+gh pr merge 114 --squash   # A2A IDOR fix
+gh pr merge 115 --squash   # checkout double-sub fix
+```
+
+If any rebase mid-stream, switch order — these 7 are largely independent (4 SQL, 3 code on different routes). After P0 lands, the rest can flow numerically.
+
+### Justin-blockers separate from PR queue
+
+1. Run `scripts/lockdown-anon-writes-and-admin-tables.sql` (Lane 4.107) — Supabase SQL editor, ~30s. **No PR ships this**; only Justin's hand on the SQL editor closes it.
+2. Yank `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` from Vercel prod (Lane 4.100 P0).
+3. Decide P1+P2 cadence; can flow once P0 merged.
+
+### Loop status
+
+NOT stopping per directive. Tick 56+ continues anchoring to `origin/master`. Open question: do I keep generating audit memos for endpoints whose fixes are already staged, or pivot to a higher-leverage activity until merge throughput resumes? Default to keep auditing (≤1 endpoint/tick) so the master baseline stays mapped — but cap any tick-output to ≤30 lines if it duplicates an open-PR finding class.
