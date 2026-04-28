@@ -558,3 +558,9 @@ Claude is reading provider ToS for resale clauses.
 - **Codex follow-up:** amend `scripts/lane-4.96-anon-write-grants-revoke.sql:23` header in a future PR to remove the false claim "Lane 4.16 REVOKE'd anon SELECT on these tables." Audit-process improvement: live-probe applied-SQL claims rather than trusting sibling-memo headers.
 - **Process note:** this is the second audit memo today on the same `tool_providers` AMBIGUOUS state (Lane 4.106 also flagged it without referencing Lane 4.16's prior fix proposal). Add a `grep -l "<table>" .agent/*.md` pre-draft step.
 - **Why this matters for /loop directive:** "applied" claims need live-probe proof (extends Hard Rule #61 from Codex audits to internal claims). Pre-launch checklists that read sibling-memo headers as source-of-truth are self-deceiving.
+
+## VERIFIED-SHIPPED — Lane 4.5 v2 (`scripts/lockdown-anon-read-leaks-v2.sql`) — 2026-04-28 loop tick 35
+- **Probe set:** `api_keys`, `user_provider_keys`, `tool_requests`, `gateway_users`, `gateway_usage_log`, `credit_transactions`, `usage_events`. All 7 → HTTP 401 anon (LOCKED).
+- **Method:** `curl /rest/v1/<t>?select=*&limit=1` with anon JWT — see `.agent/lane-4.107-lane-4.16-sql-unshipped.md` for probe pattern.
+- **Outliers (still AMBIGUOUS):** `tool_providers`, `rate_limit_windows` — those are the Lane 4.107 finding (Section 1 of `lockdown-anon-writes-and-admin-tables.sql` unshipped). Justin to run.
+- **Implication:** the Lane 4.5 v2 SQL DID ship to prod (unlike Lane 4.16 Section 1). Probe-driven verification confirmed; no false `[VERIFIED]` claims to amend. This is the audit-pattern Lane 4.107 surfaced — applied to the next sibling SQL file. Net result: 1 of 13 `scripts/*.sql` files identified as unshipped (Lane 4.107); 1 of 13 verified shipped via probe; remaining 11 are RPC-class (need RPC probes, deferred to next tick).
