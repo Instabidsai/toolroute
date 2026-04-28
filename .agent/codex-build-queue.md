@@ -819,3 +819,55 @@ The queue describes the *intended* state, not the *live* state. The audit-patter
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **15 endpoint shapes** (added `/api/v1/key`) + 2 admin gates + drift findings unchanged.
 
 **Lane 0.1 + Lane 4.107 status (re-probed):** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS — **6 ticks observed unshipped**.
+
+### Loop tick 54 — 🚨 META-FINDING: production HEAD is Lane 4.49; Lane 4.50-4.107 (67 PRs) sit unmerged
+
+**2026-04-28** — Started by auditing `/api/v1/registry/{usage,request,challenge}` trio (Lane 4.59 body-size-guard claim). All three live-probe clean (auth-first, IDOR-blocked, bounded errors). Then `grep readBoundedJson|MAX_BODY` on the trio returned **NO MATCHES** → started tracing why.
+
+**Discovery (verified end-to-end):**
+- `git log origin/master --oneline | head` → master HEAD is `988d815 [lane-4.49] Drift guard: ban .select("*")` (PR #70).
+- `gh pr list --state merged --limit 30 --json …` → exactly **30 PRs merged total**, **most recent merge at 09:59 UTC on 2026-04-28** (~9 hours before this tick).
+- `gh pr list --state open` → **67 open PRs** spanning Lane 4.50 through Lane 4.107 + Lane 6 batches. **All authored by `Instabidsai`. Zero merged since 09:59 UTC.**
+- `git merge-base --is-ancestor 85ea646 origin/master` → **NO**. Lane 4.59 commit is ONLY on `origin/lane-4.59-body-guards-registry-trio`.
+- `git branch -r --merged origin/master | grep "origin/lane-4"` → 0 of 95 lane-4 branches reach master post-Lane-4.49.
+- `git show origin/master:src/app/api/v1/registry/usage/route.ts` → exact production code — NO `assertBodyUnder` call. Matches the live-probe behavior (100KB unauth POST returns 401, not 413, because auth fires before any size check).
+
+**What this means for the /loop directive ("production-ready financial gateway"):**
+- All per-endpoint live-probe findings in ticks 47-53 are valid for the current production deploy. They describe the **`988d815` Lane 4.49 HEAD** Vercel is serving.
+- Queue tasks #67-#127 (Lane 4.50 through Lane 4.107) marked `[completed]` in `.agent/codex-build-queue.md` are NOT live in production. They're feature-branch work + PR opened + commit pushed, but never `gh pr merge`'d. Sibling to Hard Rule #61 (rows beat artifacts) at PR-level: **PR-merge-status beats branch-existence as production proof.**
+- ToolRoute-internal generalization: `[completed]` in this queue means "feature branch shipped + PR opened" — NOT "merged to master + Vercel deployed." Queue is staging-state truth, not production-state truth.
+
+**Specific items NOT in production right now (sample, not exhaustive):**
+- Lane 4.50-4.65 hardenings (TOCTOU fixes, body-size guards, cache-control, pagination clamping, JSON-LD XSS, timing-safe HMAC docs fix). Some of these landed (4.42-4.49); the rest haven't.
+- Lane 4.72-4.81 adapter-side hardenings (fetch timeouts, redactCreds expansions).
+- Lane 4.86-4.94 Stripe + IDOR + RPC-input-validation chain.
+- Lane 4.96-4.99 anon WRITE REVOKE chain + zero-policy registry table cleanup.
+- Lane 4.107 lockdown SQL (still unrun — independent of merge state, requires Justin SQL-editor click).
+- Lane 6.8.x quarterly-recheck checklist + Lane 6.9-6.14 ToS audit batches.
+- Lane 4.36 BYOK Vault encryption (Codex ticket #52, still pending — Codex-owned).
+
+**Why production is more exposed than a queue-skim suggests:**
+- Lane 4.89 A2A IDORs (HIGH severity — `tasks/get` + `tasks/cancel` unauthenticated) → fix on branch, NOT in master.
+- Lane 4.93 credit RPC input validation (mint-attack closure) → on branch, NOT in master.
+- Lane 4.94 orphaned SECDEF RPC lockdown (`get_user_dashboard` IDOR) → on branch, NOT in master.
+- Lane 4.96-4.99 anon WRITE REVOKE chain (financial table self-mint surface) → on branches, NOT in master.
+- All four were items I treated as "fixed" in earlier per-task comments. They aren't. Production right now has **the full pre-Lane-4.50 vulnerability surface** plus everything that landed up through Lane 4.49.
+
+**Recommended action for Justin (BLOCKER — more important than the Lane 4.107 SQL run):**
+- 67 open PRs need triage + merge. Mass-merge with rebase is risky given 95 long-lived branches → conflict density is high. Realistic options:
+  1. Merge in numerical order (4.50 → 4.107) accepting the rebase pain. 67 conflict resolutions × ~5 min = ~5-6 hours of merge labor.
+  2. Cherry-pick high-severity-only into master (4.89 A2A IDORs, 4.93 RPC input val, 4.94 orphan RPC lockdown, 4.96-4.99 anon write REVOKE), squash-merge as one fast-tracked PR. Defers cosmetic/audit-memo lanes.
+  3. Burn the branch stack: rebuild fixes on top of master in fresh small PRs, accept lost queue-history. Cheapest if conflicts are bad enough.
+- Either way, **the per-tick audit cadence I've been running is generating findings against a production state that's increasingly stale relative to the staged work.** Continuing to audit feature-branch HEADs while production is 9 hours behind doesn't compound; merge throughput compounds.
+- **Lane 4.107 SQL shipping is NECESSARY (still ~30s) but NOT SUFFICIENT** — even after that runs, Vercel deploys `988d815` which lacks the entire post-4.49 hardening chain.
+
+**Tick-54 audit-pattern lesson (for future audit memos):**
+- "Live probe + grep against working-tree" answers "is this fix in this branch's HEAD?"
+- "Live probe + grep against origin/master" answers "is this fix in production?"
+- The two answers diverge by 67 PRs right now. **Future memos should explicitly cite which branch they were tested against.** Sibling to Hard Rule #62 (read origin/main not working tree) — extension: when "origin/main" doesn't exist (this repo is `master`), substitute the deploy-target branch.
+
+**Cumulative session probe-matrix:** unchanged structurally — 26 tables + 7 RPCs + 15 endpoint shapes + 2 admin gates + the registry-trio probe results above (all 401-clean, no body-guard live).
+
+**Lane 0.1 + Lane 4.107 still outstanding:** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS — **7 ticks observed unshipped**. SQL is the smaller blocker; the 67-PR merge gap is the bigger one.
+
+**Loop status:** NOT stopping per the standing directive ("Stop loop only if you hit a real blocker that needs Justin"). Justin owns merge throughput; I can keep auditing the staged work in feature branches in the meantime, but **future ticks should anchor each finding to whether it's in master or in a staged branch.** Updated audit ritual proposed for tick 55+.
