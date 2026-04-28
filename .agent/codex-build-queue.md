@@ -450,3 +450,12 @@ Claude is reading provider ToS for resale clauses.
 - **Findings:** 4 confirmed forbidden (Apollo §3(g)(1)+§3(g)(3)(ii)+§3(d), Linear §2.2(c), SendGrid via Twilio 301-redirect inheritance, Sentry §2.3(a)+(b)+(c)), 1 ambiguous_unverified (Shippo JS-rendered SPA).
 - **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` with `apollo`, `linear`, `sendgrid`, `sentry`, `shippo`.
 - **Cumulative state (22 providers attempted):** 12 verified `forbidden` master-pool providers, 9 ambiguous-default-to-BYOK, 2 byok_only ok. Zero providers have unambiguous master-pool authorization.
+
+## REVIEW-WAIT — Lane 6.13 (SaaS productivity ToS audit)
+- **Branch:** `lane-6.13-saas-productivity-tos-audit`
+- **Memo:** `.agent/lane-6.13-saas-productivity-tos-audit.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Findings:** 4 confirmed forbidden (LinkedIn §3.1(8), HubSpot §8.E, Slack Applications+Commercial Distribution, GitHub §H conditional), 1 pdf_unverified (Notion MSA on Cloudfront).
+- **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` with `linkedin`, `hubspot`, `slack`, `github`, `notion`. Cumulative 20-slug Codex single-shot ticket now ready (mux, twilio, heygen, shotstack, deepl, apollo, linear, sendgrid, sentry, linkedin, hubspot, slack, github, outscraper, creatomate, dataforseo, exa, creatify, shippo, notion).
+- **Cumulative state (27 providers attempted):** 16 verified `forbidden`, 10 ambiguous-default-to-BYOK, 2 byok_only ok. Zero providers have unambiguous master-pool authorization.
+- **Audit class effectively exhausted:** only Stripe + Supabase remain (Lane 6.14, infrastructure providers — qualitatively different resale terms).
