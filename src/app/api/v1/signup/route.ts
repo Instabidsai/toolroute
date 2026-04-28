@@ -28,8 +28,16 @@ function generateSignupApiKey() {
   };
 }
 
-function getRequestOrigin(request: NextRequest) {
-  return new URL(request.url).origin;
+// Hardcoded production origin matches checkout/setup-payment pattern.
+// Trusting request.url here would let any host that reaches this endpoint
+// (Vercel preview, attacker-pointed CNAME) generate magic-link verify URLs
+// pointing to the request host — Supabase allowlist is the only thing
+// stopping account-takeover via verify-link redirect. Defense-in-depth:
+// don't trust request origin for OAuth/auth-callback URLs.
+const VERIFY_ORIGIN = "https://toolroute.ai";
+
+function getVerifyOrigin(_request: NextRequest) {
+  return VERIFY_ORIGIN;
 }
 
 async function generateVerifyUrl(
@@ -189,7 +197,7 @@ export async function POST(request: NextRequest) {
   const verifyUrl = await generateVerifyUrl(
     sb,
     email,
-    `${getRequestOrigin(request)}/auth/callback`
+    `${getVerifyOrigin(request)}/auth/callback`
   );
 
   await sendWelcomeEmail(email, verifyUrl).catch(() => false);
