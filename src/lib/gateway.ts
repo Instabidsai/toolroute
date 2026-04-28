@@ -519,3 +519,25 @@ export const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Max-Age": "86400",
 };
+
+// Lane 4.48. Authed responses must NOT be cacheable by any intermediate
+// proxy/CDN (Cloudflare, corporate, ISP). Default Next.js dynamic-route
+// header is `Cache-Control: public, max-age=0, must-revalidate` — `public`
+// permits proxies to cache responses keyed by URL alone, ignoring the
+// auth cookie/Bearer token. A misconfigured downstream cache could then
+// serve user A's `/api/v1/keys` payload to user B. `private, no-store`
+// instructs every cache layer to refuse storage entirely.
+//
+// Apply to: every route that reads an auth header (`Authorization`,
+// session cookie) or accepts validated session input. Cover writes too —
+// 200 responses on POST/DELETE may include user data the response body.
+//
+// Drift guard: tests/unit/cache-control-private.test.ts.
+export const NO_STORE_HEADERS: Record<string, string> = {
+  "Cache-Control": "private, no-store",
+};
+
+export const AUTHED_RESPONSE_HEADERS: Record<string, string> = {
+  ...CORS_HEADERS,
+  ...NO_STORE_HEADERS,
+};

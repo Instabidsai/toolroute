@@ -3,7 +3,7 @@ import {
   validateRequest,
   getUserFromSession,
   supabaseAdmin,
-  CORS_HEADERS,
+  AUTHED_RESPONSE_HEADERS,
 } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.json(
         { error: { message: "Failed to fetch usage history", code: "usage_fetch_failed" } },
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -76,24 +76,24 @@ export async function GET(request: NextRequest) {
           count: data?.length ?? 0,
         },
       },
-      { headers: CORS_HEADERS }
+      { headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Usage history error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }

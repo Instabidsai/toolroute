@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/gateway", () => ({
   CORS_HEADERS: {},
+  AUTHED_RESPONSE_HEADERS: {},
+  NO_STORE_HEADERS: {},
   getUserFromSession: mocks.getUserFromSession,
   generateApiKey: mocks.generateApiKey,
   generateTestApiKey: mocks.generateTestApiKey,

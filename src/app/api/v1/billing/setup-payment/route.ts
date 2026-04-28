@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromSession, supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import { getStripeClient } from "@/lib/stripe-billing";
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!stripe) {
       return NextResponse.json(
         { error: { message: "Stripe is not configured", code: "stripe_not_configured" } },
-        { status: 503, headers: CORS_HEADERS }
+        { status: 503, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (userError || !user) {
       return NextResponse.json(
         { error: { message: "User not found", code: "user_not_found" } },
-        { status: 404, headers: CORS_HEADERS }
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
@@ -72,24 +72,24 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { checkout_url: session.url, customer_id: customerId },
-      { headers: CORS_HEADERS }
+      { headers: AUTHED_RESPONSE_HEADERS }
     );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
         { error: { message: err.message, code: err.code } },
-        { status: err.status, headers: CORS_HEADERS }
+        { status: err.status, headers: AUTHED_RESPONSE_HEADERS }
       );
     }
 
     console.error("Setup payment error:", err);
     return NextResponse.json(
       { error: { message: "Failed to create setup session", code: "setup_payment_failed" } },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: AUTHED_RESPONSE_HEADERS }
     );
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 204, headers: AUTHED_RESPONSE_HEADERS });
 }
