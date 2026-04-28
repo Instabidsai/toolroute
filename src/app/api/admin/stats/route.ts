@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { validateAdmin } from "@/lib/admin-auth";
 
 const ADMIN_HEADERS = { ...CORS_HEADERS, "Content-Type": "application/json" };
-
-function validateAdmin(request: NextRequest): boolean {
-  const secret = request.headers.get("x-admin-secret");
-  const expected = process.env.TOOLROUTE_ADMIN_SECRET;
-  if (!expected || !secret) return false;
-  if (secret.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
-}
 
 /**
  * GET /api/admin/stats — Platform-wide revenue, COGS, margin, and usage breakdown
