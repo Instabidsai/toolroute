@@ -533,3 +533,16 @@ Claude is reading provider ToS for resale clauses.
 - **Why fix vs document:** pattern asymmetry is a latent bug magnet (future engineer copies wrong template); peer `/api/v1/keys` GET is intentionally session-only — internally inconsistent.
 - **Codex follow-up:** **Option 1 (recommended):** one-line patch — replace `resolveUserId(request)` helper with `getUserFromSession(authHeader)` directly in `usage/route.ts:25`. Matches peer pattern. Minor breaking change for tr_live_ callers using this endpoint. **Option 3 (heavier, longer-term):** formalize `api_keys.allowed_tools` scope claims (`read:usage`, `write:execute`); tie to Codex #23 BYOK runtime gate scope.
 - **Why this matters for /loop directive:** read-route auth-mode drift hides in matrix audits — every endpoint works, nothing fails. Audit-matrix view: 6 session-authed read endpoints, 1 outlier, named.
+
+## REVIEW-WAIT — Lane 4.106 (`tool_providers.auth_key_encrypted` plaintext + anon-readable AMBIGUOUS)
+- **Branch:** `lane-4.106-master-pool-plaintext-and-anon-read`
+- **Memo:** `.agent/lane-4.106-master-pool-plaintext-and-anon-read.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** HIGH-LATENT (column plaintext today; table empty in prod → anon GET returns `[]` AMBIGUOUS per Memory rule #56)
+- **Finding:** `tool_providers.auth_key_encrypted` is plaintext despite the column name. Write path: `src/app/api/admin/providers/route.ts:59, 96` — POST/PATCH writes `auth_key_encrypted: api_key` directly. Read path: `src/lib/gateway.ts:271-282` — gateway reads + uses as bearer with no decrypt call. Live anon probe (2026-04-28) on `/rest/v1/tool_providers?select=auth_key_encrypted` returned HTTP 200 + `[]`. Empty body = empty table, NOT RLS-locked. First inserted row leaks publicly.
+- **Sister to Lane 4.36:** `user_provider_keys.api_key_encrypted` is also plaintext (BYOK side, task #51 closed, #52 Codex impl pending). Same class, divergent fix path: post-Codex #23 BYOK gate + Lane 6.14 adapter deletion, master-pool storage shouldn't exist for Class-A or ToS-forbidden cohorts.
+- **Codex follow-up:**
+  - **Option 1 (ship now, defense-in-depth):** SQL migration — `REVOKE SELECT ON public.tool_providers FROM anon; REVOKE SELECT ON public.tool_providers FROM authenticated;`. Sibling to Lane 4.96-4.99 REVOKE chain. Server-side gateway uses service-role, unaffected.
+  - **Option 2 (short-term):** gate `/api/admin/providers` POST/PATCH behind 410 Gone or feature flag until post-Codex #23 architecture review concludes whether master-pool storage is ever needed.
+  - **Option 3 (deferred, only if architecture preserves storage):** Vault encryption mirroring Codex #52 pattern.
+- **Why this matters for /loop directive:** column-name lies (`_encrypted` storing plaintext) are tech-debt magnets. Defuse today via REVOKE; architectural cleanup post-gate.
