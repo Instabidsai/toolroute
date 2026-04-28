@@ -1995,13 +1995,17 @@ const chat = await toolroute("claude/chat", {
           webhook secret. Verify it before processing:
         </p>
         <CodeBlock lang="typescript">
-          {`import { createHmac } from "crypto";
+          {`import { createHmac, timingSafeEqual } from "crypto";
 
 function verifyWebhook(body: string, signature: string, secret: string): boolean {
   const expected = createHmac("sha256", secret)
     .update(body, "utf-8")
     .digest("hex");
-  return signature === \`sha256=\${expected}\`;
+  const expectedBuf = Buffer.from(\`sha256=\${expected}\`);
+  const receivedBuf = Buffer.from(signature);
+  // Constant-time compare prevents byte-by-byte timing exfiltration.
+  if (expectedBuf.length !== receivedBuf.length) return false;
+  return timingSafeEqual(expectedBuf, receivedBuf);
 }
 
 // In your webhook handler:
