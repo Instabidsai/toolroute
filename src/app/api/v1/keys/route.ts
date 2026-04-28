@@ -7,9 +7,11 @@ import {
   CORS_HEADERS,
 } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.keys);
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 
@@ -140,6 +142,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.keys);
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 
@@ -211,6 +214,7 @@ export async function DELETE(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.keys);
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 

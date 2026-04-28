@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import { GatewayError } from "@/lib/gateway-types";
 
 const ADMIN_HEADERS = { ...CORS_HEADERS, "Content-Type": "application/json" };
 
@@ -24,6 +26,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    assertBodyUnder(request, BODY_LIMITS.admin_providers);
     const body = await request.json();
     const {
       tool_slug,
@@ -122,6 +125,12 @@ export async function POST(request: NextRequest) {
       { status: 201, headers: ADMIN_HEADERS }
     );
   } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        { error: { message: err.message, code: err.code } },
+        { status: err.status, headers: ADMIN_HEADERS }
+      );
+    }
     console.error("Admin providers POST error:", err);
     return NextResponse.json(
       { error: { message: "Internal server error", code: "internal_error" } },
