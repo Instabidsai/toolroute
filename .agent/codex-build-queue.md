@@ -522,3 +522,14 @@ Claude is reading provider ToS for resale clauses.
 - **Class-C taxonomy refined:** eligibility now requires (a) public-data ops AND (b) verifiably-scoped credential. github fails (b); dataforseo passes (verified); outscraper unverified.
 - **Class-A list extended to 13:** add `github`. Refined launch-readiness rule: "No Class-A master-pool env var (13 listed) set in prod until gate ships AND `GITHUB_TOKEN` (if ever set) is verified fine-grained PAT, public_repo-only."
 - **Codex follow-up:** github is already implied in Codex #23 BYOK list (Lane 6.13 forbidden); add defensive `GET /user` scope-check OR enforce BYOK-only as P0.
+
+## REVIEW-WAIT — Lane 4.105 (`/api/v1/usage` GET dual-auths tr_live_ + session — outlier vs peers)
+- **Branch:** `lane-4.105-usage-tr-live-scope-extension`
+- **Memo:** `.agent/lane-4.105-usage-tr-live-scope-extension.md`
+- **PR:** https://github.com/Instabidsai/toolroute/pull/135
+- **Severity:** MEDIUM (privilege-scope drift; tr_live_ holder's own data only; no cross-tenant leak)
+- **Finding:** `/api/v1/usage` GET is the ONLY session-authed read endpoint that ALSO accepts `tr_live_`/`tr_test_`. Six peer endpoints (byok GET, keys GET, settings GET, checkout POST, billing/setup-payment POST, signup POST) are session-only. Asymmetry extends leaked tr_live_ blast radius from "execute tools" to "read full audit trail" (tool_slug, provider_used, latency, cost, error_message, timestamps; up to 100K-offset paging).
+- **Bounded by:** `eq("user_id", userId)` (no cross-tenant); Lane 4.18 redactCreds() on error_message; Lane 4.3 paid-plan gate on tr_live_ creation.
+- **Why fix vs document:** pattern asymmetry is a latent bug magnet (future engineer copies wrong template); peer `/api/v1/keys` GET is intentionally session-only — internally inconsistent.
+- **Codex follow-up:** **Option 1 (recommended):** one-line patch — replace `resolveUserId(request)` helper with `getUserFromSession(authHeader)` directly in `usage/route.ts:25`. Matches peer pattern. Minor breaking change for tr_live_ callers using this endpoint. **Option 3 (heavier, longer-term):** formalize `api_keys.allowed_tools` scope claims (`read:usage`, `write:execute`); tie to Codex #23 BYOK runtime gate scope.
+- **Why this matters for /loop directive:** read-route auth-mode drift hides in matrix audits — every endpoint works, nothing fails. Audit-matrix view: 6 session-authed read endpoints, 1 outlier, named.
