@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession, supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.byok);
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 
@@ -99,6 +101,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.byok);
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 

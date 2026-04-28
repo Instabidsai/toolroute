@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { CORS_HEADERS, supabaseAdmin } from "@/lib/gateway";
 import { getEmailDomain, isDisposableEmail } from "@/lib/disposable-domains";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import { GatewayError } from "@/lib/gateway-types";
 
 type SignupBody = {
   email?: unknown;
@@ -83,6 +85,14 @@ async function sendWelcomeEmail(email: string, verifyUrl: string) {
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    assertBodyUnder(request, BODY_LIMITS.signup);
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return jsonError(err.message, err.code, err.status);
+    }
+    throw err;
+  }
   let body: SignupBody;
   try {
     body = (await request.json()) as SignupBody;

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest, checkRateLimit, supabaseAdmin, CORS_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.registry);
     const ctx = await validateRequest(request.headers.get("authorization"));
     await checkRateLimit(ctx);
 

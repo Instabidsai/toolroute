@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/gateway";
 import { sendDunningEmail } from "@/lib/stripe-dunning";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import { GatewayError } from "@/lib/gateway-types";
 
 const PLAN_CREDITS: Record<string, number> = {
   pro: 5.0,
@@ -69,6 +71,17 @@ async function recordPaymentFailure({
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    assertBodyUnder(request, BODY_LIMITS.stripe_webhook);
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        { error: { message: err.message, code: err.code } },
+        { status: err.status }
+      );
+    }
+    throw err;
+  }
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");
 
