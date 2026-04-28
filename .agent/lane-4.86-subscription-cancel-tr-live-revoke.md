@@ -163,16 +163,30 @@ case "customer.subscription.deleted": {
 }
 ```
 
-Schema changes (run separately via Lane 0.x migration):
+### Schema status — `revoked_at` already exists ✅
+
+**Update 2026-04-28**: live DB inspection (via Supabase Management API)
+shows `validate_api_key` RPC already filters on `is_active = true AND
+revoked_at IS NULL`, meaning:
+
+1. The `revoked_at` column **already exists** on `api_keys` — no
+   migration needed for this lane.
+2. `validate_api_key` correctly rejects keys with non-null `revoked_at`
+   OR `is_active = false` — so the webhook revocation will take effect
+   on the next request.
+
+If `revoked_reason` doesn't yet exist (pure cosmetic — used for ops
+debugging only), Codex can add it as a one-liner; it's not load-bearing
+for the security fix.
 
 ```sql
+-- Optional cosmetic column (skip if not desired):
 ALTER TABLE api_keys
-  ADD COLUMN IF NOT EXISTS revoked_at timestamptz,
   ADD COLUMN IF NOT EXISTS revoked_reason text;
 ```
 
-(If `revoked_at` / `revoked_reason` already exist from another lane,
-skip the DDL.)
+The IF NOT EXISTS makes this safe regardless. Key insight: Lane 4.86
+implementation is **webhook-handler-only** — no migration blocker.
 
 ### Drift guard
 
@@ -192,7 +206,8 @@ to Lane 4.81 / 4.83 / 4.84 / 4.85 drift-guard tests.
 
 - [ ] `customer.subscription.deleted` revokes all `tr_live_` keys for
   the cancelled customer
-- [ ] `revoked_at` + `revoked_reason` columns added to `api_keys`
+- [x] `revoked_at` column already exists on `api_keys` (verified
+  2026-04-28 via Supabase Mgmt API); `revoked_reason` optional
 - [ ] Drift guard test fails if revocation step is removed
 - [ ] Smoke test: subscribe → create tr_live_ key → cancel → verify
   /mcp returns 401 with that key
