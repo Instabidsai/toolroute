@@ -5,8 +5,6 @@ import type {
   Category,
   CategoryBelief,
   Composite,
-  InventoryItem,
-  UsageEvent,
   LibrarianState,
 } from "./types";
 
@@ -57,21 +55,9 @@ export async function getComposites(): Promise<Composite[]> {
   return data ?? [];
 }
 
-export async function getInventory(): Promise<InventoryItem[]> {
-  const { data, error } = await supabase.from("inventory").select("*");
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function getUsageEvents(limit = 50): Promise<UsageEvent[]> {
-  const { data, error } = await supabase
-    .from("usage_events")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return data ?? [];
-}
+// getInventory + getUsageEvents moved to ./api-server.ts (service-role only).
+// Reading these tables from the public anon client breaks after Lane 4.5
+// lockdown SQL revokes anon SELECT.
 
 export async function checkBeforeBuild(task: string): Promise<unknown> {
   const { data, error } = await supabase.rpc("check_before_build", {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getTools, getInventory } from "@/lib/api";
+import { getTools } from "@/lib/api";
+import { getInventory } from "@/lib/api-server";
 import { ToolsClient } from "./ToolsClient";
 
 export const metadata: Metadata = {
