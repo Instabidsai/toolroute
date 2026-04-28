@@ -3,7 +3,7 @@
 **Owner:** Claude (auditor)
 **Status:** in-progress
 **Started:** 2026-04-27
-**Last updated:** 2026-04-28 (Lane 6.11 added — DeepL forbidden + 3 ambiguous + 1 PDF unverified)
+**Last updated:** 2026-04-28 (Lane 6.12 added — Apollo/Linear/SendGrid/Sentry forbidden + Shippo SPA unverified)
 
 ## Why this matters
 
@@ -174,8 +174,9 @@ Combined with Resend's mechanical incompatibility, the **hybrid** model is not j
 - **Lane 6.8** — `.agent/lane-6.8-master-pool-tos-audit.md` — re-classified Tavily + Replicate as **STRUCTURAL BAN** after deeper read. Audited 5 funded master-pool providers.
 - **Lane 6.9** — `.agent/lane-6.9-video-sms-tos-audit.md` — **4 NEW STRUCTURAL BANS confirmed:** Mux, Twilio, HeyGen, Shotstack. All have explicit "no resale", "non-sublicensable", "service bureau forbidden", or "no API white-label" clauses. Creatify flagged `ambiguous_unverified` (JS-rendered SPA, manual browser fetch needed).
 - **Lane 6.11** — `.agent/lane-6.11-search-translation-tos-audit.md` — **1 NEW STRUCTURAL BAN confirmed: DeepL** (§8.1.4 verbatim "Customer is not entitled to repackage or resell access credentials..."). 3 ambiguous (Outscraper, Creatomate, DataForSEO — silent or behind signup gate). 1 PDF-unverifiable (Exa — binary PDF, manual fetch needed). *Note: Lane 6.10 number is taken by an unrelated tier-copy drift task #74; numbered 6.11 to avoid collision.*
+- **Lane 6.12** — `.agent/lane-6.12-productivity-crm-tos-audit.md` — **4 NEW STRUCTURAL BANS confirmed:** Apollo (§3(g)(1) "may not access the APIs via a third party's API credentials or integrate the Apollo APIs with your own product or service"), Linear (§2.2(c) commercial-exploitation ban), SendGrid (Twilio-inherited via Feb 2026 merger consolidation — `api.sendgrid.com/tos.html` 301→`twilio.com/legal/tos`), Sentry (§2.3(a)+(b)+(c) sublicense + service-bureau + competing-services bans). Shippo flagged `ambiguous_unverified` (JS-rendered SPA, manual browser fetch needed).
 
-**Cumulative master-pool-incompatible list (Lanes 6 + 6.8 + 6.9 + 6.11):**
+**Cumulative master-pool-incompatible list (Lanes 6 + 6.8 + 6.9 + 6.11 + 6.12 — 22 providers attempted):**
 1. Anthropic — `forbidden` (D.4, negotiable via enterprise)
 2. Replicate — `forbidden` STRUCTURAL (2.7(c)(iii), service-bureau enumerated)
 3. Tavily — `forbidden` STRUCTURAL (re-classified 6.8)
@@ -184,12 +185,16 @@ Combined with Resend's mechanical incompatibility, the **hybrid** model is not j
 6. HeyGen — `forbidden` (anti-API-white-label clause + service bureau)
 7. Shotstack — `forbidden` (§4.4 "in any manner whatsoever")
 8. DeepL — `forbidden` (§8.1.4 + §7.1 + §8.1.1.f + §8.1.9)
+9. Apollo — `forbidden` (§3(g)(1) + §3(g)(3)(ii) + §3(d))
+10. Linear — `forbidden` (§2.2(c) + §2.2(g))
+11. SendGrid — `forbidden` (Twilio-inherited via 301 redirect)
+12. Sentry — `forbidden` (§2.3(a)+(b)+(c))
 
-**Pattern (after 17 providers attempted):** **zero providers have unambiguous master-pool ToS authorization**. Every commercial-output provider with per-unit COGS audited so far has explicit no-resale clauses. Master-pool fallback for these is a contractual breach the moment a non-Justin user calls them. Default-to-BYOK posture is forced, not optional. Launch master-pool surface is empty unless Justin negotiates enterprise resale rights individually.
+**Pattern (after 22 providers attempted):** **zero providers have unambiguous master-pool ToS authorization**. Every commercial-output provider with per-unit COGS audited so far has explicit no-resale clauses. Master-pool fallback for these is a contractual breach the moment a non-Justin user calls them. Default-to-BYOK posture is forced, not optional. Launch master-pool surface is empty unless Justin negotiates enterprise resale rights individually.
 
 ## Next steps
 
-1. ✅ WebFetch each ToS URL and pull the actual resale/sublicense clause. (Lanes 6, 6.8, 6.9, 6.11 — 16/17 verified; Creatify SPA + Exa PDF pending manual.)
-2. Codex ticket: extend BYOK-required Set in `src/lib/byok-slugs.ts` to add `mux`, `twilio`, `heygen`, `shotstack`, `deepl` plus default-to-BYOK ambiguous: `outscraper`, `creatomate`, `dataforseo`, `exa`, `creatify` (Lane 6.5-impl picks this up).
+1. ✅ WebFetch each ToS URL and pull the actual resale/sublicense clause. (Lanes 6, 6.8, 6.9, 6.11, 6.12 — 20/22 verified; Creatify SPA + Exa PDF + Shippo SPA pending manual.)
+2. Codex ticket: extend BYOK-required Set in `src/lib/byok-slugs.ts` to add `mux`, `twilio`, `heygen`, `shotstack`, `deepl`, `apollo`, `linear`, `sendgrid`, `sentry` plus default-to-BYOK ambiguous: `outscraper`, `creatomate`, `dataforseo`, `exa`, `creatify`, `shippo` (Lane 6.5-impl picks this up).
 3. Surface `forbidden` results to Justin for adapter-removal vs BYOK-only-gating decision (Lane 0.3).
-4. Lane 6.12 candidate (next batch): apollo, calendar, hubspot, linear, linkedin, notion, sendgrid, sentry, sheets, shippo — most are session-OAuth/session-token shape (different audit class).
+4. Lane 6.13 candidate (next batch, likely final): notion, linkedin, hubspot, calendar, sheets, drive, github, slack — many session-OAuth shape with ACCESS_TOKEN env fallback (still master-pool resale class for ToS purposes). After 6.13 the master-pool resale audit class is essentially exhausted.

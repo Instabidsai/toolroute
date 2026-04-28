@@ -442,3 +442,11 @@ Claude is reading provider ToS for resale clauses.
 - **Findings:** 1 confirmed forbidden (DeepL §8.1.4), 3 ambiguous_ask_legal (Outscraper, Creatomate, DataForSEO), 1 pdf_unverified (Exa).
 - **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` to add `deepl` (forbidden) + `outscraper`, `creatomate`, `dataforseo`, `exa`, `creatify` (ambiguous-default-to-BYOK).
 - **Cumulative state:** 8 verified `forbidden` master-pool providers (Anthropic, Replicate, Tavily, Mux, Twilio, HeyGen, Shotstack, DeepL). Zero providers in entire audit have unambiguous master-pool authorization.
+
+## REVIEW-WAIT — Lane 6.12 (productivity/CRM/email ToS audit)
+- **Branch:** `lane-6.12-productivity-crm-tos-audit`
+- **Memo:** `.agent/lane-6.12-productivity-crm-tos-audit.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Findings:** 4 confirmed forbidden (Apollo §3(g)(1)+§3(g)(3)(ii)+§3(d), Linear §2.2(c), SendGrid via Twilio 301-redirect inheritance, Sentry §2.3(a)+(b)+(c)), 1 ambiguous_unverified (Shippo JS-rendered SPA).
+- **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` with `apollo`, `linear`, `sendgrid`, `sentry`, `shippo`.
+- **Cumulative state (22 providers attempted):** 12 verified `forbidden` master-pool providers, 9 ambiguous-default-to-BYOK, 2 byok_only ok. Zero providers have unambiguous master-pool authorization.
