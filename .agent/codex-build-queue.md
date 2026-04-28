@@ -731,3 +731,29 @@ Claude is reading provider ToS for resale clauses.
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **12 endpoint shapes** (added `/api/v1/signup`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + schema-dir verified.
 
 **Drift-pattern observation across ticks 47-50:** four lanes audited this session (4.107 SQL, 4.27 rate-limit, gateway_enabled DB column, customer.subscription.updated handler) all fit the same shape: *task marked done in queue/audit memo + implementation absent from production*. Sibling to Hard Rule #61 (table row counts beat artifact existence) and #62 (read origin/main not working tree). **The queue itself is not authoritative** — only live-probe + grep-confirmed presence is.
+
+### Loop tick 51 — `/api/v1/billing/setup-payment` audited; Lane 4.90 class-symmetry confirmed
+
+**2026-04-28** — `src/app/api/v1/billing/setup-payment/route.ts` read full (96 lines) + 6 live probes + sibling-memo cross-check.
+
+- **Auth posture clean** — all unauth/bogus paths return 401 before body parse:
+  - unauth POST `{}` → 401 `auth_required`
+  - bogus session JWT → 401 `invalid_session`
+  - `tr_test_` api-key → 401 `invalid_session` (session-only, sibling to Lane 4.105 audit)
+  - GET → 405 (Next.js default)
+  - OPTIONS → 204 (`AUTHED_RESPONSE_HEADERS` CORS preflight)
+  - **100KB unauth POST → 401 (auth fires BEFORE body parse — DoS surface bounded)**
+- **Lane 4.24 sibling**: `CHECKOUT_ORIGIN = "https://toolroute.ai"` hardcoded (line 6) → success/cancel URLs immune to host-header rewrite.
+- **Bounded SELECT** (line 24): `select("email, stripe_customer_id")` — no PII over-fetch. Response shape returns only `{checkout_url, customer_id}` — no email echo.
+- **Stripe customer-create idempotent on the happy path**: line 36-53 only creates if `stripe_customer_id` is null. Once set, reuses. Updates `gateway_users.stripe_customer_id` immediately.
+- **NEW LOW-LATENT finding (class-symmetric with Lane 4.90)** — `stripe.checkout.sessions.create` (line 55-71) has NO idempotency check. Every POST mints a new SetupIntent session. User clicking "Setup Payment" 5× generates 5 short-lived (24h) Stripe sessions. Stripe doesn't bill for unused SetupIntents (vs Lane 4.90 which mints duplicate billable subscriptions), so severity diverges:
+  - Lane 4.90 checkout: financial impact (duplicate sub charges)
+  - Tick-51 setup-payment: cosmetic/dashboard-pollution only; abandoned sessions auto-expire
+  - **Severity: LOW-LATENT.** Codex follow-up: optional `idempotency_key: \`setup-${userId}-${date}\`` on `sessions.create` to dedup within a day. Not urgent.
+- **NEW LOW-LATENT finding (class-symmetric with Lane 4.88 TOCTOU)** — customer-create race window: user POSTs setup-payment twice in rapid succession before the line 46-52 UPDATE commits. Both branches see `customerId == null`, both call `stripe.customers.create`, second UPDATE wins, first Stripe customer orphaned (no `gateway_users` row references it).
+  - **Reachable today?** Yes if double-click on dashboard before SetupIntent redirect. Stripe customers don't bill themselves, just pollute Stripe Dashboard.
+  - **Severity: LOW-LATENT.** Codex follow-up: race-safe pattern would be `INSERT … ON CONFLICT DO UPDATE` with a single `stripe_customer_id` placeholder, or check `gateway_users.stripe_customer_id` again after a 1s delay. Lower priority than Lane 4.88 (which guards real charges).
+- **Positive class-asymmetry note**: Lane 4.90 (`/api/v1/checkout`) was filed as MEDIUM (real $$ impact). Tick-51 mirrors the structural pattern but with no $$ impact, so files as LOW. Codex should fix Lane 4.90 first.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **13 endpoint shapes** (added `/api/v1/billing/setup-payment`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + 2 setup-payment-low-latent + schema-dir verified.
+
+**Lane 0.1 + Lane 4.107 status (re-probed this tick):** `usage_events` 401 LOCKED (Lane 0.1 holds), `tool_providers` 200 [] AMBIGUOUS, `rate_limit_windows` 200 [] AMBIGUOUS — Lane 4.107 SQL still unshipped. Justin blocker persists.
