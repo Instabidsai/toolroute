@@ -191,9 +191,27 @@ Claude is fixing the `check_rate_limit` RPC. Do not modify `src/lib/gateway.ts` 
 
 ---
 
-## Lane 4 — Security hardening (CLAUDE OWNS — do not touch)
+## Lane 4 — Security hardening (audits Claude-owned; subtasks below open for Codex)
 
-Claude is auditing RLS policies and resale rights. Do not modify SQL migrations or `src/lib/gateway.ts`.
+Claude has finished the RLS audit (PRs #17, #18, #20, #22). The CODEX-IMPLEMENTABLE subtask below converts the audit deliverable into CI-enforced regression coverage. Do NOT modify the SQL migrations themselves or `src/lib/gateway.ts` — those are still Claude-only.
+
+### 4.8 — Convert RLS regression bash script to vitest with CI hookup [CODEX-IMPLEMENTABLE]
+- **Why:** Lane 4.4 (PR #17, merged) shipped `scripts/rls-regression.sh` — a bash script that probes anon-read on sensitive tables and exits non-zero on leak. Bash isn't run in CI, so a future migration could re-leak silently.
+- **Files:**
+  - `tests/integration/rls-regression.test.ts` (new) — port the bash probes to vitest + supabase-js.
+  - `package.json` — add `"test:rls": "vitest run tests/integration/rls-regression.test.ts"`.
+  - `.github/workflows/ci.yml` (or whichever workflow exists; check `gh workflow list`) — add a step `npm run test:rls` after build, gated to `main` + PRs touching `migrations/**` or `src/lib/api*.ts`.
+- **Spec:**
+  - Read `scripts/rls-regression.sh` for the probe table list (anon-SELECT must return `[]` or 401/403, never row data).
+  - Use `createClient(SUPABASE_URL, SUPABASE_ANON_KEY)` — NOT service-role.
+  - Probe set must include at minimum: `usage_events`, `gateway_usage_log`, `api_keys`, `credit_transactions`, `gateway_users`. (Pull the canonical set from the bash script — don't hand-list.)
+  - Test passes if every table returns 0 rows OR 401/403; fails (with a clear diff) on any table returning row data.
+- **Acceptance:**
+  - `npm run test:rls` exits 0 locally against current prod Supabase.
+  - After Justin runs Lane 0.1 SQL, the test still exits 0 (lockdown doesn't change behavior — RLS just blocks at a different layer).
+  - CI workflow runs the test and the YAML diff is reviewable.
+  - Do NOT delete `scripts/rls-regression.sh` — leave it for ad-hoc local use.
+- **Estimate:** 1.5 hr.
 
 ---
 
@@ -231,9 +249,100 @@ Claude is auditing RLS policies and resale rights. Do not modify SQL migrations 
 
 ---
 
-## Lane 6 — Resale rights audit (CLAUDE OWNS — do not touch)
+## Lane 6 — Resale rights audit (audits Claude-owned; subtasks below open for Codex)
 
-Claude is reading provider ToS for resale clauses.
+Claude is reading provider ToS for resale clauses (Lane 6.1, 6.2, 6.6 — ongoing). The CODEX-IMPLEMENTABLE subtasks below execute on audit findings: marketing-snippet swaps (mechanical find/replace), missing-adapter additions, and the BYOK runtime gate. Do NOT touch the audit memos in `.agent/lane-6.*.md` — those are Claude's living documents.
+
+### 6.4.2-swap — Fix /use-cases page slug+op pairs [CODEX-IMPLEMENTABLE]
+- **Depends on:** Audit doc PR #24 (`.agent/lane-6.4.2-use-cases-audit.md`) + drift test PR #26 (`tests/unit/marketing-snippet-drift.test.ts`).
+- **Why:** /use-cases page documents 19 toolroute.execute calls; ~13 use slugs/ops that don't resolve at runtime. Audit memo enumerates each broken pair with the correct replacement.
+- **Files:**
+  - `src/app/use-cases/page.tsx` — only file to change.
+- **Spec:**
+  - Read PR #24 audit doc — it lists every line number + the broken `tool: "slug/op"` + the correct replacement.
+  - For each entry, change the slug+op pair so it resolves against an existing adapter in `src/lib/adapters/`.
+  - If a use case requires a tool that doesn't exist as an adapter (e.g. `semgrep/scan`), comment out that block with `{/* TODO Lane 6.4.5 — adapter missing */}` rather than deleting; it will be re-enabled when Lane 6.4.5 lands.
+- **Acceptance:**
+  - `MARKETING_DRIFT_BASELINE=audit npm run test -- marketing-snippet-drift` — `/use-cases.*resolution` failure list shrinks to 0 (or only entries blocked on Lane 6.4.5 missing adapters).
+  - `npm run build` passes.
+  - Spot-check: pick 3 random use cases, copy-paste the curl into terminal against prod, confirm 200/402 (NOT 400 "tool not found").
+- **Estimate:** 1.5 hr.
+
+### 6.4.3-swap — Fix request-shape errors in 11 blog posts + /agents page [CODEX-IMPLEMENTABLE]
+- **Depends on:** Audit doc PR #25 (`.agent/lane-6.4.3-blog-broken-shape.md`) + drift test PR #26.
+- **Why:** 11 blog posts and `/agents` document `{tool: "X", operation: "Y", input: {...}}` (3-key shape). Gateway accepts only `{tool: "X/Y", input: {...}}` (slash-joined). Every snippet currently 400s.
+- **Files:**
+  - `src/content/blog/*.mdx` (or wherever blog posts live — see PR #25 for exact paths).
+  - `src/app/agents/page.tsx`.
+- **Spec:**
+  - Mechanical find/replace: `tool: "X", operation: "Y"` → `tool: "X/Y"`. Drop the standalone `operation:` key.
+  - PR #25 audit doc lists every file:line. Use that as the canonical fix list.
+  - Verify each replacement compiles (MDX won't fail build but the snippet will display wrong).
+- **Acceptance:**
+  - `MARKETING_DRIFT_BASELINE=audit npm run test -- marketing-snippet-drift` — `shape` failure count drops to 0.
+  - `npm run build` passes.
+  - Spot-check 2 blog posts: render in browser, confirm code blocks display the joined shape.
+- **Estimate:** 1 hr.
+
+### 6.4.5 — Add missing adapters: semgrep, vercel, remotion, anthropic [CODEX-IMPLEMENTABLE]
+- **Depends on:** Lane 6.4.2-swap (which marks gaps).
+- **Why:** /use-cases references these 4 tools; no adapter exists. Either build the adapter or remove the use case. Justin's preference: build, since they're all common agent tools.
+- **Files (one per adapter):**
+  - `src/lib/adapters/semgrep-adapter.ts` — operations: `scan`. Provider: Semgrep AppSec (BYOK only — see Lane 6.6 for ToS class).
+  - `src/lib/adapters/vercel-adapter.ts` — operations: `deploy`, `list_deployments`. Use `VERCEL_TOKEN`.
+  - `src/lib/adapters/remotion-adapter.ts` — operations: `render`. Remotion Lambda or AWS Lambda.
+  - `src/lib/adapters/anthropic-adapter.ts` — operations: `messages`. Claude API. **Mark as BYOK_REQUIRED** in adapter export — Anthropic ToS prohibits resale.
+- **Spec:**
+  - Follow existing adapter pattern: see `src/lib/adapters/openai-adapter.ts` as canonical reference.
+  - Each adapter exports `slug`, `operations`, `execute(op, input, ctx)`, `estimateCost(op, input)`.
+  - Register each in `src/lib/adapters/index.ts`.
+  - Add minimal smoke-test in `tests/integration/adapter-coverage.test.ts` (just verifies adapter loads + operation list matches).
+  - Add row to `tools` table via migration: `slug`, `name`, `operations` (jsonb), `category`, `requires_byok` (bool, true for semgrep + anthropic).
+- **Acceptance:**
+  - `npm run build` passes.
+  - `curl https://toolroute.ai/api/v1/tools | jq '.tools[] | select(.slug=="semgrep")'` returns the new tool.
+  - Lane 6.4.2-swap can re-enable use cases that were commented-out.
+  - All 4 adapters listed as `requires_byok: true` for semgrep + anthropic; vercel/remotion can pool-key OR byok per Justin's call.
+- **Estimate:** 4 hr.
+
+### 6.5-impl — BYOK gate runtime: 402 early-return for ToS-banned slugs [CODEX-IMPLEMENTABLE]
+- **Depends on:** Justin's D1 decision on the 19-slug list (Lane 6.6 audit). Default if Justin silent: ship the 12-slug structurally-confirmed subset, leave 7 ambiguous slugs unbanned for now.
+- **Why:** Lane 6.5 (PR #23) is a doc-only proposal. Runtime currently allows pool-key fallback for stripe/twilio/vapi/supabase/sentry/apollo/slack/google-* — every one is a provider ToS breach. The fix is a 10-line gate in gateway.ts.
+- **Files:**
+  - `src/lib/gateway.ts` — add gate function and call it before adapter execution. Specifically in the `executeRequest` flow (search for adapter resolve + execute, around line 239-286 per PR #23).
+  - `src/lib/byok-required-slugs.ts` (new) — exports `BYOK_REQUIRED_SLUGS: ReadonlySet<string>` with the canonical list.
+  - `tests/integration/byok-gate.test.ts` (new) — for each slug in the set, verify gateway returns 402 `{error: "byok_required", code: "BYOK_REQUIRED", ...}` when caller has no BYOK key registered. Verify it returns 200 (or normal adapter response) when a BYOK key IS registered.
+- **Spec:**
+  - The gate runs AFTER auth (so we know `user_id`) and AFTER adapter resolve (so we know the slug) but BEFORE adapter execute.
+  - If `BYOK_REQUIRED_SLUGS.has(adapter.slug)` AND `!user.has_byok_key_for(provider)` → return 402 with body:
+    ```json
+    {
+      "error": "byok_required",
+      "code": "BYOK_REQUIRED",
+      "message": "<provider> requires you to bring your own API key. Register at /dashboard/byok.",
+      "provider": "<provider>",
+      "tool": "<slug>"
+    }
+    ```
+  - Initial slug set (from `.agent/lane-6.6-byok-audit-pass-2.md`):
+    ```ts
+    export const BYOK_REQUIRED_SLUGS: ReadonlySet<string> = new Set([
+      // Pass 1 (Lane 6.5)
+      "openai", "anthropic", "google-gemini", "perplexity",
+      // Pass 2 structural (Lane 6.6)
+      "stripe", "supabase", "vapi", "sentry",
+      "apollo", "slack", "google-drive", "google-calendar", "google-sheets",
+      // Ambiguous — INCLUDE by default (safer to gate; Justin removes if cleared by legal)
+      "twilio", "vercel", "github", "hubspot", "notion", "linkedin", "twitter",
+    ]);
+    ```
+  - Read Lane 6.6 audit doc before finalizing — list may have changed.
+- **Acceptance:**
+  - All BYOK gate tests pass.
+  - Existing `/api/v1/execute` tests still pass (non-BYOK slugs unaffected).
+  - 402 response shape matches spec exactly (frontend will key off `code: "BYOK_REQUIRED"`).
+  - Manual: register a BYOK OpenAI key for the demo user, hit `/api/v1/execute` with `tool: "openai/chat"` — succeeds. Hit with no BYOK key — 402.
+- **Estimate:** 2 hr.
 
 ---
 
