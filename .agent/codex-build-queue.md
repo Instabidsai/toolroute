@@ -546,3 +546,15 @@ Claude is reading provider ToS for resale clauses.
   - **Option 2 (short-term):** gate `/api/admin/providers` POST/PATCH behind 410 Gone or feature flag until post-Codex #23 architecture review concludes whether master-pool storage is ever needed.
   - **Option 3 (deferred, only if architecture preserves storage):** Vault encryption mirroring Codex #52 pattern.
 - **Why this matters for /loop directive:** column-name lies (`_encrypted` storing plaintext) are tech-debt magnets. Defuse today via REVOKE; architectural cleanup post-gate.
+- **Note (2026-04-28 PM):** Lane 4.107 found the Option 1 SQL already exists at `scripts/lockdown-anon-writes-and-admin-tables.sql:39-61` from earlier-today Lane 4.16 work — just needs to run.
+
+## REVIEW-WAIT — Lane 4.107 (Lane 4.16 SELECT-revoke SQL exists but was never shipped to prod)
+- **Branch:** `lane-4.107-lane-4.16-sql-unshipped`
+- **Memo:** `.agent/lane-4.107-lane-4.16-sql-unshipped.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** HIGH-LATENT (same class as Lane 4.106 — AMBIGUOUS today, fix exists, just unshipped)
+- **Finding:** Lane 4.16 (committed today) proposed SELECT-revoke on `tool_providers` + `rate_limit_windows` and shipped the migration at `scripts/lockdown-anon-writes-and-admin-tables.sql:39-61`. Lane 4.96 then ran on top of an unverified assumption that Lane 4.16 SQL had executed. Live probes (this tick) prove only the write-revoke half shipped — Section 1 SELECT-revoke is unshipped. `tool_providers` AND `rate_limit_windows` both anon-readable HTTP 200 + `[]` (AMBIGUOUS).
+- **Justin-actionable:** paste `scripts/lockdown-anon-writes-and-admin-tables.sql` into Supabase SQL editor (project `isbratmfnnzipzyoefbo`). Idempotent, ~30 sec. Verify with two `curl` probes documented in memo.
+- **Codex follow-up:** amend `scripts/lane-4.96-anon-write-grants-revoke.sql:23` header in a future PR to remove the false claim "Lane 4.16 REVOKE'd anon SELECT on these tables." Audit-process improvement: live-probe applied-SQL claims rather than trusting sibling-memo headers.
+- **Process note:** this is the second audit memo today on the same `tool_providers` AMBIGUOUS state (Lane 4.106 also flagged it without referencing Lane 4.16's prior fix proposal). Add a `grep -l "<table>" .agent/*.md` pre-draft step.
+- **Why this matters for /loop directive:** "applied" claims need live-probe proof (extends Hard Rule #61 from Codex audits to internal claims). Pre-launch checklists that read sibling-memo headers as source-of-truth are self-deceiving.
