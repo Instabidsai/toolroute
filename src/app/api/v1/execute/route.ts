@@ -7,9 +7,12 @@ import {
 } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import type { ExecuteRequest } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.execute);
+
     const authHeader = request.headers.get("authorization");
     const ctx = await validateRequest(authHeader);
 
