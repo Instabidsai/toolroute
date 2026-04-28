@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (23 of 43 verified across 6 ticks)
+**Status:** in-progress (26 of 43 verified across 7 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -25,7 +25,18 @@ textbelt, toolroute, twilio, twitter, unsplash, vapi, whisper, youtube
 claude, deepgram, elevenlabs, firecrawl, openai, replicate, resend, tavily
 
 ### ToolRoute-internal aggregators (skip — not third-party)
-**Likely:** auto, image-gen, search, toolroute (need to verify each is purely an aggregator with no upstream provider — `pdf`, `screenshot` could go either way)
+**Confirmed pass-7 by source-grep on `src/lib/adapters/*-adapter.ts`:**
+- **`toolroute-adapter.ts`** — internal Supabase routing only ✓ (truly internal)
+- **`auto-adapter.ts`** — lazy-import dispatch only ✓ (truly internal)
+
+**RECLASSIFIED as third-party wrappers (slug name hides upstream provider):**
+- **`image-gen-adapter.ts`** → wraps **fal.run (Fal.ai)** — confirmed forbidden this tick
+- **`search-adapter.ts`** → wraps **api.search.brave.com (Brave Search API)** — pending fetch
+- **`pdf-adapter.ts`** → wraps **api.html2pdf.app** — confirmed ambiguous this tick
+- **`screenshot-adapter.ts`** → wraps **api.screenshotone.com (ScreenshotOne)** — confirmed ambiguous this tick
+- **`playwright-adapter.ts`** → wraps **image.thum.io (Thum.io)** — pending fetch + **slug name is misleading: NOT Microsoft Playwright**
+
+This was a **classification blind spot in the original Lane 6 audit** — 5 adapters were listed as "internal aggregators" but actually proxy unaudited third-party APIs. The slug names (especially `playwright` for Thum.io) actively conceal which upstream provider gets the traffic. **Marketing copy referencing the `playwright` adapter is double-misleading**: customers think they're getting headless-browser automation, they're actually getting screenshot URLs from Thum.io.
 
 ### Pass-2 audit queue (43, prioritized by structural-resale risk)
 
@@ -39,7 +50,7 @@ supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar
 deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack, whisper ✓, removebg, dataforseo, outscraper ✓, postiz, context7 ⏳
 
 **Tier D — stock media (lower risk, often permissive):**
-pexels ⏳, unsplash ✓, youtube ✓, playwright, linear ✓, pdf, screenshot, image-gen, search, auto, toolroute
+pexels ⏳, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ⏳ (Brave), playwright ⏳ (Thum.io), auto (internal ✓), toolroute (internal ✓)
 
 ✓ = verified this tick · ⏳ = WebFetch failed, retry next tick
 
@@ -231,6 +242,35 @@ pexels ⏳, unsplash ✓, youtube ✓, playwright, linear ✓, pdf, screenshot, 
 - **Verdict:** **`forbidden`** (master-pool routing direct breach). Tier 1 + Tier 3 hits. The §2 credential-sharing ban + the §2 prohibition on linking the API account to "third-party products or services" together ban the gateway-adapter pattern at credential layer. Even BYOK has a wrinkle: each ToolRoute customer must run their own Developer App, not share a ToolRoute-owned one.
 - **Implication:** Add unsplash to `BYOK_REQUIRED_SLUGS`. Consider whether even BYOK passes muster — Unsplash credentials are bound to "your Developer Apps", which suggests each customer needs their own registered developer app, not just a credential within ToolRoute's app.
 
+### image-gen → Fal.ai (slug-name reclassification)
+- **Source:** https://fal.ai/terms (per `src/lib/adapters/image-gen-adapter.ts` — `FAL_QUEUE_URL = "https://queue.fal.run"`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **Stacked Tier 1+4 hit:** "resell, transfer, assign, or sublicense Customer's rights under these Terms to any third party or use the Services on a **timesharing, service bureau, or similar arrangement**"
+  - **Outsourcing/third-party benefit ban:** "to run an outsourcing business, or to provide the Services for the benefit of any third party"
+  - **API exposure ban:** "Client will not expose any of the Services APIs directly to any End Users"
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). The "expose APIs to End Users" clause is the strongest seen so far — even a thin wrapper would breach. ToolRoute's `image-gen` adapter exposing Fal.ai's diffusion APIs to ToolRoute customers is exactly the prohibited pattern.
+- **Implication:** Add `image-gen` to `BYOK_REQUIRED_SLUGS`. Note the slug-name layer: the `BYOK_REQUIRED_SLUGS` Set keys on slug, not upstream provider — but Justin (and customers) need to understand that "BYOK image-gen" means "BYO Fal.ai key", not "BYO some abstract image-gen key."
+
+### pdf → Html2PDF.app
+- **Source:** https://html2pdf.app/terms-of-service/ (per `src/lib/adapters/pdf-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **Tier 1 mirror hit (limited scope):** "transfer the materials to another person or **'mirror'** the materials on any other server"
+  - **Commercial-use ban:** "use the materials for any commercial purpose, or for any public display"
+  - **No SaaS/API-specific clauses** — ToS reads like a generic website-content ToS, not an API-product ToS
+- **Verdict:** **`ambiguous_ask_legal`.** The mirror + commercial-use clauses target "materials" (likely website content), not API responses. There is no API-specific section. This is concerning in itself — running a paid API behind a generic website ToS suggests Html2PDF.app may not have considered B2B aggregation at all. Default byok_only at launch.
+- **Implication:** Default to BYOK gate. Justin should email Html2PDF.app for API-aggregation clearance — silence here is more concerning than explicit silence at established providers like Linear or Fal.ai.
+
+### screenshot → ScreenshotOne
+- **Source:** https://screenshotone.com/terms-of-service/ (per `src/lib/adapters/screenshot-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **Tier 2 partial:** "non-exclusive, non-transferable, **non-sublicensable** license"
+  - **No explicit resale, service-bureau, or aggregator language**
+- **Verdict:** **`ambiguous_ask_legal`.** "Non-sublicensable" is a Tier 2 hit per the grep checklist, but it sits alone — no reinforcing "make available to third party" or "service bureau" language. Default byok_only at launch.
+- **Implication:** Default to BYOK gate. The non-sublicensable clause may be enough on its own to forbid pooled routing, but the lack of supporting language makes it worth a direct ask before deciding whether removal vs. BYOK-only is the right answer.
+
 ### Linear
 - **Source:** https://linear.app/terms
 - **Date checked:** 2026-04-28
@@ -317,6 +357,7 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **unsplash (Lane 6.6 t5, §2 credential-sharing ban + §2 third-party product binding ban + §4 aggregation ban)**
 - **youtube (Lane 6.6 t5, §10.1 non-sublicensable + §3.1 develop-and-operate-your-API-Client requirement; protocol-level OAuth-per-customer)**
 - **linear (Lane 6.6 t6, stacked Tier 1+2+4 single-sentence hit "time share or otherwise commercially exploit or make the Service available to any third party" + "not for the benefit of any third party")**
+- **image-gen → Fal.ai (Lane 6.6 t7, "timesharing, service bureau" + outsourcing-business ban + "Client will not expose any of the Services APIs directly to any End Users" — strongest API-exposure clause in audit)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
@@ -329,16 +370,20 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **outscraper (Lane 6.6 t6, silent ToS — no explicit ban or grant)**
 - **textbelt (Lane 6.6 t6, silent ToS — but 10DLC carrier compliance overrides anyway)**
 - **whisper (Lane 6.6 t6, inherits Lane 6.1 openai verdict)**
+- **pdf → Html2PDF.app (Lane 6.6 t7, generic website ToS w/o API-specific clauses)**
+- **screenshot → ScreenshotOne (Lane 6.6 t7, isolated "non-sublicensable" Tier 2 hit)**
 
-That's **21 confirmed + 1 forbidden + 10 ambiguous = 32 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **8x the gate set — over 60% of the catalog.**
+That's **22 confirmed + 1 forbidden + 12 ambiguous = 35 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **8.75x the gate set — 69% of the catalog.**
 
-If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 17 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save) and unsplash (where even BYOK may require per-customer dev app registration).
+If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 18 additional confirmed-structural adapters at minimum, plus apollo (BYOK alone may not save) and unsplash (BYOK may require per-customer dev app registration).
 
 **Service-bureau-by-name count:** 4 providers explicitly use the phrase "service bureau" in their ToS as a banned pattern: stripe, sentry (implicit via "on behalf of"), twitter (most explicit), hubspot. ToolRoute's pooled adapter pattern is exactly this anti-pattern.
 
 **Anti-aggregator-by-policy count:** 2 providers go beyond ToS to publish corporate policy refusing aggregator contracts: DeepL §5.2 ("rejects contracts with customers providing machine translation services") and apollo §3(g)(1). These are the hardest cases — even legal outreach is unlikely to clear master-pool routing.
 
 **Protocol-level OAuth-per-customer count:** 4 Google-family adapters (drive, calendar, sheets, youtube) plus likely linkedin (anti-pooling §3.1(20)). For these, the OAuth flow itself blocks pooling — different adapter shape entirely (per-customer tokens, not a single API key).
+
+**Slug-name-hides-provider count:** 5 adapters where the slug name doesn't match the upstream provider — `image-gen` (Fal.ai), `pdf` (Html2PDF), `screenshot` (ScreenshotOne), `search` (Brave), `playwright` (Thum.io). This is a separate Hard Rule #57 (pre-launch copy audit) issue: the `playwright` slug is actively misleading because customers expect headless-browser automation but get Thum.io screenshot URLs. Marketing copy and `BYOK_REQUIRED_SLUGS` documentation must surface the upstream provider names so customers know what they're being asked to BYOK.
 
 ---
 
