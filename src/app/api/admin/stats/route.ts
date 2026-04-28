@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
   try {
     const sb = supabaseAdmin();
     const { searchParams } = new URL(request.url);
-    const days = Math.min(parseInt(searchParams.get("days") ?? "30", 10), 365);
+    const rawDays = parseInt(searchParams.get("days") ?? "30", 10);
+    const days =
+      Number.isFinite(rawDays) && rawDays > 0 ? Math.min(rawDays, 365) : 30;
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceISO = since.toISOString();

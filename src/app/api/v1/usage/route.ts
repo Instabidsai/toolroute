@@ -25,8 +25,14 @@ export async function GET(request: NextRequest) {
     const userId = await resolveUserId(request);
     const { searchParams } = new URL(request.url);
 
-    const limit = Math.min(parseInt(searchParams.get("limit") ?? "50", 10), 200);
-    const offset = parseInt(searchParams.get("offset") ?? "0", 10);
+    const rawLimit = parseInt(searchParams.get("limit") ?? "50", 10);
+    const limit =
+      Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 200) : 50;
+    const rawOffset = parseInt(searchParams.get("offset") ?? "0", 10);
+    const offset =
+      Number.isFinite(rawOffset) && rawOffset >= 0
+        ? Math.min(rawOffset, 100_000)
+        : 0;
     const toolFilter = searchParams.get("tool");
     const startDate = searchParams.get("start_date");
     const endDate = searchParams.get("end_date");
