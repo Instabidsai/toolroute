@@ -564,3 +564,9 @@ Claude is reading provider ToS for resale clauses.
 - **Method:** `curl /rest/v1/<t>?select=*&limit=1` with anon JWT — see `.agent/lane-4.107-lane-4.16-sql-unshipped.md` for probe pattern.
 - **Outliers (still AMBIGUOUS):** `tool_providers`, `rate_limit_windows` — those are the Lane 4.107 finding (Section 1 of `lockdown-anon-writes-and-admin-tables.sql` unshipped). Justin to run.
 - **Implication:** the Lane 4.5 v2 SQL DID ship to prod (unlike Lane 4.16 Section 1). Probe-driven verification confirmed; no false `[VERIFIED]` claims to amend. This is the audit-pattern Lane 4.107 surfaced — applied to the next sibling SQL file. Net result: 1 of 13 `scripts/*.sql` files identified as unshipped (Lane 4.107); 1 of 13 verified shipped via probe; remaining 11 are RPC-class (need RPC probes, deferred to next tick).
+
+## VERIFIED-SHIPPED — Lane 4.92 + Lane 4.94 RPC EXECUTE lockdowns — 2026-04-28 loop tick 36
+- **Lane 4.92 (`scripts/lockdown-gateway-rpcs.sql`):** anon POST → all 5 RPCs locked. `validate_api_key`/`add_credits`/`deduct_credits`/`log_gateway_request` → 401; `check_rate_limit` → 404 (PostgREST not exposing post-revoke).
+- **Lane 4.94 (`scripts/lane-4.94-secdef-rpc-lockdown.sql`):** anon POST → both RPCs locked. `get_user_dashboard` → 401 (was full PII payload pre-fix); `cleanup_rate_limits` → 401.
+- **Lane 4.93 (`scripts/lane-4.93-credit-rpc-input-validation.sql`):** unprobeable from anon — RPC is locked from anon by 4.92, so input-validation behavior can only be tested via service_role JWT. Deferred. Caller-side audit (Apr 28) confirmed all 5 call sites already gate `> 0` so practical risk is low.
+- **Cumulative session probe-matrix:** 9 tables + 7 RPCs verified shipped via anon-probe. Sole known-unshipped = Lane 4.107 Section 1 (`tool_providers` + `rate_limit_windows` SELECT-revoke; Justin SQL pending).
