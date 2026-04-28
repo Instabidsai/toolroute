@@ -8,6 +8,7 @@ import {
 } from "./gateway-types";
 import type { ToolAdapter } from "./gateway-types";  // Used by resolveAdapter return type
 import { getAdapter, listAdapters } from "./adapters/index";
+import { redactCreds } from "./redact-creds";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -293,7 +294,7 @@ export async function executeToolRequest(
     result = await adapter.execute(operation, input, resolvedKey);
   } catch (err) {
     const latencyMs = Date.now() - start;
-    const errMsg = err instanceof Error ? err.message : String(err);
+    const errMsg = redactCreds(err instanceof Error ? err.message : String(err));
 
     // Log the failed request
     const sb = supabaseAdmin();
@@ -351,7 +352,7 @@ export async function executeToolRequest(
     p_cost_to_user: finalCost,
     p_latency_ms: latencyMs,
     p_used_byok: keySource === "byok",
-    p_error: result.error ?? null,
+    p_error: result.error ? redactCreds(result.error) : null,
     p_key_source: keySource,
   });
 
