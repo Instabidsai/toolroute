@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (15 of 43 verified across 3 ticks)
+**Status:** in-progress (17 of 43 verified across 4 ticks)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -36,7 +36,7 @@ stripe ✓, twilio ✓, vapi ✓, sendgrid ⏳, textbelt, shippo
 supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ✓, linkedin ✓, twitter ✓, notion ⏳
 
 **Tier C — AI/ML inference (LLM-adjacent):**
-deepl, exa ⏳, heygen, higgsfield, mux, creatify, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7
+deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7
 
 **Tier D — stock media (lower risk, often permissive):**
 pexels, unsplash, youtube, playwright, linear, pdf, screenshot, image-gen, search, auto, toolroute
@@ -182,6 +182,34 @@ pexels, unsplash, youtube, playwright, linear, pdf, screenshot, image-gen, searc
 - **Status:** ⏳ **WebFetch blocked** — Notion's legal pages are behind a Notion-rendered SPA that returns no extractable text. Per Hard Rule #14, can't make a verdict without source text.
 - **Action:** Manual fetch via headless browser or copy-paste ToS text into next loop tick. Alternative path: search for prior pentest writeups that quote Notion's API terms verbatim.
 
+### DeepL
+- **Source:** https://www.deepl.com/en/pro-license
+- **Date checked:** 2026-04-28
+- **Resale clauses:**
+  - **§8.1.4:** "Customer is not entitled to repackage or resell access credentials or its access to the Services to any third parties unless expressly agreed by DeepL in advance in writing."
+  - **§8.1.1(f):** prohibits use "to create a similar product, service or API whose primary purpose is to provide services based on machine learning, including but not limited to translations..."
+  - **§8.1.9:** restricts CAT tool integration — "expressly prohibited from utilising the API via CAT tool integration to create a similar product or service"
+  - **§5.2:** DeepL "rejects contracts with customers providing machine translation services" — explicit anti-aggregator policy
+- **Verdict:** **`byok_only` (forbidden as master-pool).** §8.1.4 directly bans the gateway pattern; §5.2 is an explicit policy of refusing to contract with translation aggregators.
+- **Implication:** Add deepl to `BYOK_REQUIRED_SLUGS`. ToolRoute customers using deepl through the gateway must register their own DeepL Pro subscription and bring their own API key. Even with BYOK, ToolRoute must NOT market itself as a translation-services provider.
+
+### Mux
+- **Source:** https://www.mux.com/terms
+- **Date checked:** 2026-04-28
+- **Resale clauses:**
+  - **§3.2(2):** "copy, assign, sublicense, resell, dissemble, reverse engineer, modify, scrape, or create derivative works of any part of the Services"
+  - **§2.1 (Rights to the Services):** grants only "a non-sublicensable, non-transferable, limited license"
+  - **§13.4 (Assignment):** "These Terms may not be assigned or transferred for any reason whatsoever...without our prior written consent."
+- **Verdict:** **`byok_only`.** Although Mux ToS doesn't use the phrase "service bureau" by name, the combination of (a) non-sublicensable + non-transferable license + (b) explicit anti-resale clause + (c) anti-assignment clause cumulatively closes the gateway-adapter pattern.
+- **Implication:** Add mux to `BYOK_REQUIRED_SLUGS`. ToolRoute customers using Mux for video infrastructure must register their own Mux account.
+
+### Creatify
+- **Source:** https://creatify.ai/terms
+- **Date checked:** 2026-04-28
+- **Resale clauses found:** None explicit. §7.2(iv) references "an allowable API authorized by Creatify" but no commercial terms.
+- **Verdict:** **`ambiguous_ask_legal`.** Default byok_only at launch — Creatify's API access tier may be limited to authorized partners; need to confirm with Creatify business team whether master-pool is permitted.
+- **Implication:** Default to BYOK gate; ask Justin to email Creatify legal/partnerships before promoting master-pool path.
+
 ---
 
 ## Cross-cutting finding — ToolRoute-as-customer vs. adapter-as-gateway
@@ -219,9 +247,11 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - drive (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)
 - calendar (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)
 - sheets (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)
-- **linkedin (Lane 6.6 t3, §3.1(8) + anti-pooling §3.1(20))**
-- **twitter (Lane 6.6 t3, §III.A(e) explicit "service bureau" by name)**
-- **hubspot (Lane 6.6 t3, AUP §5.5(vii) "timesharing or service bureau purposes")**
+- linkedin (Lane 6.6 t3, §3.1(8) + anti-pooling §3.1(20))
+- twitter (Lane 6.6 t3, §III.A(e) explicit "service bureau" by name)
+- hubspot (Lane 6.6 t3, AUP §5.5(vii) "timesharing or service bureau purposes")
+- **deepl (Lane 6.6 t4, §8.1.4 "repackage or resell access credentials" + §5.2 explicit anti-aggregator policy)**
+- **mux (Lane 6.6 t4, §3.2(2) anti-resale + §2.1 non-sublicensable license)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
@@ -229,19 +259,22 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 **Ambiguous — default byok_only at launch pending Justin outreach:**
 - openai, firecrawl, tavily, deepgram (Lane 6.1)
 - twilio, github (Lane 6.6 t1)
+- **creatify (Lane 6.6 t4, no explicit ban but minimal API terms — confirm authorization tier)**
 
-That's **15 confirmed + 1 forbidden + 6 ambiguous = 22 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **5.5x the gate set.**
+That's **17 confirmed + 1 forbidden + 7 ambiguous = 25 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **6.25x the gate set — nearly half the catalog.**
 
-If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 11 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save).
+If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 13 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save).
 
 **Service-bureau-by-name count:** 4 providers explicitly use the phrase "service bureau" in their ToS as a banned pattern: stripe, sentry (implicit via "on behalf of"), twitter (most explicit), hubspot. ToolRoute's pooled adapter pattern is exactly this anti-pattern.
+
+**Anti-aggregator-by-policy count:** 2 providers go beyond ToS to publish corporate policy refusing aggregator contracts: DeepL §5.2 ("rejects contracts with customers providing machine translation services") and apollo §3(g)(1). These are the hardest cases — even legal outreach is unlikely to clear master-pool routing.
 
 ---
 
 ## Next steps (subsequent loop ticks)
 
-1. Retry notion + sendgrid + exa with alternate fetch paths (Notion SPA blocks WebFetch)
-2. Audit Tier C remainder (heygen, higgsfield, mux, creatify, creatomate, shotstack, whisper, deepl, removebg, dataforseo, outscraper, postiz, context7)
+1. Retry notion + sendgrid + exa + heygen with alternate fetch paths (multiple have SPA-rendered ToS pages blocking WebFetch — try docs subdomain or app subdomain)
+2. Audit Tier C remainder (higgsfield, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7)
 3. Audit Tier D remaining (pexels, unsplash, youtube, textbelt, shippo)
 4. Confirm which ToolRoute-internal aggregators (auto, image-gen, search, toolroute, pdf, screenshot, playwright, linear) wrap upstream providers vs. are pure aggregators
 5. After all 43 done: emit a single PR updating `BYOK_REQUIRED_SLUGS` candidate set in Lane 6.5's patch proposal with the verified list
