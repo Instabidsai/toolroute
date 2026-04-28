@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (28 of 43 verified across 8 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
+**Status:** in-progress (30 of 43 verified across 9 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -47,7 +47,7 @@ stripe ✓, twilio ✓, vapi ✓, sendgrid ✓, textbelt ✓, shippo ⏳
 supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ✓, linkedin ✓, twitter ✓, notion ⏳
 
 **Tier C — AI/ML inference (LLM-adjacent):**
-deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack, whisper ✓, removebg, dataforseo, outscraper ✓, postiz, context7 ⏳
+deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack ✓, whisper ✓, removebg ✓, dataforseo, outscraper ✓, postiz, context7 ⏳
 
 **Tier D — stock media (lower risk, often permissive):**
 pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ✓ (Brave), playwright ⏳ (Thum.io), auto (internal ✓), toolroute (internal ✓)
@@ -324,6 +324,26 @@ pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf �
 - **Verdict:** **`ambiguous_ask_legal`** (inherits openai Lane 6.1 verdict). Default byok_only.
 - **Implication:** Treat whisper exactly like the openai adapter — both gated on the same ToS uncertainty.
 
+### Shotstack
+- **Source:** https://shotstack.io/terms/ (per `src/lib/adapters/shotstack-adapter.ts`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **Tier 2 stacked:** "licence, sell, rent, lease, transfer, assign or otherwise commercially exploit the Platform"
+  - **Tier 3 credential-sharing ban:** "provide Platform login details or passwords...to any unauthorised third party"
+  - **Explicit anti-pooling clause (rare):** "Rendering large volumes of video on multiple accounts...or signing up for multiple accounts to increase your credit allowance" specifically called out as breach
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). Triple-stacked hit: Tier 2 sublicense chain + Tier 3 credential-sharing ban + explicit multi-account anti-pooling clause that reads as if drafted specifically to block aggregator/gateway products. The "multiple accounts to increase credit allowance" language is the most direct anti-aggregator wording I've seen — every gateway adapter shape I can think of would fit this description.
+- **Implication:** Add shotstack to `BYOK_REQUIRED_SLUGS`. Even master-pool with billing visible to Shotstack would risk the multi-account clause; BYOK is the only legal shape. Video-rendering nature also means each customer's job spends real Shotstack render-minute credits — pooling cost-shifts in a way Shotstack explicitly enumerated as off-limits.
+
+### remove.bg
+- **Source:** https://remove-bg.io/terms-of-service/ (per `src/lib/adapters/removebg-adapter.ts`; primary remove.bg/api was silent on /terms paths)
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **§3 Tier 2:** "Redistributing, selling, or sublicensing the Service itself or access to it"
+  - **§6 anti-competitive ban:** "use the Service infrastructure, code, or design to build competing products or services"
+  - No explicit credential-sharing or service-bureau language
+- **Verdict:** **`ambiguous_ask_legal`.** §3's "redistributing...access" is a clean Tier 2 hit — sufficient to default byok_only. §6's "build competing products" is the more interesting clause for ToolRoute specifically: a unified-tools gateway that includes background removal arguably uses remove.bg's infrastructure as part of building a competing background-removal-as-a-service offering, even if the actual processing is delegated. This is structurally similar to apollo §3(g)(1) but softer language.
+- **Implication:** Default to BYOK gate. Justin should email remove.bg/Kaleido to confirm whether ToolRoute's positioning constitutes a "competing product" under §6. Note also that the canonical remove.bg/api domain returned no /terms response — this ambiguity should be resolved by direct email contact, not assumption.
+
 ### YouTube (Data API v3)
 - **Source:** https://developers.google.com/youtube/terms/api-services-terms-of-service
 - **Date checked:** 2026-04-28
@@ -382,6 +402,7 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **linear (Lane 6.6 t6, stacked Tier 1+2+4 single-sentence hit "time share or otherwise commercially exploit or make the Service available to any third party" + "not for the benefit of any third party")**
 - **image-gen → Fal.ai (Lane 6.6 t7, "timesharing, service bureau" + outsourcing-business ban + "Client will not expose any of the Services APIs directly to any End Users" — strongest API-exposure clause in audit)**
 - **search → Brave Search API (Lane 6.6 t8, Tier 2+3 stack: full sublicense chain + key-sharing ban + storage ban + anti-circumvention + anti-integration — strongest combined hit in audit)**
+- **shotstack (Lane 6.6 t9, Tier 2 + Tier 3 + explicit multi-account anti-pooling clause "Rendering large volumes of video on multiple accounts" — most directly drafted anti-aggregator clause in audit)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
@@ -397,8 +418,9 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **pdf → Html2PDF.app (Lane 6.6 t7, generic website ToS w/o API-specific clauses)**
 - **screenshot → ScreenshotOne (Lane 6.6 t7, isolated "non-sublicensable" Tier 2 hit)**
 - **pexels (Lane 6.6 t8, "competing service" clause concerns but no explicit key-sharing ban)**
+- **removebg (Lane 6.6 t9, §3 redistribute/sublicense + §6 "build competing products" — ToolRoute positioning may itself trigger §6)**
 
-That's **23 confirmed + 1 forbidden + 13 ambiguous = 37 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **9.25x the gate set — 73% of the catalog.**
+That's **24 confirmed + 1 forbidden + 14 ambiguous = 39 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **9.75x the gate set — 76% of the catalog.**
 
 If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 19 additional confirmed-structural adapters at minimum, plus apollo (BYOK alone may not save) and unsplash (BYOK may require per-customer dev app registration).
 
