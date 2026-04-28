@@ -619,5 +619,25 @@ Claude is reading provider ToS for resale clauses.
 - **Residual surface:** the only path to plaintext `api_key_encrypted` is direct service_role access — admin queries, accidental log dumps, or service-role JWT exfiltration. None of these are anon-reachable. Lane 4.36 task #52 (Codex Vault encryption) closes the residual but is **not a P0 because the API+REST layers are already locked**. The "URGENT" framing in Lane 4.36 memo overstated the immediate risk; severity is correctly HIGH-LATENT (matches Lane 4.106 framing for the master-pool sibling).
 - **Class-symmetry note vs Lane 4.106:** master-pool (`tool_providers.auth_key_encrypted`) and BYOK (`user_provider_keys.api_key_encrypted`) are sibling plaintext columns. **Asymmetry:** master-pool is anon-readable today (Lane 4.107 unshipped) AND the gateway code-path reads it as plaintext (`src/lib/gateway.ts:271-282`). BYOK is GRANT-revoked (this tick) AND no API path returns the column. So BYOK is double-bounded, master-pool is zero-bounded — explains why Lane 4.106 is the more urgent of the two even though both columns are plaintext.
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + 3 endpoint shapes (`/api/v1/tools`, `/api/v1/key`, `/api/v1/byok`) + schema-directory lockdown verified.
+
+## VERIFIED-BOUNDED — `/api/v1/keys` CRUD shape + `api_keys` table — 2026-04-28 loop tick 45
+- **API-shape audit (`src/app/api/v1/keys/route.ts`):**
+  - **POST** (line 51-85): INSERT row stores `key_hash` (bcrypt-style hash from `generateApiKey()`/`generateTestApiKey()`); SELECT-back excludes `key_hash` (line 62-63). Response returns `raw` key string ONCE with `warning: "Store this key securely. It cannot be retrieved again."` — TextBlock-once disclosure pattern, never recoverable from any subsequent endpoint.
+  - **GET** (line 109-115): explicit allowlist `id, name, key_prefix, allowed_tools, is_active, last_used_at, created_at, expires_at`. `key_hash` NOT in SELECT. `key_prefix` is the first ~10 chars (`tr_live_xxx`) — safe display fragment.
+  - **DELETE** (line 165-183): IDOR-protected by `.eq("user_id", userId)` on existence-check AND update; soft-delete via `is_active=false` (preserves audit trail); wrong-user attempt returns 404 not 403/200 (no IDOR signal leak).
+  - **PATCH** (line 212-280): IDOR-protected (line 257, 271); validates `name` length ≤80 + non-empty + key_id required; SELECT-back uses same bounded allowlist.
+- **DB-side probe** (`api_keys` table direct anon REST):
+  - `GET /rest/v1/api_keys?select=*` → 401 + 42501
+  - `GET /rest/v1/api_keys?select=key_hash` → 401 + 42501 (column-targeted probe also blocked at GRANT layer)
+  - `GET /rest/v1/api_keys?select=id,key_prefix` → 401 + 42501 (table-level REVOKE; column allowlist is moot at this layer)
+  - All three uniform — Lane 4.96 SQL shipped fully against this table.
+- **Triple-bounded class:** API key surface is bounded at three layers — (1) DB-side GRANT-revoke (anon can't read), (2) API SELECT allowlist (server doesn't echo `key_hash`), (3) storage discipline (`key_hash` is hashed not plaintext; raw `key` returned only at creation moment). Parallel structure to Lane 4.36 BYOK (tick 44 finding) — both credential tables identically bounded. The `/api/v1/keys` POST path is the only audit angle worth deeper review (does `generateApiKey`/`generateTestApiKey` use a CSPRNG? — out of scope for this tick, would be a Lane 4.X bcrypt-strength audit).
+- **Class-symmetry observation across credential surfaces:**
+  | surface | DB GRANT | API SELECT excludes secret | Storage discipline | Verdict |
+  |---|---|---|---|---|
+  | `api_keys.key_hash` (gateway keys) | ✅ 401+42501 | ✅ excludes from GET/PATCH | ✅ hashed at storage | TRIPLE-BOUNDED |
+  | `user_provider_keys.api_key_encrypted` (BYOK) | ✅ 401+42501 (tick 44) | ✅ excludes from GET/POST | ❌ plaintext until Codex #52 | DOUBLE-BOUNDED + storage gap |
+  | `tool_providers.auth_key_encrypted` (master-pool) | ❌ 200+[] (Lane 4.107 unshipped) | ❌ no /api/v1 endpoint reads it; gateway.ts:271-282 reads as plaintext for upstream calls | ❌ plaintext | UNBOUNDED — relies on Lane 4.107 + Lane 4.106 fixes |
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + 4 endpoint shapes (added `/api/v1/keys`) + schema-directory lockdown verified.
 - **Pattern for future audits:** Hard Rule #56 documents three states (401 LOCKED / 200+[] AMBIGUOUS / 200+rows LEAK) for **table** SELECT. For **RPC** EXECUTE the analog is four-state: `401` (visible, denied), `404+PGRST202` (cache-hidden, denied), `200/200+result` (callable). Both 401 and 404+PGRST202 are LOCKED outcomes; the 4-class distinction matters only when writing drift assertions that anchor on status code.
 - **Cumulative session probe-matrix:** 25 tables + 7 RPCs (now with response-code precision) + 2 endpoint shapes verified.
