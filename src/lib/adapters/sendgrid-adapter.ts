@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.sendgrid.com/v3";
 
@@ -78,13 +79,14 @@ export const sendgridAdapter: ToolAdapter = {
           content,
         };
 
-        const res = await fetch(`${BASE_URL}/mail/send`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/mail/send`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify(body),
+          timeoutMs: 20_000,
         });
 
         // SendGrid returns 202 on success with no body
@@ -127,9 +129,10 @@ export const sendgridAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/scopes`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/scopes`, {
         method: "GET",
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
