@@ -36,8 +36,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      console.error("registry/request RPC error:", error.message);
       return NextResponse.json(
-        { error: { message: error.message, code: "rpc_error" } },
+        { error: { message: "Request log failed", code: "rpc_error" } },
         { status: 500, headers: CORS_HEADERS }
       );
     }
