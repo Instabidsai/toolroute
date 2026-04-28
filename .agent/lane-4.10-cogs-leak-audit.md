@@ -135,17 +135,39 @@ This guard:
 
 ## Decisions queued
 
-### D15. Verify admin route guard before closing this lane?
-- **A.** Yes — one-grep follow-up (`requireAdmin` or equivalent in `/api/admin/stats/route.ts`). If absent, this becomes a P0 finding before merge.
-- **B.** Trust the route-prefix pattern, ship the regression guard, audit the guard separately as Lane 4.11.
+### D15. Verify admin route guard — ✅ CLOSED CLEAN
 
-Recommend **D15.A** — five-minute follow-up before this PR merges. The downside risk (any authenticated user reads ToolRoute COGS) is too high for a deferred check.
+Admin guard confirmed via direct read of `src/app/api/admin/stats/route.ts:7-13` and `src/app/api/admin/providers/route.ts:7-13`:
 
-### D16. Ship the regression vitest in this PR?
-- **A.** Yes — vitest is the deliverable; doc-only PRs don't prevent regression.
-- **B.** Doc-only PR; vitest follows in Lane 4.10.1.
+```ts
+function validateAdmin(request: NextRequest): boolean {
+  const secret = request.headers.get("x-admin-secret");
+  const expected = process.env.TOOLROUTE_ADMIN_SECRET;
+  if (!expected || !secret) return false;
+  if (secret.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
+}
+```
 
-Recommend **D16.A** — doc + test together. Doc captures the why; test enforces the rule.
+Properties:
+- Fail-closed if env var missing (`!expected` returns false).
+- Fail-closed if header missing (`!secret` returns false).
+- Length-prefix check before `timingSafeEqual` (avoids `RangeError` on length mismatch).
+- Timing-safe comparison via `crypto.timingSafeEqual`.
+- Returns 401 `admin_auth_required` on failure (line 19-23).
+
+**Verdict:** D15 closed clean. The grep I originally suggested (`requireAdmin|isAdmin|admin_only`) would NOT have found this guard — the actual pattern is `validateAdmin(request)` + `x-admin-secret` header + `timingSafeEqual`. Future audits should grep `validateAdmin\|x-admin-secret\|timingSafeEqual` for ToolRoute's admin-guard pattern specifically.
+
+**New follow-up flagged (Lane 4.11):** the `validateAdmin` function is **duplicated** across both admin route files (copy-pasted). Risk: a third admin route added without copying the function ships unguarded. Fix shape: extract to `src/lib/admin-auth.ts`, single source of truth. Low-priority because no third route currently exists, but cheap (one PR, ~10 LOC).
+
+### D16. Ship the regression vitest in this PR — ✅ SHIPPED
+
+`tests/unit/cogs-leak-audit.test.ts` added in this PR. Three test cases:
+1. Walks `src/`, fails if any non-allowlisted file references `cost_to_us`.
+2. Verifies the admin route still surfaces COGS as `cogs` (catches accidental rename that would leave data unwalled).
+3. Verifies the admin route is still guarded by `validateAdmin` + `x-admin-secret` + `timingSafeEqual` (catches accidental guard removal).
+
+Allowlist: `src/app/api/admin/stats/route.ts`, `src/lib/gateway.ts` (write path only).
 
 ## Cross-references
 
