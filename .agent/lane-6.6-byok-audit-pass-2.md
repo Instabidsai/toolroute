@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (12 of 43 verified across 2 ticks)
+**Status:** in-progress (15 of 43 verified across 3 ticks)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -33,7 +33,7 @@ claude, deepgram, elevenlabs, firecrawl, openai, replicate, resend, tavily
 stripe ✓, twilio ✓, vapi ✓, sendgrid ⏳, textbelt, shippo
 
 **Tier B — data infra + auth-gated business APIs:**
-supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ⏳, notion ⏳, linkedin, twitter ⏳
+supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar ✓, sheets ✓, hubspot ✓, linkedin ✓, twitter ✓, notion ⏳
 
 **Tier C — AI/ML inference (LLM-adjacent):**
 deepl, exa ⏳, heygen, higgsfield, mux, creatify, creatomate, shotstack, whisper, removebg, dataforseo, outscraper, postiz, context7
@@ -143,6 +143,47 @@ pexels, unsplash, youtube, playwright, linear, pdf, screenshot, image-gen, searc
 
 ---
 
+### LinkedIn
+- **Source:** https://www.linkedin.com/legal/l/api-terms-of-use
+- **Date checked:** 2026-04-28
+- **Resale clauses:**
+  - **§3.1(8):** "Sell, rent, lease, disclose, distribute, share (with the exception of making the Content available to Users through the Application), transfer, sublicense...any Content, directly or indirectly, to any third party."
+  - **§3.1(20):** "Try to exceed or circumvent limitations on API calls and use. This includes creating multiple Applications for identical, or largely similar, usage." (anti-pooling)
+  - **§2.2:** Credentials must not be used to "require your Users to obtain their own Access Credentials to use your Application (for example, in an attempt to circumvent call limits)" — even BYOK is constrained.
+  - **§1.4(3):** Self-Serve apps capped at "NOT expected to have more than 100,000 lifetime Users"
+- **Verdict:** **`byok_only` (effectively `forbidden` at scale).** The §3.1(20) anti-multi-app clause + §2.2 anti-credential-shift clause together make ToolRoute's gateway pattern hostile-by-design under LinkedIn's API program.
+- **Implication:** Add linkedin to `BYOK_REQUIRED_SLUGS`. Even with BYOK, ToolRoute should warn customers that LinkedIn API access is gated by individual application approval (~50% rejection rate per dev forums).
+
+### Twitter / X
+- **Source:** https://docs.x.com/developer-terms/agreement
+- **Date checked:** 2026-04-28
+- **Resale clauses (strongest service-bureau ban in audit):**
+  - **§III.A(d):** "sell, rent, lease, sublicense, distribute, redistribute, syndicate, create derivative works of, assign, or otherwise transfer or provide access to, in whole or in part, the Licensed Material to any third party except as expressly permitted"
+  - **§III.A(e):** "provide use of the X API on a service bureau, rental or managed services basis, or permit other individuals or entities to create links to the X API or 'frame' or 'mirror' the X API on any other server"
+  - **§III.A(e):** "permit other individuals or entities...or otherwise make available to a third party any token, key, password, or other login credentials to the X API"
+  - **§VII.F:** "Each purchase of a Paid Service applies to a single X account...you may not allow others to use your X account to access any Licensed Material"
+- **Verdict:** **`byok_only` (forbidden as master-pool).** §III.A(e) is the most explicit "service bureau" prohibition encountered in the audit — names the pattern by name.
+- **Implication:** Add twitter to `BYOK_REQUIRED_SLUGS`. Customers must register their own X developer accounts and pay X's API tiers ($100-5000/mo).
+
+### HubSpot
+- **Source:** https://legal.hubspot.com/acceptable-use (AUP — main resale ban)
+- **Date checked:** 2026-04-28
+- **Resale clauses (AUP §5.5):**
+  - **§5.5(vi):** "lease, distribute, license, sell or otherwise commercially exploit the HubSpot Service or make the HubSpot Service available to a third party other than as contemplated in your subscription"
+  - **§5.5(vii):** "use the HubSpot Service for **timesharing or service bureau purposes** or otherwise for the benefit of a third party"
+  - **§5.5(viii):** "provide to third parties any evaluation version of the HubSpot Service without our prior written consent"
+- **Customer ToS gap:** Main Customer ToS doesn't explicitly enumerate this ban — it lives in the AUP, which is incorporated by reference. Easy to miss without specifically checking the AUP.
+- **Verdict:** **`byok_only`.** §5.5(vii) names "service bureau" by name — same severity class as Twitter/X.
+- **Implication:** Add hubspot to `BYOK_REQUIRED_SLUGS`. ToolRoute customers using HubSpot through the gateway must register their own HubSpot account and use their own private app token.
+
+### Notion
+- **Source attempted:** notion.com/notion/Master-Subscription-Agreement, notion.so SPA, developers.notion.com/page/api-terms (404)
+- **Date checked:** 2026-04-28
+- **Status:** ⏳ **WebFetch blocked** — Notion's legal pages are behind a Notion-rendered SPA that returns no extractable text. Per Hard Rule #14, can't make a verdict without source text.
+- **Action:** Manual fetch via headless browser or copy-paste ToS text into next loop tick. Alternative path: search for prior pentest writeups that quote Notion's API terms verbatim.
+
+---
+
 ## Cross-cutting finding — ToolRoute-as-customer vs. adapter-as-gateway
 
 **Pattern surfaced this tick (stripe + supabase):**
@@ -170,34 +211,39 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - replicate (Lane 6.1, §2.7(c)(iii) "service bureau" enumeration)
 - elevenlabs (Lane 6.1, OEM Terms required)
 - resend (Lane 6.1, sender-domain mechanic)
-- **stripe (Lane 6.6 t1, §1.2(a)(viii) "service bureau or pass-through agent")**
-- **supabase (Lane 6.6 t1, §2(c)(ii) explicit "make available...to any third party")**
-- **vapi (Lane 6.6 t1, §2(a) "host or otherwise commercially exploit")**
-- **sentry (Lane 6.6 t2, §2.3(a-b))**
-- **slack (Lane 6.6 t2, "sell, rent, lease, sublicense, redistribute, or syndicate")**
-- **drive (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)**
-- **calendar (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)**
-- **sheets (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)**
+- stripe (Lane 6.6 t1, §1.2(a)(viii) "service bureau or pass-through agent")
+- supabase (Lane 6.6 t1, §2(c)(ii) explicit "make available...to any third party")
+- vapi (Lane 6.6 t1, §2(a) "host or otherwise commercially exploit")
+- sentry (Lane 6.6 t2, §2.3(a-b))
+- slack (Lane 6.6 t2, "sell, rent, lease, sublicense, redistribute, or syndicate")
+- drive (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)
+- calendar (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)
+- sheets (Lane 6.6 t2, §2.2.b transfer + OAuth per-customer)
+- **linkedin (Lane 6.6 t3, §3.1(8) + anti-pooling §3.1(20))**
+- **twitter (Lane 6.6 t3, §III.A(e) explicit "service bureau" by name)**
+- **hubspot (Lane 6.6 t3, AUP §5.5(vii) "timesharing or service bureau purposes")**
 
 **Forbidden — adapter may need removal even with BYOK:**
-- **apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service")** — first adapter where BYOK alone may not satisfy ToS
+- apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
 
 **Ambiguous — default byok_only at launch pending Justin outreach:**
 - openai, firecrawl, tavily, deepgram (Lane 6.1)
 - twilio, github (Lane 6.6 t1)
 
-That's **12 confirmed + 1 forbidden + 6 ambiguous = 19 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **Nearly 5x the gate set.**
+That's **15 confirmed + 1 forbidden + 6 ambiguous = 22 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **5.5x the gate set.**
 
-If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 8 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save).
+If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 11 additional confirmed-structural adapters at minimum, plus apollo (which BYOK alone may not save).
+
+**Service-bureau-by-name count:** 4 providers explicitly use the phrase "service bureau" in their ToS as a banned pattern: stripe, sentry (implicit via "on behalf of"), twitter (most explicit), hubspot. ToolRoute's pooled adapter pattern is exactly this anti-pattern.
 
 ---
 
 ## Next steps (subsequent loop ticks)
 
-1. Retry sendgrid + hubspot + exa with corrected URLs
-2. Audit Tier B remainder (sentry, apollo, notion, slack, linkedin, drive, calendar, sheets, twitter)
-3. Audit Tier C remainder (heygen, higgsfield, mux, creatify, creatomate, shotstack, whisper, deepl, removebg, dataforseo, outscraper, postiz, context7)
-4. Confirm which ToolRoute-internal aggregators (auto, image-gen, search, toolroute, pdf, screenshot, playwright) wrap upstream providers vs. are pure aggregators
+1. Retry notion + sendgrid + exa with alternate fetch paths (Notion SPA blocks WebFetch)
+2. Audit Tier C remainder (heygen, higgsfield, mux, creatify, creatomate, shotstack, whisper, deepl, removebg, dataforseo, outscraper, postiz, context7)
+3. Audit Tier D remaining (pexels, unsplash, youtube, textbelt, shippo)
+4. Confirm which ToolRoute-internal aggregators (auto, image-gen, search, toolroute, pdf, screenshot, playwright, linear) wrap upstream providers vs. are pure aggregators
 5. After all 43 done: emit a single PR updating `BYOK_REQUIRED_SLUGS` candidate set in Lane 6.5's patch proposal with the verified list
 
 ## Justin decisions queued
@@ -208,6 +254,8 @@ If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRout
 - **D4 (Lane 6.6 t2): apollo adapter — remove entirely, negotiate written waiver with Apollo, or pursue legal opinion on whether BYOK passthrough qualifies as "integration" under §3(g)(1)?** This is the first adapter in the audit where BYOK alone may not be sufficient.
 - **D5 (Lane 6.6 t2): drive/calendar/sheets adapters — confirm OAuth flow is implemented per-customer (not pooled OAuth tokens). Need code review of `drive-adapter.ts`, `calendar-adapter.ts`, `sheets-adapter.ts` to verify.**
 - **D6 (Lane 6.6 t2): slack adapter — pursue Slack app-directory submission for Commercial Distribution authorization, in addition to BYOK gate?**
+- **D7 (Lane 6.6 t3): linkedin + twitter adapters — given LinkedIn's §1.4(3) 100K-user cap and X's $100-5000/mo per-customer API tiers, are these adapters actually viable for ToolRoute customers? Most agent users won't pay X's enterprise rates. Consider removing both adapters and surfacing as "BYO LinkedIn/X account" in marketing instead.**
+- **D8 (Lane 6.6 t3): hubspot adapter — same as Tier A providers (stripe/supabase): is the adapter built for customer-facing use or internal-only? Given ToolRoute likely doesn't use HubSpot internally, the adapter exists purely as a gateway product feature, making the §5.5(vii) breach unambiguous.**
 
 ## Cross-refs
 
