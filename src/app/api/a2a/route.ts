@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import { GatewayError } from "@/lib/gateway-types";
 
 // In-memory task store for status lookups
 const taskStore = new Map<
@@ -49,6 +51,22 @@ const A2A_CORS = {
 };
 
 export async function POST(request: NextRequest) {
+  try {
+    assertBodyUnder(request, BODY_LIMITS.a2a);
+  } catch (err) {
+    if (err instanceof GatewayError) {
+      return NextResponse.json(
+        {
+          jsonrpc: "2.0",
+          id: null,
+          error: { code: -32600, message: err.message },
+        },
+        { status: err.status, headers: A2A_CORS }
+      );
+    }
+    throw err;
+  }
+
   let body: JsonRpcRequest;
   try {
     body = (await request.json()) as JsonRpcRequest;
