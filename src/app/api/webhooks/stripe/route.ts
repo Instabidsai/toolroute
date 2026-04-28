@@ -125,13 +125,18 @@ export async function POST(request: NextRequest) {
             }
 
             // Platform fee is handled by Stripe (we set the price). Net credit = purchase amount.
-            await sb.rpc("add_credits", {
+            const { error: addCreditsErr } = await sb.rpc("add_credits", {
               p_user_id: userId,
               p_amount: creditAmount,
               p_type: "purchase",
               p_stripe_payment_id: session.payment_intent as string,
               p_description: `$${creditAmount} credit purchase`,
             });
+
+            if (addCreditsErr) {
+              console.error("add_credits failed (purchase):", addCreditsErr.message, { userId, creditAmount });
+              return NextResponse.json({ error: "credit grant failed" }, { status: 500 });
+            }
 
             // Save stripe_customer_id if not already set (enables auto-top-up later)
             if (session.customer) {
@@ -180,13 +185,17 @@ export async function POST(request: NextRequest) {
                   .maybeSingle();
 
                 if (!existingPlanTx) {
-                  await sb.rpc("add_credits", {
+                  const { error: planCreditsErr } = await sb.rpc("add_credits", {
                     p_user_id: userId,
                     p_amount: planCredits,
                     p_type: "plan_credit",
                     p_stripe_payment_id: session.subscription as string,
                     p_description: `${plan} plan monthly credits`,
                   });
+                  if (planCreditsErr) {
+                    console.error("add_credits failed (plan_credit):", planCreditsErr.message, { userId, plan, planCredits });
+                    return NextResponse.json({ error: "plan credit grant failed" }, { status: 500 });
+                  }
                 } else {
                   console.log("Already granted plan credits for subscription:", session.subscription);
                 }
@@ -219,13 +228,17 @@ export async function POST(request: NextRequest) {
               .maybeSingle();
 
             if (!existingRenewalTx) {
-              await sb.rpc("add_credits", {
+              const { error: renewalErr } = await sb.rpc("add_credits", {
                 p_user_id: user.id,
                 p_amount: planCredits,
                 p_type: "plan_credit",
                 p_stripe_payment_id: invoice.id,
                 p_description: `${user.plan_slug} plan monthly credits (renewal)`,
               });
+              if (renewalErr) {
+                console.error("add_credits failed (renewal):", renewalErr.message, { userId: user.id, planCredits });
+                return NextResponse.json({ error: "renewal credit grant failed" }, { status: 500 });
+              }
               console.log(`Added $${planCredits} renewal credits for user ${user.id}`);
             } else {
               console.log("Already granted renewal credits for invoice:", invoice.id);
@@ -251,13 +264,17 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (!existing) {
-              await sb.rpc("add_credits", {
+              const { error: topupErr } = await sb.rpc("add_credits", {
                 p_user_id: userId,
                 p_amount: creditAmount,
                 p_type: "purchase",
                 p_stripe_payment_id: pi.id,
                 p_description: `Auto top-up $${creditAmount.toFixed(2)}`,
               });
+              if (topupErr) {
+                console.error("add_credits failed (auto_topup):", topupErr.message, { userId, creditAmount });
+                return NextResponse.json({ error: "auto top-up credit grant failed" }, { status: 500 });
+              }
               console.log(`Auto-top-up: added $${creditAmount} credits for user ${userId}`);
             }
           }
