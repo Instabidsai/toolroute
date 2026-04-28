@@ -14,7 +14,12 @@ export async function POST(request: NextRequest) {
     const result = await checkBeforeBuild(task);
     return NextResponse.json(result);
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Don't leak raw PostgrestError.message (DB structure, RPC names, columns)
+    // to public unauth callers. Log for ops, return generic to caller.
+    console.error("api/check error:", e instanceof Error ? e.message : e);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
