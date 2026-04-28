@@ -665,3 +665,22 @@ Claude is reading provider ToS for resale clauses.
   - Anon `tasks/send` with valid-shape body → HTTP 200 + `Missing message content` validation error — auth check still appears to come after parser validation.
   - **No new finding** — Lane 4.89 covers it and is queued for Justin merge. Logged here for "live-state still leak" documentation.
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **8 endpoint shapes** (added `/api/v1/tools`, `/api/v1/execute`, `/mcp`, `/api/a2a`) + 2 admin auth-gates + 1 docs-drift + 1 DB-drift finding logged + schema-directory lockdown verified.
+
+## VERIFIED — `/api/v1/checkout` + `/api/v1/settings` exemplary hardening — 2026-04-28 loop tick 48
+- **`POST /api/v1/checkout` shape verified clean** (`src/app/api/v1/checkout/route.ts:31-126`):
+  - Auth: session-only via `getUserFromSession()`. No `tr_live_` key path (correct — billing is browser-side).
+  - Input: enum-validated `type ∈ {credits, subscription}`, `amount ∈ {5,10,25,50,100}`, `plan ∈ {pro, enterprise}`. Stripe `priceId` comes from server env, never body-sourced — IDOR-proof on price.
+  - `metadata.user_id` set from session, not body — Stripe webhook can't be tricked into crediting wrong user.
+  - `success_url`/`cancel_url` hardcoded `https://toolroute.ai` — open-redirect-proof (Lane 4.24 sibling).
+  - Live probes: no auth → 401 `auth_required`; fake bearer → 401 `invalid_session`; no body → 401 (auth before parse). No leakage.
+  - **Lane 4.90 finding (PR #115) confirmed still live:** no `existing-subscription` check before creating `mode: subscription` checkout (line 90-101). Plan-change creates 2nd Stripe sub. Code-level confirmation matches Lane 4.90 audit memo. Already in Justin's merge queue.
+- **`PATCH /api/v1/settings` shape verified exemplary mass-assignment hardening** (`src/app/api/v1/settings/route.ts:71-231`):
+  - Auth: session-only via `getUserFromSession()`.
+  - Allowlist `ALLOWED_FIELDS = {auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, display_name}` — explicit set membership check on every body key (line 80). Body keys outside allowlist → 400 `invalid_field`.
+  - Per-field type+enum validation: booleans must be boolean; thresholds must be in `{1.0, 5.0, 10.0}`; amounts must be in `{1000, 2500, 5000, 10000}` cents; `display_name` length-bounded 1-100.
+  - IDOR-safe: `.eq("id", userId)` from session.
+  - Auto-topup activation gated on existing Stripe payment method (line 154-178) — closes Lane 4.88 TOCTOU sibling pattern at config layer.
+  - Response shape excludes `stripe_customer_id` even though SELECT pulls it (line 187-189 + line 205-216) — used only for server-side Stripe lookup.
+  - **GET shape**: `display_name, email, plan_slug, credit_balance, auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, has_payment_method, payment_method` — no Stripe customer ID, no internal billing_id, no API key info. Bounded.
+- **No new findings.** Both routes pass audit. Sets a clean "exemplary template" for future session-authed billing routes — Codex can pattern-match against `settings/route.ts:61-66` (allowlist constant) + `:79-90` (key-set check loop) + `:104-142` (per-field enum guards).
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **10 endpoint shapes** (added `/api/v1/checkout`, `/api/v1/settings` GET+PATCH) + 2 admin gates + 1 docs-drift + 1 DB-drift + schema-dir verified.
