@@ -483,3 +483,12 @@ Claude is reading provider ToS for resale clauses.
 - **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` (per Lane 4.100 / ticket #23) with `stripe`, `supabase`. Final cumulative BYOK list now **28 slugs** (18 forbidden + 10 ambiguous default-to-BYOK).
 - **Cumulative state (29 providers attempted, audit class CLOSED):** 18 verified `forbidden`, 10 ambiguous-default-to-BYOK, 2 byok_only ok. Pattern holds zero-exceptions across entire audit.
 - **Master-pool resale audit class CLOSED with this lane.**
+
+## REVIEW-WAIT — Lane 4.101 (BYOK runtime-gate gap is universal across all 3 gateway entry points)
+- **Branch:** `lane-4.101-byok-gap-all-gateway-entrypoints`
+- **Memo:** `.agent/lane-4.101-byok-gap-all-gateway-entrypoints.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** P0 / CRITICAL (extends Lane 4.100)
+- **Finding:** Lane 4.100 confirmed BYOK gap on `/api/v1/execute`; this lane verifies the same gap exists at `/mcp` (route.ts:114→133) and `/api/a2a` (route.ts:117→135). All three entry points converge on `executeToolRequest(ctx, toolName, input)` from `@/lib/gateway` with zero BYOK enforcement. A2A amplifies risk via auto-router — natural-language `task` text routes to `claude`/`openai` based on intent inference and master-pool fall-through delivers ToolRoute's keys.
+- **Codex follow-up:** ticket #23 scope expansion — gate must land at `executeToolRequest` boundary (not per-route handler) AFTER `auto/route` resolution to its final tool slug, then check `BYOK_REQUIRED_SLUGS.has(final_slug)` against user's BYOK registry. Single source of truth, three protocol-specific error surfaces (REST 402, JSON-RPC error, A2A task error).
+- **Why this matters for /loop directive:** without this memo, Codex #23 could ship a partial fix that gates only `/api/v1/execute` — leaving `/mcp` + `/api/a2a` as live leak paths if env vars are ever re-set post-yank. This memo closes the scope ambiguity in writing.
