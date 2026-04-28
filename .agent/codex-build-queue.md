@@ -492,3 +492,14 @@ Claude is reading provider ToS for resale clauses.
 - **Finding:** Lane 4.100 confirmed BYOK gap on `/api/v1/execute`; this lane verifies the same gap exists at `/mcp` (route.ts:114→133) and `/api/a2a` (route.ts:117→135). All three entry points converge on `executeToolRequest(ctx, toolName, input)` from `@/lib/gateway` with zero BYOK enforcement. A2A amplifies risk via auto-router — natural-language `task` text routes to `claude`/`openai` based on intent inference and master-pool fall-through delivers ToolRoute's keys.
 - **Codex follow-up:** ticket #23 scope expansion — gate must land at `executeToolRequest` boundary (not per-route handler) AFTER `auto/route` resolution to its final tool slug, then check `BYOK_REQUIRED_SLUGS.has(final_slug)` against user's BYOK registry. Single source of truth, three protocol-specific error surfaces (REST 402, JSON-RPC error, A2A task error).
 - **Why this matters for /loop directive:** without this memo, Codex #23 could ship a partial fix that gates only `/api/v1/execute` — leaving `/mcp` + `/api/a2a` as live leak paths if env vars are ever re-set post-yank. This memo closes the scope ambiguity in writing.
+
+## REVIEW-WAIT — Lane 4.102 (broken-by-design master-pool class spans 12 adapters)
+- **Branch:** `lane-4.102-broken-by-design-master-pool-class`
+- **Memo:** `.agent/lane-4.102-broken-by-design-master-pool-class.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** HIGH-LATENT (10 of 12 env vars unset; 0 currently active in Class-A but trivially activatable)
+- **Finding:** Lane 6.14's stripe+supabase architectural break generalizes — 12 adapters are owner-scoped (Class A), 8+ are compute-inference (Class B, COGS-only), 3 are public-data (Class C, rate-limit-uplift only). Class A: stripe, supabase, slack, linear, twilio, hubspot, sentry, mux, notion, linkedin, apollo, sendgrid. Master-pool firing on any Class-A adapter = data leak (ToolRoute's resources exposed to API caller), not just COGS.
+- **SendGrid sub-finding:** Class A + email-reputation/phishing class — emails would go from ToolRoute's verified sender domain.
+- **Resend explanation:** byok_only structurally — env var unset means fall-through is config-error, not silent fall-through. Sendgrid would have the same reputation-damage class if its env var were ever set.
+- **Codex follow-up:** strengthens ticket #23 P0 rationale (gate prevents Class-A data leaks, not just COGS). Separate ticket suggested for "audit all 12 Class-A adapters' operational coherence before keeping any in catalog" (Lane 6.14 already recommended deleting stripe + supabase).
+- **Why this matters for /loop directive:** adds structural rule to launch-readiness checklist — "No Class-A master-pool env var gets set in prod until BYOK gate ships and is wired in `executeToolRequest`."
