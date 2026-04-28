@@ -1,7 +1,7 @@
 # Lane 6.6 — Provider ToS resale audit, pass 2 (remaining 43 adapters)
 
 **Owner:** Claude (auditor)
-**Status:** in-progress (26 of 43 verified across 7 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
+**Status:** in-progress (28 of 43 verified across 8 ticks; classification expanded — internal-aggregator slugs reclassified as third-party wrappers)
 **Started:** 2026-04-28
 **Sibling:** `.agent/lane-6-resale-audit.md` (Lane 6.1 — 8 of 51 audited)
 **Feeds:** `.agent/lane-6.5-byok-gate-gap-audit.md` (PR #23) — `BYOK_REQUIRED_SLUGS` Set
@@ -50,7 +50,7 @@ supabase ✓, github ✓, sentry ✓, apollo ✓, slack ✓, drive ✓, calendar
 deepl ✓, mux ✓, creatify ✓, exa ⏳, heygen ⏳, higgsfield, creatomate, shotstack, whisper ✓, removebg, dataforseo, outscraper ✓, postiz, context7 ⏳
 
 **Tier D — stock media (lower risk, often permissive):**
-pexels ⏳, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ⏳ (Brave), playwright ⏳ (Thum.io), auto (internal ✓), toolroute (internal ✓)
+pexels ✓, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf ✓ (Html2PDF), screenshot ✓ (ScreenshotOne), search ✓ (Brave), playwright ⏳ (Thum.io), auto (internal ✓), toolroute (internal ✓)
 
 ✓ = verified this tick · ⏳ = WebFetch failed, retry next tick
 
@@ -242,6 +242,29 @@ pexels ⏳, unsplash ✓, youtube ✓, linear ✓, image-gen ✓ (Fal.ai), pdf �
 - **Verdict:** **`forbidden`** (master-pool routing direct breach). Tier 1 + Tier 3 hits. The §2 credential-sharing ban + the §2 prohibition on linking the API account to "third-party products or services" together ban the gateway-adapter pattern at credential layer. Even BYOK has a wrinkle: each ToolRoute customer must run their own Developer App, not share a ToolRoute-owned one.
 - **Implication:** Add unsplash to `BYOK_REQUIRED_SLUGS`. Consider whether even BYOK passes muster — Unsplash credentials are bound to "your Developer Apps", which suggests each customer needs their own registered developer app, not just a credential within ToolRoute's app.
 
+### search → Brave Search API (slug-name reclassification)
+- **Source:** https://api-dashboard.search.brave.com/terms-of-service (per `src/lib/adapters/search-adapter.ts` — `BRAVE_WEB_URL = "https://api.search.brave.com/res/v1/web/search"`)
+- **Date checked:** 2026-04-28
+- **Resale clauses found (cleanest Tier 1+2+3 stack in audit):**
+  - **Tier 2 (sublicense chain):** "rent, lease, lend, sell, distribute, publish, sublicense, assign, transfer, or otherwise make available the API or Documentation to any third party"
+  - **Tier 2 (results redistribution):** "redistribute, resell, or sublicense the Search Results"
+  - **Tier 3 (key-sharing ban):** "Customer shall keep the API Key secure, may not share the API Key with any third party other than its affiliates, contractors and agents that need to know the API"
+  - **Storage ban:** "store, cache, or create a database of Search Results, in whole or in part, other than transient storage required for operation of Customer Applications"
+  - **Anti-circumvention:** "use the API in Customer Applications to replicate or attempt to replace the functionality of the API, or circumvent use of the API"
+  - **Anti-integration:** "combine or integrate the API with any software, services, systems, technology or materials not authorized by Provider"
+- **Verdict:** **`forbidden`** (master-pool routing direct breach). Strongest combined hit so far — every tier of the grep checklist except Tier 1 fires. The "may not share the API Key with any third party" is the single hardest line to argue around, period. The "combine or integrate...with any software...not authorized" clause appears designed specifically to ban gateway-style integrations.
+- **Implication:** Add `search` to `BYOK_REQUIRED_SLUGS`. Note slug-name layer: customers see "search", they actually need to BYO Brave Search API key. Brave specifically authorizes integrations only via written authorization — even Lane 6.5 documentation should mention this is a "BYO Brave Search key" gate, not "BYO any search provider."
+
+### pexels → Pexels API
+- **Source:** https://www.pexels.com/terms-of-service/
+- **Date checked:** 2026-04-28
+- **Resale clauses found:**
+  - **Standalone-resale ban:** "You cannot sell or distribute the Content (either in digital or physical form) on a Standalone basis"
+  - **Anti-scraping:** "Data mining, extraction, scraping and the use of programs or robots for automatic data collection...is strictly prohibited"
+  - **Tier 4-adjacent (competing service):** "use or compile any Content to replicate a similar or competing service"
+- **Verdict:** **`ambiguous_ask_legal`.** No explicit API-key-sharing clause, but the "competing service" clause is concerning — ToolRoute offering Pexels stock photo access via gateway could be interpreted as creating a competing-stock-photo aggregator. Default byok_only at launch. Pexels is permissively-licensed for content but their commercial-aggregation language is fuzzier.
+- **Implication:** Default to BYOK gate; ask Pexels via support before promoting master-pool path.
+
 ### image-gen → Fal.ai (slug-name reclassification)
 - **Source:** https://fal.ai/terms (per `src/lib/adapters/image-gen-adapter.ts` — `FAL_QUEUE_URL = "https://queue.fal.run"`)
 - **Date checked:** 2026-04-28
@@ -358,6 +381,7 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **youtube (Lane 6.6 t5, §10.1 non-sublicensable + §3.1 develop-and-operate-your-API-Client requirement; protocol-level OAuth-per-customer)**
 - **linear (Lane 6.6 t6, stacked Tier 1+2+4 single-sentence hit "time share or otherwise commercially exploit or make the Service available to any third party" + "not for the benefit of any third party")**
 - **image-gen → Fal.ai (Lane 6.6 t7, "timesharing, service bureau" + outsourcing-business ban + "Client will not expose any of the Services APIs directly to any End Users" — strongest API-exposure clause in audit)**
+- **search → Brave Search API (Lane 6.6 t8, Tier 2+3 stack: full sublicense chain + key-sharing ban + storage ban + anti-circumvention + anti-integration — strongest combined hit in audit)**
 
 **Forbidden — adapter may need removal even with BYOK:**
 - apollo (Lane 6.6 t2, §3(g)(1) "integrate...with your own product or service") — first adapter where BYOK alone may not satisfy ToS
@@ -372,10 +396,11 @@ Provider candidates with likely ToolRoute-internal usage (Justin to confirm):
 - **whisper (Lane 6.6 t6, inherits Lane 6.1 openai verdict)**
 - **pdf → Html2PDF.app (Lane 6.6 t7, generic website ToS w/o API-specific clauses)**
 - **screenshot → ScreenshotOne (Lane 6.6 t7, isolated "non-sublicensable" Tier 2 hit)**
+- **pexels (Lane 6.6 t8, "competing service" clause concerns but no explicit key-sharing ban)**
 
-That's **22 confirmed + 1 forbidden + 12 ambiguous = 35 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **8.75x the gate set — 69% of the catalog.**
+That's **23 confirmed + 1 forbidden + 13 ambiguous = 37 of 51** adapters that should be on the BYOK gate at launch (or removed), up from Lane 6.5's 4-slug baseline. **9.25x the gate set — 73% of the catalog.**
 
-If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 18 additional confirmed-structural adapters at minimum, plus apollo (BYOK alone may not save) and unsplash (BYOK may require per-customer dev app registration).
+If Lane 6.5's `BYOK_REQUIRED_SLUGS` Set ships with only the original 4, ToolRoute is exposed on 19 additional confirmed-structural adapters at minimum, plus apollo (BYOK alone may not save) and unsplash (BYOK may require per-customer dev app registration).
 
 **Service-bureau-by-name count:** 4 providers explicitly use the phrase "service bureau" in their ToS as a banned pattern: stripe, sentry (implicit via "on behalf of"), twitter (most explicit), hubspot. ToolRoute's pooled adapter pattern is exactly this anti-pattern.
 
