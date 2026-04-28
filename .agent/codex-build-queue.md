@@ -503,3 +503,12 @@ Claude is reading provider ToS for resale clauses.
 - **Resend explanation:** byok_only structurally — env var unset means fall-through is config-error, not silent fall-through. Sendgrid would have the same reputation-damage class if its env var were ever set.
 - **Codex follow-up:** strengthens ticket #23 P0 rationale (gate prevents Class-A data leaks, not just COGS). Separate ticket suggested for "audit all 12 Class-A adapters' operational coherence before keeping any in catalog" (Lane 6.14 already recommended deleting stripe + supabase).
 - **Why this matters for /loop directive:** adds structural rule to launch-readiness checklist — "No Class-A master-pool env var gets set in prod until BYOK gate ships and is wired in `executeToolRequest`."
+
+## REVIEW-WAIT — Lane 4.103 (catalog env-var-only gate has no Class-A awareness; auto-router amplifies)
+- **Branch:** `lane-4.103-catalog-class-a-awareness`
+- **Memo:** `.agent/lane-4.103-catalog-class-a-awareness.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** HIGH-LATENT
+- **Finding:** `listAvailableAdapters` (`src/lib/adapter-availability.ts:133-137`) is env-var-binary only — no Class-A awareness. Same filter feeds 4 catalog endpoints (default, openai, mcp, anthropic) AND auto-router (`auto-adapter.ts` `availableSlugs`). Setting any of 12 Class-A env vars (apollo/hubspot/linear/linkedin/mux/notion/sendgrid/sentry/slack/stripe/supabase/twilio) immediately publishes that adapter to 4 catalog formats AND adds it to auto-router routing pool. AI agents discover + call → master-pool fall-through → Class-A leak.
+- **Codex follow-up:** extend ticket #23 scope: add `requires_byok` flag to availability response + filter Class-A from anonymous catalog (Option A) + auto-router post-resolution gate (resolves `auto/route` → final slug, then checks BYOK, falls through to next match if Class-A + no BYOK).
+- **Why this matters for /loop directive:** catalog is the discovery/advertising surface — agents fetch `?format=openai|mcp|anthropic` to know what tools exist. Without Class-A awareness, the catalog is a honeypot. Lane 4.102's launch-readiness rule reinforced.
