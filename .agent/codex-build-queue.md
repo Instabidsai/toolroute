@@ -684,3 +684,25 @@ Claude is reading provider ToS for resale clauses.
   - **GET shape**: `display_name, email, plan_slug, credit_balance, auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, has_payment_method, payment_method` — no Stripe customer ID, no internal billing_id, no API key info. Bounded.
 - **No new findings.** Both routes pass audit. Sets a clean "exemplary template" for future session-authed billing routes — Codex can pattern-match against `settings/route.ts:61-66` (allowlist constant) + `:79-90` (key-set check loop) + `:104-142` (per-field enum guards).
 - **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **10 endpoint shapes** (added `/api/v1/checkout`, `/api/v1/settings` GET+PATCH) + 2 admin gates + 1 docs-drift + 1 DB-drift + schema-dir verified.
+
+## VERIFIED + LOGGED-MISS — `/api/webhooks/stripe` deep audit — 2026-04-28 loop tick 49
+- **`POST /api/webhooks/stripe` signature gate verified clean** (`src/app/api/webhooks/stripe/route.ts:71-96`):
+  - Missing `stripe-signature` header → 400 `Missing signature` (line 75-77). No DB writes pre-verification.
+  - Invalid signature → 400 `Invalid signature` (line 92-96). Stripe SDK `webhooks.constructEvent` enforces HMAC + 5-min tolerance.
+  - GET → 405 (Next.js method-not-allowed default).
+  - Empty body → 400 (sig check fires first).
+  - **Live probes confirm**: no auth, fake sig, empty body all 4XX with no leakage. Lane 4.29 replay-window guard inherent in SDK.
+- **Idempotency audit — 5 credit-mint paths, all gated:**
+  - `checkout.session.completed` credits → `stripe_payment_id = session.payment_intent` dedup (line 116-125)
+  - `checkout.session.completed` plan credits → `stripe_payment_id = session.subscription` dedup (line 176-180)
+  - `invoice.paid` renewal → `stripe_payment_id = invoice.id` dedup (line 215-219)
+  - `payment_intent.succeeded` (auto-topup) → `stripe_payment_id = pi.id` dedup (line 247-251)
+  - `recordPaymentFailure` → insert dedup before `add_credits` (line 38-43)
+  - All 5 use `add_credits` RPC (Lane 4.93 input-validated). Lane 4.20 + Lane 4.23 (UNIQUE constraint on `(stripe_payment_id, type)`) both belt-and-suspenders.
+- **NEW MEDIUM-LATENT finding — `customer.subscription.updated` handler missing:**
+  - Webhook handles `customer.subscription.deleted` (line 322-345, downgrades to free) but **no case for `.updated`**. If Justin enables Stripe Customer Portal self-service upgrade/downgrade (today: opt-in, off), users could change `pro→enterprise` (or vice versa) without `gateway_users.plan_slug` syncing. Renewal handler at line 201-236 reads stale `plan_slug` → could over- or under-credit on next monthly cycle.
+  - **Reachable today?** No — Stripe Billing Portal is not enabled (verified by absence of `/dashboard/billing/portal` route + Lane 4.90's pattern of always-create-new-sub via `/api/v1/checkout`). So `customer.subscription.updated` would never fire from user action.
+  - **Latent?** Yes — the moment Billing Portal flips on, this becomes an active drift. **Severity: MEDIUM-LATENT (LOW today, MEDIUM upon Billing Portal enable).**
+  - **Codex follow-up:** add `case "customer.subscription.updated"` that pulls new `items.data[0].price.id`, maps to plan_slug, updates `gateway_users.plan_slug + plan_id`. Sibling pattern to Lane 4.86 (cancel doesn't revoke tr_live_) — same "Stripe-side state changes ↔ DB drift" class.
+- **No leakage observed across all 7 case branches** — every error path uses console.error + generic 500, no Stripe payload echoed back to caller, no PII logged beyond customerId.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **11 endpoint shapes** (added `/api/webhooks/stripe`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + schema-dir verified.
