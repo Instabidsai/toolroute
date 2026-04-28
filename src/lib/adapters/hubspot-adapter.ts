@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 
@@ -60,12 +61,13 @@ export const hubspotAdapter: ToolAdapter = {
         if (input.phone) properties.phone = input.phone;
         if (input.company) properties.company = input.company;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${HUBSPOT_BASE_URL}/crm/v3/objects/contacts`,
           {
             method: "POST",
             headers: hdrs,
             body: JSON.stringify({ properties }),
+            timeoutMs: 15_000,
           }
         );
 
@@ -106,12 +108,13 @@ export const hubspotAdapter: ToolAdapter = {
           ],
         };
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${HUBSPOT_BASE_URL}/crm/v3/objects/contacts/search`,
           {
             method: "POST",
             headers: hdrs,
             body: JSON.stringify(body),
+            timeoutMs: 15_000,
           }
         );
 
@@ -145,12 +148,13 @@ export const hubspotAdapter: ToolAdapter = {
         };
         if (input.amount !== undefined) properties.amount = input.amount;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${HUBSPOT_BASE_URL}/crm/v3/objects/deals`,
           {
             method: "POST",
             headers: hdrs,
             body: JSON.stringify({ properties }),
+            timeoutMs: 15_000,
           }
         );
 
@@ -170,11 +174,12 @@ export const hubspotAdapter: ToolAdapter = {
       if (operation === "list-deals") {
         const limit = (input.limit as number) || 10;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${HUBSPOT_BASE_URL}/crm/v3/objects/deals?limit=${limit}`,
           {
             method: "GET",
             headers: hdrs,
+            timeoutMs: 15_000,
           }
         );
 
@@ -203,7 +208,7 @@ export const hubspotAdapter: ToolAdapter = {
         }
 
         // Step 1: Create the note
-        const noteRes = await fetch(
+        const noteRes = await fetchWithTimeout(
           `${HUBSPOT_BASE_URL}/crm/v3/objects/notes`,
           {
             method: "POST",
@@ -214,6 +219,7 @@ export const hubspotAdapter: ToolAdapter = {
                 hs_timestamp: new Date().toISOString(),
               },
             }),
+            timeoutMs: 15_000,
           }
         );
 
@@ -229,11 +235,12 @@ export const hubspotAdapter: ToolAdapter = {
         const noteData = (await noteRes.json()) as { id: string };
 
         // Step 2: Associate note with contact
-        const assocRes = await fetch(
+        const assocRes = await fetchWithTimeout(
           `${HUBSPOT_BASE_URL}/crm/v3/objects/notes/${noteData.id}/associations/contacts/${contactId}/note_to_contact`,
           {
             method: "PUT",
             headers: hdrs,
+            timeoutMs: 15_000,
           }
         );
 
@@ -274,11 +281,12 @@ export const hubspotAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${HUBSPOT_BASE_URL}/crm/v3/objects/contacts?limit=1`,
         {
           method: "GET",
           headers: headers(apiKey),
+          timeoutMs: 10_000,
         }
       );
       return { healthy: res.ok, latency_ms: Date.now() - start };

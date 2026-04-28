@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.goshippo.com";
 
@@ -48,7 +49,7 @@ export const shippoAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/shipments`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/shipments`, {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -57,6 +58,7 @@ export const shippoAdapter: ToolAdapter = {
             parcels,
             async: false,
           }),
+          timeoutMs: 20_000,
         });
 
         if (!res.ok) {
@@ -104,10 +106,11 @@ export const shippoAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${BASE_URL}/shipments/${shipmentId}/rates`,
           {
             headers: { Authorization: `ShippoToken ${apiKey}` },
+            timeoutMs: 15_000,
           }
         );
 
@@ -151,7 +154,7 @@ export const shippoAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/transactions`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/transactions`, {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -159,6 +162,7 @@ export const shippoAdapter: ToolAdapter = {
             label_file_type: "PDF",
             async: false,
           }),
+          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
@@ -198,10 +202,11 @@ export const shippoAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${BASE_URL}/tracks/${carrier}/${trackingNumber}`,
           {
             headers: { Authorization: `ShippoToken ${apiKey}` },
+            timeoutMs: 15_000,
           }
         );
 
@@ -250,8 +255,9 @@ export const shippoAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/shipments?results=1`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/shipments?results=1`, {
         headers: { Authorization: `ShippoToken ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
