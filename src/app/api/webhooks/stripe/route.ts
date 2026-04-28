@@ -170,16 +170,26 @@ export async function POST(request: NextRequest) {
                 })
                 .eq("id", userId);
 
-              // Add included plan credits
+              // Add included plan credits (idempotent on session.subscription)
               const planCredits = PLAN_CREDITS[plan] ?? 0;
-              if (planCredits > 0) {
-                await sb.rpc("add_credits", {
-                  p_user_id: userId,
-                  p_amount: planCredits,
-                  p_type: "plan_credit",
-                  p_stripe_payment_id: session.subscription as string,
-                  p_description: `${plan} plan monthly credits`,
-                });
+              if (planCredits > 0 && session.subscription) {
+                const { data: existingPlanTx } = await sb
+                  .from("credit_transactions")
+                  .select("id")
+                  .eq("stripe_payment_id", session.subscription as string)
+                  .maybeSingle();
+
+                if (!existingPlanTx) {
+                  await sb.rpc("add_credits", {
+                    p_user_id: userId,
+                    p_amount: planCredits,
+                    p_type: "plan_credit",
+                    p_stripe_payment_id: session.subscription as string,
+                    p_description: `${plan} plan monthly credits`,
+                  });
+                } else {
+                  console.log("Already granted plan credits for subscription:", session.subscription);
+                }
               }
             }
             console.log(`Upgraded user ${userId} to ${plan} plan`);
@@ -189,7 +199,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "invoice.paid": {
-        // Monthly subscription renewal — add plan credits
+        // Monthly subscription renewal — add plan credits (idempotent on invoice.id)
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
 
@@ -199,16 +209,27 @@ export async function POST(request: NextRequest) {
           .eq("stripe_customer_id", customerId)
           .single();
 
-        if (user && user.plan_slug) {
+        if (user && user.plan_slug && invoice.id) {
           const planCredits = PLAN_CREDITS[user.plan_slug] ?? 0;
           if (planCredits > 0) {
-            await sb.rpc("add_credits", {
-              p_user_id: user.id,
-              p_amount: planCredits,
-              p_type: "plan_credit",
-              p_description: `${user.plan_slug} plan monthly credits (renewal)`,
-            });
-            console.log(`Added $${planCredits} renewal credits for user ${user.id}`);
+            const { data: existingRenewalTx } = await sb
+              .from("credit_transactions")
+              .select("id")
+              .eq("stripe_payment_id", invoice.id)
+              .maybeSingle();
+
+            if (!existingRenewalTx) {
+              await sb.rpc("add_credits", {
+                p_user_id: user.id,
+                p_amount: planCredits,
+                p_type: "plan_credit",
+                p_stripe_payment_id: invoice.id,
+                p_description: `${user.plan_slug} plan monthly credits (renewal)`,
+              });
+              console.log(`Added $${planCredits} renewal credits for user ${user.id}`);
+            } else {
+              console.log("Already granted renewal credits for invoice:", invoice.id);
+            }
           }
         }
         break;
