@@ -52,9 +52,9 @@ const plans = [
       "10,000 requests/month",
       "60 RPM rate limit",
       "10 API keys",
-      "All tools access",
+      "All master-pool tools",
+      "BYOK for premium providers*",
       "Priority routing",
-      "BYOK support",
       "Usage analytics",
       "Email support",
       "$5/mo included credits",
@@ -72,9 +72,9 @@ const plans = [
       "100,000 requests/month",
       "300 RPM rate limit",
       "50 API keys",
-      "All tools + custom adapters",
+      "All master-pool tools + custom adapters",
+      "BYOK for premium providers*",
       "Priority routing",
-      "BYOK support",
       "Dedicated support + SLA",
       "$50/mo included credits",
     ],
@@ -96,7 +96,7 @@ const faqs = [
   },
   {
     q: "How is this different from using tools directly?",
-    a: "One key, one bill, automatic routing and fallbacks. Plus our intelligence layer picks the best tool for your task based on real usage data across hundreds of agents. No more managing 20 different API keys and accounts.",
+    a: "One key, one bill, automatic routing and fallbacks within the master pool. Plus our intelligence layer picks the best tool for your task based on real usage data across hundreds of agents. Premium providers (Anthropic, Replicate, ElevenLabs, Resend) require BYOK — their terms-of-service forbid resale, so we route those calls through your own provider account at zero markup.",
   },
   {
     q: "Can I switch plans anytime?",
@@ -113,7 +113,7 @@ const pricingSchema = {
   "@type": "Product",
   name: "ToolRoute",
   description:
-    "MCP gateway and unified API for 70+ AI tools. One API key, every tool. Prepaid credits + BYOK support.",
+    "MCP gateway and unified API for 70+ AI tools. One API key for the master pool, BYOK for premium providers. Prepaid credits + auto-top-up.",
   brand: {
     "@type": "Brand",
     name: "ToolRoute",
@@ -211,7 +211,7 @@ export default function PricingPage() {
 
       {/* Plan Cards */}
       <section>
-        <div className="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto mb-4">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -264,6 +264,14 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+        <p className="text-xs text-text-muted text-center max-w-2xl mx-auto px-4">
+          * Anthropic, Replicate, ElevenLabs, and Resend require Bring-Your-Own-Key
+          (provider terms forbid API resale). Register at{" "}
+          <Link href="/dashboard/byok" className="text-accent hover:underline">
+            /dashboard/byok
+          </Link>
+          .
+        </p>
       </section>
 
       {/* Comparison Table */}

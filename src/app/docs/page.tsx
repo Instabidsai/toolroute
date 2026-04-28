@@ -163,6 +163,7 @@ function CompactToolCard({
   operations,
   pricing,
   byok,
+  byokRequired,
   primaryOp,
   primaryParams,
   curlExample,
@@ -173,6 +174,7 @@ function CompactToolCard({
   operations: string[];
   pricing: string;
   byok: string;
+  byokRequired?: boolean;
   primaryOp: string;
   primaryParams: Array<{ name: string; type: string; required?: boolean; desc: string }>;
   curlExample: string;
@@ -232,6 +234,23 @@ function CompactToolCard({
                 ))}
               </div>
             </div>
+            {byokRequired && (
+              <div className="border border-amber-500/30 bg-amber-500/5 rounded p-3 mb-2 text-xs">
+                <strong className="text-amber-300">BYOK required.</strong>
+                <span className="text-text-dim">
+                  {" "}
+                  Provider terms-of-service forbid API resale. Register your
+                  key at{" "}
+                </span>
+                <a className="text-accent hover:underline" href="/dashboard/byok">
+                  /dashboard/byok
+                </a>
+                <span className="text-text-dim">
+                  {" "}
+                  before running this snippet.
+                </span>
+              </div>
+            )}
             <CodeBlock title="terminal">{curlExample}</CodeBlock>
           </div>
         </details>
@@ -253,6 +272,7 @@ const toolsByCategory = [
         operations: ["chat", "complete"],
         pricing: "$0.003/1K chars",
         byok: "Yes",
+        byokRequired: true,
         primaryOp: "chat",
         primaryParams: [
           { name: "messages", type: "array", required: true, desc: "Array of {role, content} message objects." },
@@ -298,6 +318,7 @@ const toolsByCategory = [
         operations: ["run", "list-models"],
         pricing: "$0.01/run",
         byok: "Yes",
+        byokRequired: true,
         primaryOp: "run",
         primaryParams: [
           { name: "model", type: "string", required: true, desc: 'Model identifier (e.g. "stability-ai/sdxl:version").' },
@@ -402,6 +423,7 @@ const toolsByCategory = [
         operations: ["text-to-speech", "voices"],
         pricing: "$0.0003/char",
         byok: "Yes",
+        byokRequired: true,
         primaryOp: "text-to-speech",
         primaryParams: [
           { name: "text", type: "string", required: true, desc: "Text to convert to speech." },
@@ -503,6 +525,7 @@ const toolsByCategory = [
         operations: ["send-email", "list-emails"],
         pricing: "$0.001/call",
         byok: "Yes",
+        byokRequired: true,
         primaryOp: "send-email",
         primaryParams: [
           { name: "from", type: "string", required: true, desc: "Sender email." },
