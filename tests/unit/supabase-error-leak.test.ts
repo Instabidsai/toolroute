@@ -2,7 +2,12 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const API_ROOT = resolve(process.cwd(), "src", "app", "api");
+// Lane 4.117 — broadened scope from src/app/api → src/app to cover non-/api
+// route handlers (mcp, auth/callback, llms*.txt). Sibling pattern to Lane
+// 4.116 (route-auth-coverage scope extension): Next.js App Router accepts
+// route.ts anywhere under src/app/, so any drift test scoped to
+// src/app/api/ has a write-time scope-claim gap.
+const APP_ROOT = resolve(process.cwd(), "src", "app");
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -17,10 +22,10 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-describe("Supabase RPC error.message leak guard", () => {
+describe("Supabase RPC error.message leak guard (Lane 4.117 — src/app/**/route.ts)", () => {
   const offenders: { file: string; line: number; snippet: string }[] = [];
 
-  const files = walk(API_ROOT);
+  const files = walk(APP_ROOT);
 
   for (const file of files) {
     const src = readFileSync(file, "utf8");
