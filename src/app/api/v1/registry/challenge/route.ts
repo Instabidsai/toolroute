@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest, checkRateLimit, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 const SCORE_DIMS = [
   "capability",
@@ -15,6 +16,7 @@ const SCORE_DIMS = [
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.registry);
     const ctx = await validateRequest(request.headers.get("authorization"));
     await checkRateLimit(ctx);
 

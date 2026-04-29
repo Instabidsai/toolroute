@@ -28,7 +28,7 @@ export default async function DiscoverPage() {
     getBeliefs(),
   ]);
 
-  const toolMap = new Map(tools.map((t) => [t.slug, t]));
+  const toolMap = new Map(tools.map((t) => [t.id, t]));
 
   const highConfidence = beliefs.filter((b) => b.confidence >= 0.8);
   const lowConfidence = beliefs.filter(
@@ -79,7 +79,7 @@ export default async function DiscoverPage() {
           <div className="border border-border rounded-lg bg-bg-card divide-y divide-border">
             {events.length > 0 ? (
               events.slice(0, 10).map((e) => {
-                const tool = toolMap.get(e.tool_slug);
+                const tool = toolMap.get(e.tool_id);
                 const outcomeColor =
                   e.outcome === "success"
                     ? "text-green"
@@ -90,7 +90,7 @@ export default async function DiscoverPage() {
                   <div key={e.id} className="px-4 py-2.5 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">
-                        {tool?.name || e.tool_slug}
+                        {tool?.name || "Unknown tool"}
                       </p>
                       <p className="text-[10px] text-text-muted">
                         {e.company} &middot; {e.action}
