@@ -53,7 +53,7 @@ export const BYOK_REQUIRED_SLUGS: ReadonlySet<string> = new Set([
   "hubspot",      // HubSpot AUP §5.5(vii) — "timesharing or service bureau"
 
   // Lane 6.6 t4 — translation + media + comms
-  "deepl",        // DeepL §8.1.4 + §5.2 explicit anti-aggregator policy
+  "translate",    // DeepL §8.1.4 + §5.2 (adapter slug = translate; provider is DeepL)
   "mux",          // Mux §3.2(2) — anti-resale + non-sublicensable
   "sendgrid",     // SendGrid (Twilio MSA) — "transfer, resell, lease, license"
 
@@ -65,7 +65,7 @@ export const BYOK_REQUIRED_SLUGS: ReadonlySet<string> = new Set([
   "linear",       // Linear — single-sentence Tier 1+2+4 stack
 
   // Lane 6.6 t7 — slug-name-hides-provider reclassifications
-  "image-gen",    // Fal.ai — "timesharing, service bureau" + API-exposure ban
+  "image",        // Fal.ai — timesharing/service-bureau + API-exposure ban (adapter slug = image; provider is Fal.ai)
   "search",       // Brave Search API — Tier 2+3 stack (slug misleads)
 
   // Lane 6.6 t9-t11 — AI/ML inference
