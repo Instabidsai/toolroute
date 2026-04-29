@@ -14,7 +14,12 @@ class ToolRoute:
         })
 
     def execute(self, tool: str, input: dict, **kwargs) -> dict:
-        """Execute any tool. e.g., tr.execute("search/web", {"query": "AI tools"})"""
+        """Execute any tool. e.g., tr.execute("search/web", {"query": "AI tools"}).
+
+        Premium providers (claude, image, translate, search/web, elevenlabs, resend, stripe,
+        context7, etc.) require BYOK — register your provider key at /api/v1/byok and
+        ToolRoute routes at zero markup.
+        """
         body = {"tool": tool, "input": input}
         if kwargs:
             body["provider"] = kwargs
@@ -23,11 +28,11 @@ class ToolRoute:
         return resp.json()
 
     def search(self, query: str, num_results: int = 5) -> dict:
-        """Web search shortcut."""
+        """Web search shortcut. BYOK required (premium provider)."""
         return self.execute("search/web", {"query": query, "num_results": num_results})
 
     def chat(self, message: str, model: str = "claude-sonnet-4-20250514") -> dict:
-        """LLM chat shortcut."""
+        """LLM chat shortcut. BYOK required — Anthropic ToS forbids resale."""
         return self.execute("claude/chat", {"messages": [{"role": "user", "content": message}], "model": model})
 
     def scrape(self, url: str) -> dict:
@@ -35,15 +40,15 @@ class ToolRoute:
         return self.execute("firecrawl/scrape", {"url": url})
 
     def translate(self, text: str, target_lang: str) -> dict:
-        """Translation shortcut."""
+        """Translation shortcut. BYOK required (premium provider)."""
         return self.execute("translate/text", {"text": text, "target_lang": target_lang})
 
     def generate_image(self, prompt: str) -> dict:
-        """Image generation shortcut."""
+        """Image generation shortcut. BYOK required (premium provider)."""
         return self.execute("image/generate", {"prompt": prompt})
 
     def tts(self, text: str, voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> dict:
-        """Text-to-speech shortcut."""
+        """Text-to-speech shortcut. BYOK required (premium provider)."""
         return self.execute("elevenlabs/text-to-speech", {"text": text, "voice_id": voice_id})
 
     def auto(self, task: str) -> dict:

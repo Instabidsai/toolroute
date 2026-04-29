@@ -145,6 +145,13 @@ function publicReadableFiles(): string[] {
     for (const f of agentManifests) {
       if (existsSync(f)) files.push(f);
     }
+    // Public SDK files (toolroute.js, toolroute.py, etc.) ship code samples
+    // referencing Class-A slugs — agents copying these into their codebase
+    // hit BYOK runtime gates. Disclosure must be inline near each sample.
+    const sdkDir = join(publicDir, "sdk");
+    if (existsSync(sdkDir)) {
+      files.push(...walk(sdkDir, [".js", ".mjs", ".cjs", ".ts", ".py"]));
+    }
   }
   return files;
 }
