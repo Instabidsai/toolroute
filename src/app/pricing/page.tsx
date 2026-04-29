@@ -97,7 +97,7 @@ const faqs = [
   },
   {
     q: "How is this different from using tools directly?",
-    a: "One key, one bill, automatic routing and fallbacks within the master pool. Plus our intelligence layer picks the best tool for your task based on real usage data across hundreds of agents. Premium providers (Anthropic, Replicate, ElevenLabs, Resend) require BYOK — their terms-of-service forbid resale, so we route those calls through your own provider account at zero markup.",
+    a: "One key, one bill, automatic routing and fallbacks within the master pool. Plus our intelligence layer picks the best tool for your task based on real usage data across hundreds of agents. Premium providers — Anthropic, OpenAI, Stripe, Supabase, GitHub, Sentry, Slack, Replicate, ElevenLabs, Resend, Mux, SendGrid, HeyGen, Notion and 16 others — require BYOK. Their terms-of-service forbid resale, so we route those calls through your own provider account at zero markup. See the full list at /dashboard/providers.",
   },
   {
     q: "Can I switch plans anytime?",
@@ -266,8 +266,12 @@ export default function PricingPage() {
           ))}
         </div>
         <p className="text-xs text-text-muted text-center max-w-2xl mx-auto px-4">
-          * Anthropic, Replicate, ElevenLabs, and Resend require Bring-Your-Own-Key
-          (provider terms forbid API resale). Register at{" "}
+          * 30 premium providers (Anthropic, OpenAI, Stripe, Supabase, GitHub,
+          Sentry, Slack, Replicate, ElevenLabs, Resend, Mux, SendGrid, HeyGen,
+          Notion, Vapi, Drive, Calendar, Sheets, LinkedIn, Twitter, HubSpot,
+          DeepL, Unsplash, YouTube, Linear, Fal.ai, Brave Search, Shotstack,
+          Higgsfield, Postiz, Context7, Exa) require Bring-Your-Own-Key —
+          provider terms forbid API resale. Register at{" "}
           <Link href="/dashboard/byok" className="text-accent hover:underline">
             /dashboard/byok
           </Link>
