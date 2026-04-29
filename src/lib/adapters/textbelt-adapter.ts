@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://textbelt.com";
 
@@ -49,7 +50,9 @@ export const textbeltAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Textbelt send-sms failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Textbelt send-sms failed: ${res.status} ${errText}`
+            ),
             provider: "textbelt",
           };
         }
@@ -92,7 +95,9 @@ export const textbeltAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Textbelt check-status failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Textbelt check-status failed: ${res.status} ${errText}`
+            ),
             provider: "textbelt",
           };
         }
