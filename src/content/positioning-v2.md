@@ -65,9 +65,9 @@ We assume you've already decided you need an external tool. The question is *whi
 
 **Belief system.** Every tool has a confidence score that updates from real usage. When `firecrawl/scrape` starts rate-limiting, the router auto-prefers `jina/reader` for the same intent. When a new scraper outperforms, it gets promoted. The registry is alive.
 
-**One auth, 87 tools.** You present one bearer token. We handle Stripe, OpenAI, Anthropic, Firecrawl, Resend, ElevenLabs, Apollo, Composio, Semgrep, Playwright — the full 87. Provider keys rotate, deprecate, and split pricing tiers; you never see it.
+**One auth, 87 tools.** You present one bearer token. We route the full 87 — most via the shared master pool, while premium providers (Anthropic, OpenAI, Stripe, GitHub, Supabase, ElevenLabs, Replicate, Resend, and 22 others — full list at `/dashboard/providers`) require BYOK because their terms-of-service forbid resale. Provider keys rotate, deprecate, and split pricing tiers; you never see it.
 
-**Transparent pricing.** Credit cost per call is published on `GET /api/v1/tools` alongside the tool schema. You can budget before you execute. No surprise markups — we pass through provider cost + 10% gateway fee. If a call costs us 4 credits, you pay 4 credits. Our margin is on the gateway, not on obscuring your spend.
+**Transparent pricing.** Credit cost per call is published on `GET /api/v1/tools` alongside the tool schema. You can budget before you execute. For master-pool tools, no surprise markups — we pass through provider cost + 10% gateway fee. For BYOK-required premium providers, calls route through your own provider account at zero markup; ToolRoute charges only the orchestration credit. Our margin is on the gateway, not on obscuring your spend.
 
 ### How to connect
 
@@ -143,9 +143,13 @@ Go.
 
 ## What ToolRoute Is
 ToolRoute is an MCP-native tool gateway. Agents call one endpoint; we route to
-the right provider (OpenAI, Firecrawl, Stripe, Resend, Semgrep, Playwright,
-ElevenLabs, Apollo, Composio, and 78 others). You authenticate once, we handle
-every downstream provider's auth, rate limits, retries, and billing.
+the right provider (Firecrawl, Apollo, Composio, Semgrep, Playwright, and
+others on the shared master pool, plus premium providers — Anthropic, OpenAI,
+Stripe, GitHub, Supabase, ElevenLabs, Replicate, Resend and 22 others — that
+require BYOK because their terms-of-service forbid resale). You authenticate
+once, we handle every downstream provider's auth, rate limits, retries, and
+billing — master-pool calls bill in credits; BYOK-required calls route through
+your own key at zero markup.
 
 ## Tools Available (87 total, 14 categories)
 
