@@ -482,7 +482,7 @@ BYOK required (Class-A — Fal.ai premium provider, BYOK enforced at runtime onc
 
 Pricing: $0.02/image
 
-#### image/upscale
+#### image/upscale (BYOK required)
 **Input:**
 - `image_url` (string, REQUIRED)
 - `scale` (number, default: 2)
@@ -656,7 +656,7 @@ BYOK required (Class-A — DeepL premium provider, BYOK enforced at runtime once
 - `target_lang` (string, REQUIRED) -- Target language code (e.g. DE, FR, ES, JA)
 - `source_lang` (string) -- Source language (auto-detected if omitted)
 
-#### translate/detect-language
+#### translate/detect-language (BYOK required)
 **Input:**
 - `text` (string, REQUIRED) -- Text to detect
 

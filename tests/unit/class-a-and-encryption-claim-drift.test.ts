@@ -161,6 +161,26 @@ describe.skipIf(!SHOULD_RUN)("Class-A + encryption claim drift (Lane 4.112)", ()
         if (h.file.includes("/lib/adapters/")) continue;
         // Skip references in audit memos (.agent/) — they describe the drift
         if (h.file.includes("/.agent/")) continue;
+        // Skip Next.js metadata convention files — `image/png` etc. are MIME
+        // types in opengraph-image.tsx / twitter-image.tsx / icon.tsx, not
+        // Class-A slug refs. Same applies to any `<route>/contentType` line.
+        const baseName = h.file.split("/").pop() ?? "";
+        if (
+          /^(opengraph|twitter|apple|icon|favicon)-?image\.(tsx|ts|jsx|js)$/.test(
+            baseName,
+          ) ||
+          /^icon\.(tsx|ts|jsx|js)$/.test(baseName) ||
+          /^apple-icon\.(tsx|ts|jsx|js)$/.test(baseName)
+        ) {
+          continue;
+        }
+        // Belt-and-suspenders: skip MIME-type matches across all files
+        // (image/png, image/jpeg, image/svg+xml, image/webp, etc.).
+        if (/^image\/(png|jpeg|jpg|gif|svg(\+xml)?|webp|avif|x-icon|bmp|tiff)$/.test(
+          h.matchText,
+        )) {
+          continue;
+        }
 
         const ok = CLASS_A_QUALIFIERS.some((q) => h.context.includes(q));
         if (!ok) drifts.push(h);
