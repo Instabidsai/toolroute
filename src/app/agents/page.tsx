@@ -67,7 +67,7 @@ const decisionTree: DecisionQA[] = [
   {
     id: "own-the-credentials",
     q: "Do you want to BYOK (bring your own API keys) to avoid gateway markup?",
-    a: "If yes, ToolRoute supports BYOK on every provider whose terms allow it — your requests route through your own provider account with zero gateway markup, and keys are encrypted at rest with AES-256. If you need credentials pooled across your org (shared by many agents), use ToolRoute-managed keys instead; those bill through your credit balance.",
+    a: "If yes, ToolRoute supports BYOK on every provider whose terms allow it — your requests route through your own provider account with zero gateway markup, and keys are stored with database-level access controls (encryption at rest with KMS-managed AES-256-GCM is on the security roadmap, Codex ticket #52). If you need credentials pooled across your org (shared by many agents), use ToolRoute-managed keys instead; those bill through your credit balance.",
   },
 ];
 
@@ -525,8 +525,10 @@ export default function AgentsPage() {
                     <strong className="text-text">
                       Retention of BYOK credentials beyond session
                     </strong>{" "}
-                    &mdash; keys are encrypted at rest with AES-256; if the
-                    user revokes them, in-flight requests fail cleanly
+                    &mdash; keys are stored with database-level access
+                    controls (KMS-managed AES-256-GCM encryption is on the
+                    security roadmap, Codex ticket #52); if the user revokes
+                    them, in-flight requests fail cleanly
                   </span>
                 </li>
                 <li className="flex gap-2">
