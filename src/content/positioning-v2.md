@@ -149,34 +149,42 @@ every downstream provider's auth, rate limits, retries, and billing.
 
 ## Tools Available (87 total, 14 categories)
 
-AI/LLM (11):
+> **Premium providers require BYOK (Bring Your Own Key).** Most tools work
+> on the shared master pool, but a subset of providers — Anthropic, OpenAI,
+> Stripe, ElevenLabs, Replicate, Resend, Supabase, Vapi, HubSpot, LinkedIn,
+> Twitter, YouTube, SendGrid, Notion, Exa, Heygen, Postiz, Slack, Drive,
+> Calendar, Sheets and others — forbid resale via a shared pool in their
+> Terms of Service. Calls to those slugs require BYOK. Class-A slugs are
+> annotated below.
+
+AI/LLM (11) — *premium providers require BYOK (claude/*):*
 - openai/chat, openai/embed, openai/image, openai/transcribe
 - anthropic/messages
 - google/generate, google/embed
 - groq/chat, mistral/chat, deepseek/chat, together/chat
 
-Search & Scrape (9):
+Search & Scrape (9) — *premium providers require BYOK (exa):*
 - firecrawl/scrape, firecrawl/crawl, firecrawl/search
 - jina/reader, jina/search
 - serper/search, tavily/search
 - exa/search, brave/search
 
-Email (5):
+Email (5) — *premium providers require BYOK (resend, sendgrid):*
 - resend/send, postmark/send, sendgrid/send
 - mailgun/send, loops/send
 
-Voice (6):
+Voice (6) — *premium providers require BYOK (elevenlabs):*
 - elevenlabs/tts, elevenlabs/voice_clone
 - openai/tts, openai/stt
 - deepgram/transcribe, cartesia/tts
 
-Video & Image (9):
+Video & Image (9) — *premium providers require BYOK (replicate, heygen):*
 - replicate/run, fal/run
 - heygen/video, synthesia/video, d-id/video
 - pika/video, runway/video
 - remotion/render, stability/image
 
-Database & Infra (8):
+Database & Infra (8) — *premium providers require BYOK (supabase):*
 - supabase/query, supabase/rpc, supabase/storage
 - redis/get, redis/set
 - upstash/vector, pinecone/query, qdrant/query
@@ -185,13 +193,13 @@ Security (6):
 - semgrep/scan, snyk/scan, socket/audit
 - zap/scan, vibearmor/scan, playwright/e2e
 
-Business (9):
+Business (9) — *premium providers require BYOK (stripe, hubspot):*
 - stripe/charge, stripe/customer, stripe/subscription
 - clerk/user, auth0/user
 - hubspot/contact, salesforce/query
 - quickbooks/invoice, xero/invoice
 
-Social & Content (8):
+Social & Content (8) — *premium providers require BYOK (twitter, linkedin, youtube, postiz, notion):*
 - twitter/post, linkedin/post, reddit/post
 - youtube/upload, youtube/transcripts
 - postiz/schedule, buffer/schedule
@@ -202,12 +210,12 @@ Code & Ops (7):
 - vercel/deploy, netlify/deploy
 - cloudflare/purge, docker/run
 
-Productivity (5):
+Productivity (5) — *premium providers require BYOK (calendar, drive, sheets):*
 - gmail/send, gmail/search
 - calendar/event
 - drive/file, sheets/row
 
-SMS & Comms (4):
+SMS & Comms (4) — *premium providers require BYOK (vapi):*
 - twilio/sms, textbelt/sms
 - vapi/call, bland/call
 
@@ -222,13 +230,15 @@ Data & Enrichment (5):
 
 1 credit = $0.001 USD. Every tool lists its credit cost on /api/v1/tools.
 
-Typical costs per call:
+Typical costs per call (note: premium providers require BYOK — slugs like
+`openai/`, `resend/`, `elevenlabs/`, `stripe/` are billed against your own
+provider key plus a small ToolRoute orchestration credit):
 - firecrawl/scrape: 3 credits
-- openai/chat (gpt-4o, 1K tokens in/out): 15 credits
-- resend/send: 1 credit
-- elevenlabs/tts (30 sec): 12 credits
+- openai/chat (gpt-4o, 1K tokens in/out): 15 credits — BYOK required
+- resend/send: 1 credit — BYOK required
+- elevenlabs/tts (30 sec): 12 credits — BYOK required
 - apollo/enrich: 4 credits
-- stripe/charge: 2 credits
+- stripe/charge: 2 credits — BYOK required
 - semgrep/scan: 8 credits
 
 Plans:
