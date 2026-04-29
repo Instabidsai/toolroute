@@ -123,6 +123,14 @@ function publicReadableFiles(): string[] {
         files.push(join(publicDir, name));
       }
     }
+    // OpenAPI spec is the canonical machine-readable API contract — agents
+    // using OpenAPIToolkit / OpenAI tool-use generators / MCP-via-OpenAPI
+    // bridges consume these files to discover what they can call. Class-A
+    // BYOK disclosure must travel through the same surface.
+    const openapi = join(publicDir, "openapi.json");
+    if (existsSync(openapi)) files.push(openapi);
+    const wellKnownOpenapi = join(publicDir, ".well-known", "openapi.json");
+    if (existsSync(wellKnownOpenapi)) files.push(wellKnownOpenapi);
   }
   return files;
 }
