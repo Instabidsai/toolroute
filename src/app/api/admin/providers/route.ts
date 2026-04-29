@@ -6,10 +6,32 @@ import { GatewayError } from "@/lib/gateway-types";
 
 const ADMIN_HEADERS = { ...AUTHED_RESPONSE_HEADERS, "Content-Type": "application/json" };
 
+// Lane 4.106: master-pool plaintext + anon-read AMBIGUOUS audit gated this writer
+// to 410 Gone by default. tool_providers stores credentials in a column named
+// auth_key_encrypted that is in fact plaintext; until the post-Codex-#23 BYOK gate
+// + Lane 6.14 ToS-forbidden cohort cleanup conclude whether master-pool storage is
+// architecturally needed at all, accidental inserts must be impossible. Set
+// ENABLE_TOOL_PROVIDERS_ADMIN=1 to re-open the writer.
+const ADMIN_PROVIDERS_WRITES_ENABLED =
+  process.env.ENABLE_TOOL_PROVIDERS_ADMIN === "1";
+
 /**
  * POST /api/admin/providers — Register or update a master provider key
  */
 export async function POST(request: NextRequest) {
+  if (!ADMIN_PROVIDERS_WRITES_ENABLED) {
+    return NextResponse.json(
+      {
+        error: {
+          message:
+            "Master-pool provider writes are disabled. tool_providers stores credentials in plaintext (column name notwithstanding); the master-pool architecture is under review (Lane 4.106). Set ENABLE_TOOL_PROVIDERS_ADMIN=1 to re-enable.",
+          code: "endpoint_disabled",
+        },
+      },
+      { status: 410, headers: ADMIN_HEADERS }
+    );
+  }
+
   if (!validateAdmin(request)) {
     return NextResponse.json(
       { error: { message: "Unauthorized", code: "admin_auth_required" } },
