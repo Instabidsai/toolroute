@@ -2,12 +2,15 @@ import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 
-// Lane 4.33 — Drift-prevention test for API route auth coverage.
+// Lane 4.33 + 4.116 — Drift-prevention test for route auth coverage.
 //
 // Lane 4.28 covered admin endpoints. Lane 4.21 covered CSRF/method shape.
-// This lane locks down the FULL set of /api routes: every route file in
-// src/app/api/**/route.ts must have a known classification, and the auth
-// function expected for that class must appear in the source.
+// Lane 4.33 originally locked /api routes only; Lane 4.116 broadened scope
+// to src/app/**/route.ts since Next.js App Router accepts route handlers
+// anywhere under src/app/ — non-/api routes (mcp, auth/callback, llms*.txt)
+// are real HTTP endpoints with auth implications and must be classified too.
+// Every route file in src/app/**/route.ts must have a known classification,
+// and the auth function expected for that class must appear in the source.
 //
 // Failure modes this catches:
 //   1. New route file added without ANY auth check (silently public)
@@ -132,6 +135,24 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
     classification: "stripe_webhook",
     rationale: "Stripe webhook — signature verification via stripe.webhooks.constructEvent.",
   },
+
+  // --- Lane 4.116 — non-/api routes (live under src/app/<path>/route.ts) ---
+  "src/app/mcp/route.ts": {
+    classification: "api_key",
+    rationale: "MCP Streamable HTTP gateway — requires Bearer tr_live_ for tools/call. validateRequest gate at line 139.",
+  },
+  "src/app/auth/callback/route.ts": {
+    classification: "public",
+    rationale: "Supabase OAuth callback. Establishes session via createServerClient. Input gate is the Supabase ?code= param, not validateRequest/getUserFromSession/etc.",
+  },
+  "src/app/llms.txt/route.ts": {
+    classification: "public",
+    rationale: "Public AI-agent discovery file (toolroute.ai/llms.txt). Static text serve.",
+  },
+  "src/app/llms-full.txt/route.ts": {
+    classification: "public",
+    rationale: "Public AI-agent discovery file (toolroute.ai/llms-full.txt). Static text serve.",
+  },
 };
 
 const AUTH_MARKERS: Record<AuthClass, RegExp[]> = {
@@ -155,7 +176,10 @@ const ALL_AUTH_MARKERS: RegExp[] = [
 ];
 
 function walkRoutes(): string[] {
-  const apiRoot = path.join(process.cwd(), "src", "app", "api");
+  // Lane 4.116 — scan all of src/app/, not just src/app/api/. Non-/api
+  // routes (mcp, auth/callback, llms*.txt) are still real HTTP endpoints
+  // with auth implications and must be classified by ROUTE_MAP.
+  const appRoot = path.join(process.cwd(), "src", "app");
   const out: string[] = [];
   function walk(dir: string) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -166,11 +190,11 @@ function walkRoutes(): string[] {
       }
     }
   }
-  walk(apiRoot);
+  walk(appRoot);
   return out;
 }
 
-describe("Lane 4.33 — API route auth coverage", () => {
+describe("Lane 4.33 + 4.116 — route auth coverage (src/app/**/route.ts)", () => {
   const routes = walkRoutes();
 
   it("every route on disk has a classification in ROUTE_MAP", () => {
