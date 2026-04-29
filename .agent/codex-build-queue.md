@@ -546,3 +546,405 @@ Claude is reading provider ToS for resale clauses.
   - **Option 2 (short-term):** gate `/api/admin/providers` POST/PATCH behind 410 Gone or feature flag until post-Codex #23 architecture review concludes whether master-pool storage is ever needed.
   - **Option 3 (deferred, only if architecture preserves storage):** Vault encryption mirroring Codex #52 pattern.
 - **Why this matters for /loop directive:** column-name lies (`_encrypted` storing plaintext) are tech-debt magnets. Defuse today via REVOKE; architectural cleanup post-gate.
+- **Note (2026-04-28 PM):** Lane 4.107 found the Option 1 SQL already exists at `scripts/lockdown-anon-writes-and-admin-tables.sql:39-61` from earlier-today Lane 4.16 work — just needs to run.
+
+## REVIEW-WAIT — Lane 4.107 (Lane 4.16 SELECT-revoke SQL exists but was never shipped to prod)
+- **Branch:** `lane-4.107-lane-4.16-sql-unshipped`
+- **Memo:** `.agent/lane-4.107-lane-4.16-sql-unshipped.md`
+- **PR:** pending (will pin number after `gh pr create`)
+- **Severity:** HIGH-LATENT (same class as Lane 4.106 — AMBIGUOUS today, fix exists, just unshipped)
+- **Finding:** Lane 4.16 (committed today) proposed SELECT-revoke on `tool_providers` + `rate_limit_windows` and shipped the migration at `scripts/lockdown-anon-writes-and-admin-tables.sql:39-61`. Lane 4.96 then ran on top of an unverified assumption that Lane 4.16 SQL had executed. Live probes (this tick) prove only the write-revoke half shipped — Section 1 SELECT-revoke is unshipped. `tool_providers` AND `rate_limit_windows` both anon-readable HTTP 200 + `[]` (AMBIGUOUS).
+- **Justin-actionable:** paste `scripts/lockdown-anon-writes-and-admin-tables.sql` into Supabase SQL editor (project `isbratmfnnzipzyoefbo`). Idempotent, ~30 sec. Verify with two `curl` probes documented in memo.
+- **Codex follow-up:** amend `scripts/lane-4.96-anon-write-grants-revoke.sql:23` header in a future PR to remove the false claim "Lane 4.16 REVOKE'd anon SELECT on these tables." Audit-process improvement: live-probe applied-SQL claims rather than trusting sibling-memo headers.
+- **Process note:** this is the second audit memo today on the same `tool_providers` AMBIGUOUS state (Lane 4.106 also flagged it without referencing Lane 4.16's prior fix proposal). Add a `grep -l "<table>" .agent/*.md` pre-draft step.
+- **Why this matters for /loop directive:** "applied" claims need live-probe proof (extends Hard Rule #61 from Codex audits to internal claims). Pre-launch checklists that read sibling-memo headers as source-of-truth are self-deceiving.
+
+## VERIFIED-SHIPPED — Lane 4.5 v2 (`scripts/lockdown-anon-read-leaks-v2.sql`) — 2026-04-28 loop tick 35
+- **Probe set:** `api_keys`, `user_provider_keys`, `tool_requests`, `gateway_users`, `gateway_usage_log`, `credit_transactions`, `usage_events`. All 7 → HTTP 401 anon (LOCKED).
+- **Method:** `curl /rest/v1/<t>?select=*&limit=1` with anon JWT — see `.agent/lane-4.107-lane-4.16-sql-unshipped.md` for probe pattern.
+- **Outliers (still AMBIGUOUS):** `tool_providers`, `rate_limit_windows` — those are the Lane 4.107 finding (Section 1 of `lockdown-anon-writes-and-admin-tables.sql` unshipped). Justin to run.
+- **Implication:** the Lane 4.5 v2 SQL DID ship to prod (unlike Lane 4.16 Section 1). Probe-driven verification confirmed; no false `[VERIFIED]` claims to amend. This is the audit-pattern Lane 4.107 surfaced — applied to the next sibling SQL file. Net result: 1 of 13 `scripts/*.sql` files identified as unshipped (Lane 4.107); 1 of 13 verified shipped via probe; remaining 11 are RPC-class (need RPC probes, deferred to next tick).
+
+## VERIFIED-SHIPPED — Lane 4.92 + Lane 4.94 RPC EXECUTE lockdowns — 2026-04-28 loop tick 36
+- **Lane 4.92 (`scripts/lockdown-gateway-rpcs.sql`):** anon POST → all 5 RPCs locked. `validate_api_key`/`add_credits`/`deduct_credits`/`log_gateway_request` → 401; `check_rate_limit` → 404 (PostgREST not exposing post-revoke).
+- **Lane 4.94 (`scripts/lane-4.94-secdef-rpc-lockdown.sql`):** anon POST → both RPCs locked. `get_user_dashboard` → 401 (was full PII payload pre-fix); `cleanup_rate_limits` → 401.
+- **Lane 4.93 (`scripts/lane-4.93-credit-rpc-input-validation.sql`):** unprobeable from anon — RPC is locked from anon by 4.92, so input-validation behavior can only be tested via service_role JWT. Deferred. Caller-side audit (Apr 28) confirmed all 5 call sites already gate `> 0` so practical risk is low.
+- **Cumulative session probe-matrix:** 9 tables + 7 RPCs verified shipped via anon-probe. Sole known-unshipped = Lane 4.107 Section 1 (`tool_providers` + `rate_limit_windows` SELECT-revoke; Justin SQL pending).
+
+## VERIFIED-SHIPPED — Lane 4.96 + Lane 4.98 anon WRITE revokes — 2026-04-28 loop tick 37
+- **Lane 4.96 (financial tables, 6/6):** `api_keys`, `credit_transactions`, `gateway_usage_log`, `gateway_users`, `usage_events`, `user_provider_keys` — all anon POST → HTTP 401 with body `{"code":"42501","message":"permission denied for table <t>"}`. GRANT-layer denial confirmed (NOT RLS-layer "violates row-level security" — proves the REVOKE shipped, not just RLS still holding).
+- **Lane 4.98 (zero-policy tables, 8/8):** `conversations`, `discovery_feed`, `inventory`, `rate_limit_windows`, `tool_memory`, `tool_overrides`, `tool_providers`, `tool_requests` — all anon POST → HTTP 401 GRANT-layer.
+- **Layer-distinction note:** body inspection (`permission denied for table` vs `violates row-level security`) is how to differentiate GRANT-layer vs RLS-layer 401s when probing write revokes. Useful for any future Lane-4-class verification.
+- **Cumulative session probe-matrix update:** 17 tables (read+write) + 7 RPCs verified shipped via anon-probe. Sole known-unshipped remains Lane 4.107 Section 1 (Justin SQL pending). Outstanding probe targets: Lane 4.97 (authenticated write revoke — needs authenticated JWT, deferred), Lane 4.99 (8 one-policy tables — same probe pattern as 4.98), Lane 4.93 (RPC input validation — needs service-role).
+
+## VERIFIED-SHIPPED — Lane 4.99 anon WRITE revokes (8 one-policy SELECT-only) — 2026-04-28 loop tick 38
+- **Tables (8/8):** `category_beliefs`, `composites`, `plans`, `provider_health_log`, `skills`, `tool_categories`, `tool_pricing`, `tools` — all anon POST → HTTP 401 GRANT-layer (`{"code":"42501","message":"permission denied for table <t>"}`).
+- **Read-side regression check:** spot-probed `tools`, `tool_categories`, `category_beliefs` SELECT → all HTTP 200. Public catalog reads still work post-revoke as designed (the "SELECT-only" half of the one-policy intent is preserved).
+- **Cumulative session probe-matrix update:** 25 tables + 7 RPCs verified shipped via anon-probe (17 → 25 this tick, +8). Sole known-unshipped remains Lane 4.107 Section 1.
+- **Remaining probe targets:** Lane 4.97 (authenticated write revoke on financial tables — needs authenticated JWT, no easy session in this loop), Lane 4.93 (RPC input validation on add_credits/deduct_credits — needs service-role JWT to invoke; caller-side audit per Apr 28 already confirms all 5 call sites gate `> 0` so practical risk is low). Both are deferred as low-marginal-utility.
+
+## VERIFIED-SAFE — `/api/v1/tools` catalog endpoint vs Lane 4.106 leak vector — 2026-04-28 loop tick 39
+- **Concern:** Lane 4.106 found `tool_providers.auth_key_encrypted` is plaintext + Lane 4.107 found anon-SELECT still ON. If `/api/v1/tools` joined `tool_providers`, the catalog would leak provider creds publicly.
+- **Verification:** read `src/app/api/v1/tools/route.ts:1-170` + live probe of `/api/v1/tools` response shape. Default path uses `get_tool_catalog` RPC (or fallback `tools.select(<explicit-column-list>)`) — neither joins `tool_providers`. Format-variants `?format=openai|mcp|anthropic` use `listAdapters()` from in-memory registry, no DB read. Live response (sampled 6 entries: brave-search, claude-api, composio, context7, deepgram, elevenlabs) confirms no `auth_key_encrypted`/`api_key`/credential-shaped fields.
+- **Implication:** Lane 4.106 leak vector is bounded to direct anon `/rest/v1/tool_providers` reads, NOT propagated through the public catalog endpoint. Reduces blast radius framing in Lane 4.106 memo (still HIGH-LATENT severity — direct PostgREST endpoint remains exposed until Lane 4.107 SQL ships).
+- **Future-proofing note:** `tools.select(...)` uses an explicit column allowlist (id, name, slug, description, capabilities, cost, status, super_category, sub_category) — adding a sensitive column to `tools` itself wouldn't auto-leak. Same for `get_tool_catalog` RPC (return shape is fixed at function definition). Defense-in-depth is intact.
+
+## VERIFIED-SAFE — `/api/v1/key` GET shape — 2026-04-28 loop tick 40
+- **`getKeyInfo` (gateway.ts:400-439) returns:** `key_name`, `plan`, `credit_balance`, `rate_limit:{rpm,rpd}`, `usage:{today,this_month}`. No raw key, hash, or `key_prefix`. usage shape is row counts + cost sums only — no per-call detail.
+- **Implication vs Lane 4.105 dual-auth concern:** even when called via tr_live_, the response shape is bounded — adding tr_live_ auth here would NOT widen what the key holder sees about their own data. Lane 4.105 widening concern stands only for `/api/v1/usage` (which exposes per-call rows). `/api/v1/key` is ticket-shaped (rolled-up) and would be safer to dual-auth than `/api/v1/usage`. Useful framing if Codex revisits Lane 4.105 Option-3 scope claims.
+- **Diminishing-returns acknowledgement:** session probe-matrix is now 25 tables + 7 RPCs verified shipped + 2 endpoint shapes verified safe (`/api/v1/tools`, `/api/v1/key`). The remaining audit angles are mostly low-yield. Lane 4.107 SQL execution remains the only Justin-blocker; PR stack 131-137 awaits review/merge. Loop continues with reduced scope per /loop directive ("Stop only if real blocker that needs Justin" — Lane 4.107 IS that blocker, but loop is licensed to continue background audits while waiting).
+
+## RESPONSE-CODE REFINEMENT — Lane 4.92 RPC lockdown returns 404 PGRST202, not 401 — 2026-04-28 loop tick 41
+- **Probed all 5 RPCs from Lane 4.92 batch (line 420 [RESOLVED] entry):** `add_credits`, `deduct_credits`, `validate_api_key`, `check_rate_limit`, `log_gateway_request` — anon JWT POST `{}` → uniform `HTTP 404` + `{"code":"PGRST202","message":"Could not find the function public.<fn> ... in the schema cache"}`.
+- **Mismatch with build-queue narrative:** line 420 reports "All 5 RPCs now return HTTP 401 permission-denied to anon" — actual is 404 PGRST202. Both indicate locked, but the mechanism differs: 401 = function visible but EXECUTE denied; 404 PGRST202 = function hidden from PostgREST schema cache (anon-EXECUTE revoke causes PostgREST to omit the function from its introspection set entirely). The Lane 4.14 lockdown is at the **schema-cache layer**, even stronger than 401.
+- **Drift-test implication (CORRECTED tick 42):** initial tick-41 framing claimed existing vitests would silently false-fail. **That was hypothetical, not actual.** Tick-42 audit of all 5 grants-drift tests (`gateway-rpc-grants-drift`, `anon-write-grants-drift`, `authenticated-write-grants-drift`, `zero-policy-tables-write-grants-drift`, `registry-tables-write-grants-drift`) confirms zero HTTP status-code assertions — they're all static SQL+source parsers (REVOKE/GRANT clause presence checks). Lockdown is enforced at the SQL-text layer, runtime response code is incidental. The 401 vs 404 PGRST202 distinction matters only for FUTURE runtime probes that anchor on status code. Sibling to Hard Rule #62 (verify origin/main vs working tree before claiming a bug exists).
+
+## VERIFIED-SAFE + RESIDUAL-ORACLE — schema-directory locked, per-table existence still oracled — 2026-04-28 loop tick 43
+- **Strong positive find:** `GET /rest/v1/` (PostgREST OpenAPI introspection — full schema directory listing every table+RPC visible to the calling role) returns `HTTP 401` + `{"message":"Invalid API key","hint":"Only the service_role API key can be used for this endpoint."}` to anon. Anon literally cannot enumerate what tables exist — names must be guessed from product context.
+- **Residual disclosure surface:** per-table probe still oracles existence via response-code pattern. Test set:
+  - `usage_events` → 401 + `42501 "permission denied for table"` → EXISTS, LOCKED
+  - `nonexistent_xyz_table` → 404 + `PGRST205 "Could not find the table"` → DOES NOT EXIST
+  - `api_keys`, `gateway_users` → 401 + 42501 → EXISTS, LOCKED
+  - `tools` → 200 + rows → EXISTS, READABLE
+  - `rate_limit_windows` → 200 + [] → AMBIGUOUS (Lane 4.107 outlier confirmed)
+- **Class-distinction vs RPC layer (tick 41 sibling):** for RPCs, anon-EXECUTE revoke triggers PGRST202 cache-hide (404 — function name leaks NOTHING). For tables, anon-SELECT REVOKE leaves the table visible to introspection at the route level — 42501 still confirms existence. Different lockdown granularities. Hard Rule #56 (table 401/200/200+[]) was correct; tick-41 added the RPC analog (401/404+PGRST202/200).
+- **Severity framing:** LOW residual. Table names are typically inferrable from product feature surface (`/dashboard/api-keys` → `api_keys`, `/dashboard/usage` → `usage_events`). Schema-directory lockdown means an attacker has to guess, but they don't have to guess hard — common conventions narrow the search space to ~30 candidates. Closing this would require shifting all tables behind a numeric-id-only PostgREST routing scheme — high-cost, low-payoff. **Not actionable; documenting as known posture.**
+- **Implication for /loop tick discipline:** sweep-audit via `/rest/v1/` introspection is unavailable. Each table must be probed by name. Existing audit set (Lane 4.5/4.96/4.97/4.98/4.99/4.107) covered known tables exhaustively; the schema-directory lockdown means there's no way to find UNKNOWN tables anon could read without service-role access. The "completeness" guarantee for the table-side audit comes from `pg_class` queries done via Mgmt API, not anon probes — that's the right posture.
+- **Cumulative session probe-matrix:** 25 tables + 7 RPCs + 2 endpoint shapes + schema-directory lockdown verified. The remaining audit gap is whether `pg_class` enumeration was ever cross-referenced against the Lane 4.5/4.96-4.99 covered-tables list — Codex follow-up: query `pg_class` via Mgmt API, diff against the union of those 5 lockdown SQL files, surface any table not in either set as a "did anyone ever probe this?" flag. Likely zero residual after Lane 4.107 ships, but worth confirming once.
+
+## VERIFIED-BOUNDED — Lane 4.36 BYOK plaintext leak vector — 2026-04-28 loop tick 44
+- **Two-layer bounding confirmed:**
+  - **API layer** (`src/app/api/v1/byok/route.ts:65-98` GET, lines 22-36 POST): both return shapes use **explicit column allowlist** `id, tool_slug, is_active, prefer_own_key, created_at, updated_at`. `api_key_encrypted` (the plaintext column from Lane 4.36) is **NOT** in either SELECT. Even though storage is plaintext, the user-facing API never echoes the key back. Same defense as `/api/v1/key` (tick 40).
+  - **DB layer** (live anon probe): `GET /rest/v1/user_provider_keys?select=*&limit=1` → `HTTP 401` + `42501 permission denied for table user_provider_keys`. Targeted column probe `?select=api_key_encrypted` also 401 — GRANT-layer REVOKE fires before column-level RLS. Confirms Lane 4.96 SQL shipped against this table.
+- **Residual surface:** the only path to plaintext `api_key_encrypted` is direct service_role access — admin queries, accidental log dumps, or service-role JWT exfiltration. None of these are anon-reachable. Lane 4.36 task #52 (Codex Vault encryption) closes the residual but is **not a P0 because the API+REST layers are already locked**. The "URGENT" framing in Lane 4.36 memo overstated the immediate risk; severity is correctly HIGH-LATENT (matches Lane 4.106 framing for the master-pool sibling).
+- **Class-symmetry note vs Lane 4.106:** master-pool (`tool_providers.auth_key_encrypted`) and BYOK (`user_provider_keys.api_key_encrypted`) are sibling plaintext columns. **Asymmetry:** master-pool is anon-readable today (Lane 4.107 unshipped) AND the gateway code-path reads it as plaintext (`src/lib/gateway.ts:271-282`). BYOK is GRANT-revoked (this tick) AND no API path returns the column. So BYOK is double-bounded, master-pool is zero-bounded — explains why Lane 4.106 is the more urgent of the two even though both columns are plaintext.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + 3 endpoint shapes (`/api/v1/tools`, `/api/v1/key`, `/api/v1/byok`) + schema-directory lockdown verified.
+
+## VERIFIED-BOUNDED — `/api/v1/keys` CRUD shape + `api_keys` table — 2026-04-28 loop tick 45
+- **API-shape audit (`src/app/api/v1/keys/route.ts`):**
+  - **POST** (line 51-85): INSERT row stores `key_hash` (bcrypt-style hash from `generateApiKey()`/`generateTestApiKey()`); SELECT-back excludes `key_hash` (line 62-63). Response returns `raw` key string ONCE with `warning: "Store this key securely. It cannot be retrieved again."` — TextBlock-once disclosure pattern, never recoverable from any subsequent endpoint.
+  - **GET** (line 109-115): explicit allowlist `id, name, key_prefix, allowed_tools, is_active, last_used_at, created_at, expires_at`. `key_hash` NOT in SELECT. `key_prefix` is the first ~10 chars (`tr_live_xxx`) — safe display fragment.
+  - **DELETE** (line 165-183): IDOR-protected by `.eq("user_id", userId)` on existence-check AND update; soft-delete via `is_active=false` (preserves audit trail); wrong-user attempt returns 404 not 403/200 (no IDOR signal leak).
+  - **PATCH** (line 212-280): IDOR-protected (line 257, 271); validates `name` length ≤80 + non-empty + key_id required; SELECT-back uses same bounded allowlist.
+- **DB-side probe** (`api_keys` table direct anon REST):
+  - `GET /rest/v1/api_keys?select=*` → 401 + 42501
+  - `GET /rest/v1/api_keys?select=key_hash` → 401 + 42501 (column-targeted probe also blocked at GRANT layer)
+  - `GET /rest/v1/api_keys?select=id,key_prefix` → 401 + 42501 (table-level REVOKE; column allowlist is moot at this layer)
+  - All three uniform — Lane 4.96 SQL shipped fully against this table.
+- **Triple-bounded class:** API key surface is bounded at three layers — (1) DB-side GRANT-revoke (anon can't read), (2) API SELECT allowlist (server doesn't echo `key_hash`), (3) storage discipline (`key_hash` is hashed not plaintext; raw `key` returned only at creation moment). Parallel structure to Lane 4.36 BYOK (tick 44 finding) — both credential tables identically bounded. The `/api/v1/keys` POST path is the only audit angle worth deeper review (does `generateApiKey`/`generateTestApiKey` use a CSPRNG? — out of scope for this tick, would be a Lane 4.X bcrypt-strength audit).
+- **Class-symmetry observation across credential surfaces:**
+  | surface | DB GRANT | API SELECT excludes secret | Storage discipline | Verdict |
+  |---|---|---|---|---|
+  | `api_keys.key_hash` (gateway keys) | ✅ 401+42501 | ✅ excludes from GET/PATCH | ✅ hashed at storage | TRIPLE-BOUNDED |
+  | `user_provider_keys.api_key_encrypted` (BYOK) | ✅ 401+42501 (tick 44) | ✅ excludes from GET/POST | ❌ plaintext until Codex #52 | DOUBLE-BOUNDED + storage gap |
+  | `tool_providers.auth_key_encrypted` (master-pool) | ❌ 200+[] (Lane 4.107 unshipped) | ❌ no /api/v1 endpoint reads it; gateway.ts:271-282 reads as plaintext for upstream calls | ❌ plaintext | UNBOUNDED — relies on Lane 4.107 + Lane 4.106 fixes |
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + 4 endpoint shapes (added `/api/v1/keys`) + schema-directory lockdown verified.
+
+## VERIFIED-SAFE + DOCUMENTATION-DRIFT — `/api/v1/health` + discovery endpoints — 2026-04-28 loop tick 46
+- **`/api/v1/health` GET shape** (`src/app/api/v1/health/route.ts:8-45`, live response): bounded — returns static service identity (`name`, `version: "1.2.0"`), serverless cold-start markers (`uptime_seconds: 0`, `booted_at`, `timestamp`), tool counts (`adapter_count: 51`, `operation_count: 152`), four public endpoint URLs, and five discovery URLs. No leakage of: DB connection status, env vars, PIDs, internal IPs, stack traces, build SHAs, dependency versions, memory/CPU stats. **Cold-start posture confirmed:** `uptime_seconds: 0` + `booted_at` matches `timestamp` to ~14ms — every invocation is a fresh Vercel function process; no long-running state to leak even if a future change accidentally exposed it.
+- **Discovery endpoints probed** (advertised by `/api/v1/health.discovery.*`): all 5 return HTTP 200 with reasonable sizes — `openapi.json` (66KB), `ai-plugin.json` (1.5KB), `mcp.json` (651B), `agents.json` (5.5KB), `llms.txt` (2.2KB). Designed to be public, no leak class.
+- **Admin endpoints — auth posture verified:**
+  - `GET /api/admin/providers` → 401 + `{"code":"admin_auth_required"}`
+  - `GET /api/admin/stats` → 401 + `{"code":"admin_auth_required"}`
+  - Confirms Lane 4.28 (task #43, completed) admin auth coverage holds in prod. Same `admin_auth_required` code on both — consistent error-shape (no IDOR-leak signal differential).
+- **DOCUMENTATION DRIFT — Lane 6.3-class find:** `/.well-known/openapi.json` advertises `/api/v1/provider-keys` as a documented endpoint, but `GET /api/v1/provider-keys` returns **HTTP 404** (Vercel default Next.js not-found page). The real BYOK endpoint is `/api/v1/byok` (tick 44). Likely rename leftover. **Severity: LOW (docs-only, no security leak — 404 doesn't expose anything).** But it's a class-match to Lane 6.3.x marketing-copy audits where public-facing claims didn't match runtime. **Codex follow-up:** edit `src/app/.well-known/openapi.json/route.ts` (or wherever the spec is generated) to either remove `/api/v1/provider-keys` or alias it to `/api/v1/byok`. Sibling drift-prevention: add a vitest that fetches every advertised path from openapi.json and asserts non-404 to anon (or non-405-only-on-GET).
+- **Sibling non-v1 paths discovered:** `/api/check` (405 — POST-only), `/api/search` (400 — needs `?q=`), `/api/tools` (200 — legacy catalog endpoint, sibling to `/api/v1/tools`). All exist + auth-correct. Out of scope for this audit pass; logged for completeness.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + 5 endpoint shapes (added `/api/v1/health`) + 2 admin auth-gates verified + 1 docs-drift finding logged + schema-directory lockdown verified.
+- **Pattern for future audits:** Hard Rule #56 documents three states (401 LOCKED / 200+[] AMBIGUOUS / 200+rows LEAK) for **table** SELECT. For **RPC** EXECUTE the analog is four-state: `401` (visible, denied), `404+PGRST202` (cache-hidden, denied), `200/200+result` (callable). Both 401 and 404+PGRST202 are LOCKED outcomes; the 4-class distinction matters only when writing drift assertions that anchor on status code.
+
+## VERIFIED + DB-DRIFT — `/api/v1/tools` catalog + 3 gateway entry points — 2026-04-28 loop tick 47
+- **`GET /api/v1/tools` shape verified bounded.** 109 catalog items returned, 22 distinct field keys union: `adapter_slug, avg_latency_ms, capabilities, data, description, free_tier_calls, gateway_enabled, health_status, id, name, operation, price_per_call, price_per_unit, primary_type, protocols, provider_cost, rating, status, sub_category, super_category, tools, unit_name`. **Zero fields containing `key|secret|encrypt|hash|password|token|auth_key|env`.** No leak class. Catalog uses `withAvailability()` to override `status` from adapter registry runtime — DB columns are advisory only.
+- **DB-drift observation:** `gateway_enabled: false` for **all 109 rows** (status counts: `coming_soon` 98, `available` 11; `gateway_enabled` is uniformly `false`). The `available` 11 are computed by `getToolAvailability()` from the adapter registry, not from DB. **The DB column `tools.gateway_enabled` is dead-code-equivalent** — runtime ignores it. Severity: NONE (security), but anyone querying `tools` table directly via SQL would mis-conclude that nothing is gateway-enabled. **Codex follow-up:** either populate `tools.gateway_enabled` to match adapter registry truth, or drop the column to remove the misleading signal.
+- **`POST /api/v1/execute` auth posture verified clean:**
+  - No `Authorization` header → HTTP 401 + `{"code":"auth_required","message":"Missing or invalid Authorization header"}`
+  - Fake `Bearer tr_live_FAKE_NOT_REAL_12345` → HTTP 401 + `{"code":"invalid_key","message":"Invalid or revoked API key"}`
+  - **No leakage in either error path.** Error codes are uniform shape with admin endpoints (`auth_required` vs `admin_auth_required` — distinguishable but no IDOR signal).
+- **`POST /mcp` `tools/list` is intentionally anon (MCP-spec compliant discovery).** Returns full tool list to unauthenticated callers — designed surface, mirrors `/api/v1/tools` content. Not a leak.
+- **`POST /api/a2a` re-confirms Lane 4.89 finding still live (PR #114 unmerged):**
+  - Anon `tasks/get` with valid UUID → HTTP 200 + JSON-RPC error `Task not found: 00000000-...` — confirms DB query happens BEFORE auth check, which is the IDOR signature Lane 4.89 documented.
+  - Anon `tasks/send` with valid-shape body → HTTP 200 + `Missing message content` validation error — auth check still appears to come after parser validation.
+  - **No new finding** — Lane 4.89 covers it and is queued for Justin merge. Logged here for "live-state still leak" documentation.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **8 endpoint shapes** (added `/api/v1/tools`, `/api/v1/execute`, `/mcp`, `/api/a2a`) + 2 admin auth-gates + 1 docs-drift + 1 DB-drift finding logged + schema-directory lockdown verified.
+
+## VERIFIED — `/api/v1/checkout` + `/api/v1/settings` exemplary hardening — 2026-04-28 loop tick 48
+- **`POST /api/v1/checkout` shape verified clean** (`src/app/api/v1/checkout/route.ts:31-126`):
+  - Auth: session-only via `getUserFromSession()`. No `tr_live_` key path (correct — billing is browser-side).
+  - Input: enum-validated `type ∈ {credits, subscription}`, `amount ∈ {5,10,25,50,100}`, `plan ∈ {pro, enterprise}`. Stripe `priceId` comes from server env, never body-sourced — IDOR-proof on price.
+  - `metadata.user_id` set from session, not body — Stripe webhook can't be tricked into crediting wrong user.
+  - `success_url`/`cancel_url` hardcoded `https://toolroute.ai` — open-redirect-proof (Lane 4.24 sibling).
+  - Live probes: no auth → 401 `auth_required`; fake bearer → 401 `invalid_session`; no body → 401 (auth before parse). No leakage.
+  - **Lane 4.90 finding (PR #115) confirmed still live:** no `existing-subscription` check before creating `mode: subscription` checkout (line 90-101). Plan-change creates 2nd Stripe sub. Code-level confirmation matches Lane 4.90 audit memo. Already in Justin's merge queue.
+- **`PATCH /api/v1/settings` shape verified exemplary mass-assignment hardening** (`src/app/api/v1/settings/route.ts:71-231`):
+  - Auth: session-only via `getUserFromSession()`.
+  - Allowlist `ALLOWED_FIELDS = {auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, display_name}` — explicit set membership check on every body key (line 80). Body keys outside allowlist → 400 `invalid_field`.
+  - Per-field type+enum validation: booleans must be boolean; thresholds must be in `{1.0, 5.0, 10.0}`; amounts must be in `{1000, 2500, 5000, 10000}` cents; `display_name` length-bounded 1-100.
+  - IDOR-safe: `.eq("id", userId)` from session.
+  - Auto-topup activation gated on existing Stripe payment method (line 154-178) — closes Lane 4.88 TOCTOU sibling pattern at config layer.
+  - Response shape excludes `stripe_customer_id` even though SELECT pulls it (line 187-189 + line 205-216) — used only for server-side Stripe lookup.
+  - **GET shape**: `display_name, email, plan_slug, credit_balance, auto_topup_enabled, auto_topup_threshold, auto_topup_amount_cents, has_payment_method, payment_method` — no Stripe customer ID, no internal billing_id, no API key info. Bounded.
+- **No new findings.** Both routes pass audit. Sets a clean "exemplary template" for future session-authed billing routes — Codex can pattern-match against `settings/route.ts:61-66` (allowlist constant) + `:79-90` (key-set check loop) + `:104-142` (per-field enum guards).
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **10 endpoint shapes** (added `/api/v1/checkout`, `/api/v1/settings` GET+PATCH) + 2 admin gates + 1 docs-drift + 1 DB-drift + schema-dir verified.
+
+## VERIFIED + LOGGED-MISS — `/api/webhooks/stripe` deep audit — 2026-04-28 loop tick 49
+- **`POST /api/webhooks/stripe` signature gate verified clean** (`src/app/api/webhooks/stripe/route.ts:71-96`):
+  - Missing `stripe-signature` header → 400 `Missing signature` (line 75-77). No DB writes pre-verification.
+  - Invalid signature → 400 `Invalid signature` (line 92-96). Stripe SDK `webhooks.constructEvent` enforces HMAC + 5-min tolerance.
+  - GET → 405 (Next.js method-not-allowed default).
+  - Empty body → 400 (sig check fires first).
+  - **Live probes confirm**: no auth, fake sig, empty body all 4XX with no leakage. Lane 4.29 replay-window guard inherent in SDK.
+- **Idempotency audit — 5 credit-mint paths, all gated:**
+  - `checkout.session.completed` credits → `stripe_payment_id = session.payment_intent` dedup (line 116-125)
+  - `checkout.session.completed` plan credits → `stripe_payment_id = session.subscription` dedup (line 176-180)
+  - `invoice.paid` renewal → `stripe_payment_id = invoice.id` dedup (line 215-219)
+  - `payment_intent.succeeded` (auto-topup) → `stripe_payment_id = pi.id` dedup (line 247-251)
+  - `recordPaymentFailure` → insert dedup before `add_credits` (line 38-43)
+  - All 5 use `add_credits` RPC (Lane 4.93 input-validated). Lane 4.20 + Lane 4.23 (UNIQUE constraint on `(stripe_payment_id, type)`) both belt-and-suspenders.
+- **NEW MEDIUM-LATENT finding — `customer.subscription.updated` handler missing:**
+  - Webhook handles `customer.subscription.deleted` (line 322-345, downgrades to free) but **no case for `.updated`**. If Justin enables Stripe Customer Portal self-service upgrade/downgrade (today: opt-in, off), users could change `pro→enterprise` (or vice versa) without `gateway_users.plan_slug` syncing. Renewal handler at line 201-236 reads stale `plan_slug` → could over- or under-credit on next monthly cycle.
+  - **Reachable today?** No — Stripe Billing Portal is not enabled (verified by absence of `/dashboard/billing/portal` route + Lane 4.90's pattern of always-create-new-sub via `/api/v1/checkout`). So `customer.subscription.updated` would never fire from user action.
+  - **Latent?** Yes — the moment Billing Portal flips on, this becomes an active drift. **Severity: MEDIUM-LATENT (LOW today, MEDIUM upon Billing Portal enable).**
+  - **Codex follow-up:** add `case "customer.subscription.updated"` that pulls new `items.data[0].price.id`, maps to plan_slug, updates `gateway_users.plan_slug + plan_id`. Sibling pattern to Lane 4.86 (cancel doesn't revoke tr_live_) — same "Stripe-side state changes ↔ DB drift" class.
+- **No leakage observed across all 7 case branches** — every error path uses console.error + generic 500, no Stripe payload echoed back to caller, no PII logged beyond customerId.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **11 endpoint shapes** (added `/api/webhooks/stripe`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + schema-dir verified.
+
+### Loop tick 50 — `/api/v1/signup` deep-audit; rate-limit gap discovered
+
+**2026-04-28** — `src/app/api/v1/signup/route.ts` read full (218 lines) + 5 live validation-gate probes + grep-confirmed rate-limit gap.
+
+- **Validation chain exemplary** (lines 105-127): `EMAIL_PATTERN` → `isDisposableEmail` → `password.length≥8` → `accepted_tos===true`. All 5 live probes return clean 400s with bounded error codes:
+  - `=== invalid_json ===` → HTTP 400
+  - `=== missing_email ===` → HTTP 400 (`invalid_email`)
+  - `=== disposable ===` → HTTP 400 (`disposable_email`, against `mailinator.com`)
+  - `=== weak_password ===` → HTTP 400 (`weak_password`, `<8 chars`)
+  - `=== tos_missing ===` → HTTP 400 (`tos_required`)
+- **Lane 1.2 compliant**: `generateSignupApiKey()` line 18-22 emits `tr_test_` prefix only — no live-key issuance from public signup.
+- **Lane 1.D compliant**: new accounts insert with `credit_balance: 0`, `lifetime_credits: 0` (line 188-191) — no free-credit grant.
+- **Lane 4.24 sibling**: `VERIFY_ORIGIN = "https://toolroute.ai"` hardcoded (line 28) → magic-link redirect immune to `request.url` host-header / CNAME-based account-takeover.
+- **`rate_limit_rpm: 10`** stamped on new key (line 186) → gates the new KEY's runtime, NOT the signup endpoint itself.
+- **NEW LOW-LATENT finding — signup endpoint has NO per-IP rate limit** despite task #42 (Lane 4.27) being marked complete in the queue:
+  - `grep -nR "checkRateLimit"` across `src/` → only `execute/route.ts:19`, `registry/usage/route.ts:8`, `a2a/route.ts:132`, `registry/request/route.ts:8`, `registry/challenge/route.ts:19`, `mcp/route.ts:130`, `gateway.ts:99` — **NOT in `signup/route.ts`**.
+  - Lane 4.27 audit memo proposed the fix; implementation never shipped. Same drift class as Lane 4.107 (SQL committed, never executed).
+  - **Reachable today?** Yes — anonymous attacker can pump signup attempts unbounded. Each successful signup triggers Supabase `auth.signUp` (subject to Supabase's own per-IP throttle, ~30 req/hour anon) so the practical floor is bounded by Supabase, not ToolRoute. Severity: **LOW-LATENT** — Supabase shoulders the load today; if Justin migrates auth backends or raises Supabase throttles, surface area expands.
+  - **Codex follow-up:** wrap `POST /api/v1/signup` in `checkRateLimit(request, "signup", { rpm: 5 })` keyed on IP. Mirror Lane 4.27 audit-memo's proposed shape.
+- **MINOR observation:** `getVerifyOrigin(_request: NextRequest)` (line 30) takes a request param it never reads. Today the `_` prefix telegraphs intent; a future refactor that drops the prefix and re-introduces `request.headers.get("origin")` would silently re-open the open-redirect class. **Codex follow-up (cosmetic):** drop the parameter entirely, or add `// SECURITY: do NOT reintroduce request-derived origin — see Lane 4.24` comment.
+- **Email-enumeration**: signup returns `{error: "email_exists", code: 409}` when email is already in use (line 142-148). Industry-standard tradeoff acknowledged — UX vs. enumeration. Lane 4.27 audit memo accepted this; not flagging.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **12 endpoint shapes** (added `/api/v1/signup`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + schema-dir verified.
+
+**Drift-pattern observation across ticks 47-50:** four lanes audited this session (4.107 SQL, 4.27 rate-limit, gateway_enabled DB column, customer.subscription.updated handler) all fit the same shape: *task marked done in queue/audit memo + implementation absent from production*. Sibling to Hard Rule #61 (table row counts beat artifact existence) and #62 (read origin/main not working tree). **The queue itself is not authoritative** — only live-probe + grep-confirmed presence is.
+
+### Loop tick 51 — `/api/v1/billing/setup-payment` audited; Lane 4.90 class-symmetry confirmed
+
+**2026-04-28** — `src/app/api/v1/billing/setup-payment/route.ts` read full (96 lines) + 6 live probes + sibling-memo cross-check.
+
+- **Auth posture clean** — all unauth/bogus paths return 401 before body parse:
+  - unauth POST `{}` → 401 `auth_required`
+  - bogus session JWT → 401 `invalid_session`
+  - `tr_test_` api-key → 401 `invalid_session` (session-only, sibling to Lane 4.105 audit)
+  - GET → 405 (Next.js default)
+  - OPTIONS → 204 (`AUTHED_RESPONSE_HEADERS` CORS preflight)
+  - **100KB unauth POST → 401 (auth fires BEFORE body parse — DoS surface bounded)**
+- **Lane 4.24 sibling**: `CHECKOUT_ORIGIN = "https://toolroute.ai"` hardcoded (line 6) → success/cancel URLs immune to host-header rewrite.
+- **Bounded SELECT** (line 24): `select("email, stripe_customer_id")` — no PII over-fetch. Response shape returns only `{checkout_url, customer_id}` — no email echo.
+- **Stripe customer-create idempotent on the happy path**: line 36-53 only creates if `stripe_customer_id` is null. Once set, reuses. Updates `gateway_users.stripe_customer_id` immediately.
+- **NEW LOW-LATENT finding (class-symmetric with Lane 4.90)** — `stripe.checkout.sessions.create` (line 55-71) has NO idempotency check. Every POST mints a new SetupIntent session. User clicking "Setup Payment" 5× generates 5 short-lived (24h) Stripe sessions. Stripe doesn't bill for unused SetupIntents (vs Lane 4.90 which mints duplicate billable subscriptions), so severity diverges:
+  - Lane 4.90 checkout: financial impact (duplicate sub charges)
+  - Tick-51 setup-payment: cosmetic/dashboard-pollution only; abandoned sessions auto-expire
+  - **Severity: LOW-LATENT.** Codex follow-up: optional `idempotency_key: \`setup-${userId}-${date}\`` on `sessions.create` to dedup within a day. Not urgent.
+- **NEW LOW-LATENT finding (class-symmetric with Lane 4.88 TOCTOU)** — customer-create race window: user POSTs setup-payment twice in rapid succession before the line 46-52 UPDATE commits. Both branches see `customerId == null`, both call `stripe.customers.create`, second UPDATE wins, first Stripe customer orphaned (no `gateway_users` row references it).
+  - **Reachable today?** Yes if double-click on dashboard before SetupIntent redirect. Stripe customers don't bill themselves, just pollute Stripe Dashboard.
+  - **Severity: LOW-LATENT.** Codex follow-up: race-safe pattern would be `INSERT … ON CONFLICT DO UPDATE` with a single `stripe_customer_id` placeholder, or check `gateway_users.stripe_customer_id` again after a 1s delay. Lower priority than Lane 4.88 (which guards real charges).
+- **Positive class-asymmetry note**: Lane 4.90 (`/api/v1/checkout`) was filed as MEDIUM (real $$ impact). Tick-51 mirrors the structural pattern but with no $$ impact, so files as LOW. Codex should fix Lane 4.90 first.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **13 endpoint shapes** (added `/api/v1/billing/setup-payment`) + 2 admin gates + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + 2 setup-payment-low-latent + schema-dir verified.
+
+**Lane 0.1 + Lane 4.107 status (re-probed this tick):** `usage_events` 401 LOCKED (Lane 0.1 holds), `tool_providers` 200 [] AMBIGUOUS, `rate_limit_windows` 200 [] AMBIGUOUS — Lane 4.107 SQL still unshipped. Justin blocker persists.
+
+### Loop tick 52 — `/api/admin/providers` deep-audit; Lane 4.106 citation-drift correction
+
+**2026-04-28** — `src/app/api/admin/providers/route.ts` read full (179 lines) + `src/lib/admin-auth.ts` read full (22 lines) + 9 live probes + Lane 4.106 evidence-quote cross-check vs `git show 7e4b09e:` (the commit that landed Lane 4.106).
+
+**Auth surface (positive):**
+- `validateAdmin` (admin-auth.ts:15-21) is the FIRST line of both POST and GET handlers (line 11, 129). Body parsing happens AFTER auth.
+- 9 live probes confirm 401-before-everything: unauth GET/POST, bogus secret, empty secret, wrong-shape session JWT, 100KB unauth POST → all 401 `admin_auth_required`.
+- `crypto.timingSafeEqual` with explicit length-pre-check (line 19-20) — Lane 4.44 timing-safe HMAC pattern correctly applied. Length-mismatch returns false WITHOUT calling timingSafeEqual (which would throw).
+- `expected = process.env.TOOLROUTE_ADMIN_SECRET`; if env var unset → fail closed (line 18).
+- Method coverage tight: PUT/DELETE/PATCH all 405 (Next.js default). Only POST/GET/OPTIONS exported.
+- OPTIONS preflight 204 with `AUTHED_RESPONSE_HEADERS`.
+
+**GET response shape (positive):**
+- Explicit SELECT column allowlist (line 142-145) — `auth_key_encrypted` deliberately NOT in the projected columns. Confirmed by reading the field list.
+- `has_master_key: true` flag added unconditionally for any returned row (line 160) — no key value ever leaves the server through GET.
+- Response includes provider configuration + health metrics, no credentials.
+
+**POST write path (Lane 4.106 finding holds at substance):**
+- Line 59 (UPDATE branch) and line 96 (INSERT branch) both write `auth_key_encrypted: api_key` plaintext. Column-naming-as-lie still active. Lane 4.106 conclusion is correct.
+- POST has TOCTOU between line 50-54 SELECT and line 91 INSERT (two admins racing on same `tool_slug` could both INSERT). Class-match to Lane 4.88, severity VERY-LOW (admin-only write surface, internal HMAC-gated).
+
+**NEW finding — Lane 4.106 has citation drift (Hard Rule #62 sibling):**
+- Lane 4.106 line 22-30 quoted the write path as `.from("tool_providers").upsert({...})`. **Actual code uses `.from("tool_providers").update(updateFields)` after a SELECT-then-decide branch (route.ts line 50-87).**
+- Lane 4.106 line 33-35 quoted a PATCH handler at line 96 with `if (api_key !== undefined) updateBody.auth_key_encrypted = api_key`. **Route has no PATCH method; only POST/GET/OPTIONS.** Variable `updateBody` doesn't exist in the file.
+- Verified: `git show 7e4b09e:src/app/api/admin/providers/route.ts` (the commit that landed Lane 4.106) shows the SAME current code — INSERT-or-UPDATE, no PATCH, no upsert. So this isn't post-write drift; the audit memo's evidence quotes were FABRICATED at write-time.
+- **Severity: HIGH for audit-pattern hygiene; LOW for substance** — Lane 4.106's conclusion (plaintext write + anon-AMBIGUOUS read class) is correct via the actual lines 59 + 96, just not via the lines the memo cited.
+- **Codex follow-up (memo amendment):** PR to amend `lane-4.106-master-pool-plaintext-and-anon-read.md` lines 22-35 to quote the actual `update(updateFields)` and INSERT branches. Sibling memo to Hard Rule #62 (read origin/main, not working tree) — extension: read the FILE not your own past prose.
+- **Pattern-level lesson for /loop:** the audit-pattern checklist for new memos should include "open the cited file:line and confirm the code matches before write" — for Lane 4.106 this would have caught the upsert/update + missing-PATCH fabrication in <30s. Adds to the same drift class as Lane 4.107 (`scripts/lockdown-anon-writes-and-admin-tables.sql` claimed shipped, actually not run).
+
+**Body-size guard status:** task #79 (Lane 4.60) marked complete claims a 16KB body-size guard on admin/providers. **Live grep `readBoundedJson|MAX_BODY|content-length` on route.ts → ZERO matches.** This is a third instance of audit-marked-complete-but-implementation-absent, joining Lane 4.107 (SQL unshipped) + Lane 4.27 (signup rate-limit unshipped). Severity here is LOW because admin auth fires before body parse, so DoS surface is bounded by HMAC-secret discipline.
+- **Codex follow-up:** add `await readBoundedJson(request, 16 * 1024)` after `validateAdmin()` in POST. Mirrors Lane 4.59 trio pattern.
+
+**Cumulative session probe-matrix:** 26 tables + 7 RPCs + **14 endpoint shapes** (added `/api/admin/providers`) + 2 admin gates (now deeply audited) + 1 docs-drift + 1 DB-drift + 1 missing-handler-latent + 1 missing-rate-limit-latent + 2 setup-payment-low-latent + 1 fabricated-citations-finding + 1 admin-body-guard-missing + schema-dir verified.
+
+**Lane 0.1 + Lane 4.107 still outstanding:** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS. Justin SQL still unshipped (now 5 ticks observed in this state).
+
+**Drift-meta-pattern this session (ticks 47-52):** SIX completed-task entries in the queue have no production implementation:
+1. Lane 4.107 (`scripts/lockdown-anon-writes-and-admin-tables.sql` — committed, never run)
+2. Lane 4.27 (signup rate-limit — audit-memo-only)
+3. `tools.gateway_enabled` DB column (uniformly false, runtime ignores)
+4. `customer.subscription.updated` Stripe handler (missing case)
+5. Lane 4.60 (admin/providers body-size guard — task #79 marked complete, no `readBoundedJson` in file)
+6. Lane 4.106 evidence quotes (fabricated; conclusion holds)
+
+The queue describes the *intended* state, not the *live* state. The audit-pattern lesson: every "completed" entry needs a live-probe / grep-confirm anchor before being trusted. This is the ToolRoute-internal generalization of Hard Rule #61 (rows beat artifacts) + #62 (origin/main beats working tree) + the "applied-SQL claims need live-probe proof" rule from `~/.claude-jarvis/projects/.../memory/feedback_applied_sql_live_probe.md`.
+
+### Loop tick 53 — `/api/v1/key` audited fully clean
+
+**2026-04-28** — `src/app/api/v1/key/route.ts` (30 lines) + `getKeyInfo` body in `src/lib/gateway.ts:400-439` read full + 9 live probes.
+
+- **All auth-shape paths return clean 401:** unauth GET → `auth_required`; bogus tr_live_/tr_test_ → `invalid_key`; session-JWT-shape → `invalid_key_format`; empty Bearer → `auth_required`. POST → 405. OPTIONS → 204.
+- **IDOR-via-query-string blocked**: `?user_id=00000000-...` → 401 (auth fires before any param parse). `getKeyInfo()` line 401 `validateRequest(authHeader)` is the FIRST call; `ctx.userId` is the only user scope used downstream — no `request.url` parsing, no body parsing.
+- **Bounded SELECT** (line 411-419): `gateway_usage_log` queries select only `cost_to_user`, `.eq("user_id", ctx.userId)` scoped. Owner-only by design.
+- **Bounded response shape** (line 429-438):
+  - Returns: `key_name`, `plan`, `credit_balance`, `rate_limit.{rpm,rpd}`, `usage.{today,this_month}.{requests,cost}`.
+  - **Deliberately absent**: `user_id`, `email`, `key_prefix`, `key_id`, `created_at`. No IDOR-enabler exposed.
+- **Canary-echo probe**: sent `tr_live_canaryxxxx...` → 401 response body contained 0 occurrences of "canary". Lane 4.18 redactCreds + Lane 4.41 RPC error.message redaction holding for this endpoint.
+- **Class-symmetry vs `/api/v1/keys` (Lane 4.45 audit, ticks 44-45):** tr_live_/tr_test_ for `/api/v1/key` (info), session-only for `/api/v1/keys` (CRUD). Clean separation per Lane 4.105 dual-auth-asymmetry frame — no class-A drift.
+- **Cumulative session probe-matrix:** 26 tables + 7 RPCs + **15 endpoint shapes** (added `/api/v1/key`) + 2 admin gates + drift findings unchanged.
+
+**Lane 0.1 + Lane 4.107 status (re-probed):** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS — **6 ticks observed unshipped**.
+
+### Loop tick 54 — 🚨 META-FINDING: production HEAD is Lane 4.49; Lane 4.50-4.107 (67 PRs) sit unmerged
+
+**2026-04-28** — Started by auditing `/api/v1/registry/{usage,request,challenge}` trio (Lane 4.59 body-size-guard claim). All three live-probe clean (auth-first, IDOR-blocked, bounded errors). Then `grep readBoundedJson|MAX_BODY` on the trio returned **NO MATCHES** → started tracing why.
+
+**Discovery (verified end-to-end):**
+- `git log origin/master --oneline | head` → master HEAD is `988d815 [lane-4.49] Drift guard: ban .select("*")` (PR #70).
+- `gh pr list --state merged --limit 30 --json …` → exactly **30 PRs merged total**, **most recent merge at 09:59 UTC on 2026-04-28** (~9 hours before this tick).
+- `gh pr list --state open` → **67 open PRs** spanning Lane 4.50 through Lane 4.107 + Lane 6 batches. **All authored by `Instabidsai`. Zero merged since 09:59 UTC.**
+- `git merge-base --is-ancestor 85ea646 origin/master` → **NO**. Lane 4.59 commit is ONLY on `origin/lane-4.59-body-guards-registry-trio`.
+- `git branch -r --merged origin/master | grep "origin/lane-4"` → 0 of 95 lane-4 branches reach master post-Lane-4.49.
+- `git show origin/master:src/app/api/v1/registry/usage/route.ts` → exact production code — NO `assertBodyUnder` call. Matches the live-probe behavior (100KB unauth POST returns 401, not 413, because auth fires before any size check).
+
+**What this means for the /loop directive ("production-ready financial gateway"):**
+- All per-endpoint live-probe findings in ticks 47-53 are valid for the current production deploy. They describe the **`988d815` Lane 4.49 HEAD** Vercel is serving.
+- Queue tasks #67-#127 (Lane 4.50 through Lane 4.107) marked `[completed]` in `.agent/codex-build-queue.md` are NOT live in production. They're feature-branch work + PR opened + commit pushed, but never `gh pr merge`'d. Sibling to Hard Rule #61 (rows beat artifacts) at PR-level: **PR-merge-status beats branch-existence as production proof.**
+- ToolRoute-internal generalization: `[completed]` in this queue means "feature branch shipped + PR opened" — NOT "merged to master + Vercel deployed." Queue is staging-state truth, not production-state truth.
+
+**Specific items NOT in production right now (sample, not exhaustive):**
+- Lane 4.50-4.65 hardenings (TOCTOU fixes, body-size guards, cache-control, pagination clamping, JSON-LD XSS, timing-safe HMAC docs fix). Some of these landed (4.42-4.49); the rest haven't.
+- Lane 4.72-4.81 adapter-side hardenings (fetch timeouts, redactCreds expansions).
+- Lane 4.86-4.94 Stripe + IDOR + RPC-input-validation chain.
+- Lane 4.96-4.99 anon WRITE REVOKE chain + zero-policy registry table cleanup.
+- Lane 4.107 lockdown SQL (still unrun — independent of merge state, requires Justin SQL-editor click).
+- Lane 6.8.x quarterly-recheck checklist + Lane 6.9-6.14 ToS audit batches.
+- Lane 4.36 BYOK Vault encryption (Codex ticket #52, still pending — Codex-owned).
+
+**Why production is more exposed than a queue-skim suggests:**
+- Lane 4.89 A2A IDORs (HIGH severity — `tasks/get` + `tasks/cancel` unauthenticated) → fix on branch, NOT in master.
+- Lane 4.93 credit RPC input validation (mint-attack closure) → on branch, NOT in master.
+- Lane 4.94 orphaned SECDEF RPC lockdown (`get_user_dashboard` IDOR) → on branch, NOT in master.
+- Lane 4.96-4.99 anon WRITE REVOKE chain (financial table self-mint surface) → on branches, NOT in master.
+- All four were items I treated as "fixed" in earlier per-task comments. They aren't. Production right now has **the full pre-Lane-4.50 vulnerability surface** plus everything that landed up through Lane 4.49.
+
+**Recommended action for Justin (BLOCKER — more important than the Lane 4.107 SQL run):**
+- 67 open PRs need triage + merge. Mass-merge with rebase is risky given 95 long-lived branches → conflict density is high. Realistic options:
+  1. Merge in numerical order (4.50 → 4.107) accepting the rebase pain. 67 conflict resolutions × ~5 min = ~5-6 hours of merge labor.
+  2. Cherry-pick high-severity-only into master (4.89 A2A IDORs, 4.93 RPC input val, 4.94 orphan RPC lockdown, 4.96-4.99 anon write REVOKE), squash-merge as one fast-tracked PR. Defers cosmetic/audit-memo lanes.
+  3. Burn the branch stack: rebuild fixes on top of master in fresh small PRs, accept lost queue-history. Cheapest if conflicts are bad enough.
+- Either way, **the per-tick audit cadence I've been running is generating findings against a production state that's increasingly stale relative to the staged work.** Continuing to audit feature-branch HEADs while production is 9 hours behind doesn't compound; merge throughput compounds.
+- **Lane 4.107 SQL shipping is NECESSARY (still ~30s) but NOT SUFFICIENT** — even after that runs, Vercel deploys `988d815` which lacks the entire post-4.49 hardening chain.
+
+**Tick-54 audit-pattern lesson (for future audit memos):**
+- "Live probe + grep against working-tree" answers "is this fix in this branch's HEAD?"
+- "Live probe + grep against origin/master" answers "is this fix in production?"
+- The two answers diverge by 67 PRs right now. **Future memos should explicitly cite which branch they were tested against.** Sibling to Hard Rule #62 (read origin/main not working tree) — extension: when "origin/main" doesn't exist (this repo is `master`), substitute the deploy-target branch.
+
+**Cumulative session probe-matrix:** unchanged structurally — 26 tables + 7 RPCs + 15 endpoint shapes + 2 admin gates + the registry-trio probe results above (all 401-clean, no body-guard live).
+
+**Lane 0.1 + Lane 4.107 still outstanding:** usage_events 401 LOCKED, tool_providers 200 [] AMBIGUOUS, rate_limit_windows 200 [] AMBIGUOUS — **7 ticks observed unshipped**. SQL is the smaller blocker; the 67-PR merge gap is the bigger one.
+
+**Loop status:** NOT stopping per the standing directive ("Stop loop only if you hit a real blocker that needs Justin"). Justin owns merge throughput; I can keep auditing the staged work in feature branches in the meantime, but **future ticks should anchor each finding to whether it's in master or in a staged branch.** Updated audit ritual proposed for tick 55+.
+
+---
+
+## Loop tick 55 (2026-04-28 ~18:30Z) — PR backlog severity triage for Justin
+
+State unchanged since tick 54: master HEAD `988d815` (Lane 4.49), 67 PRs unmerged, Lane 0.1 still LOCKED, Lane 4.107 SQL still unshipped (`tool_providers` + `rate_limit_windows` still 200+`[]` AMBIGUOUS).
+
+Tick-55 audit pick `/api/check` against `git show origin/master:src/app/api/check/route.ts`: confirms bad-JSON path returns raw V8 parse error to public callers (HTTP 500 + `"Unexpected token 'o'..."`); fix is in PR #95 (Lane 4.71) — UNMERGED. **No new finding class.** Same shape as tick 54: every drift I find is already patched in an open feature branch.
+
+### Triage table — cherry-pick by severity, not by number
+
+**P0 — stop-the-bleed (merge today, real fixes shipping SQL or code):**
+| PR | Lane | What it stops | Type |
+|----|------|---------------|------|
+| #122 | 4.97 | authenticated WRITE REVOKE + backdoor-policy DROP (self-mint surface) | SQL |
+| #121 | 4.96 | anon WRITE REVOKE on financial tables | SQL |
+| #117 | 4.92 | gateway RPC EXECUTE lockdown applied to prod | SQL |
+| #119 | 4.94 | orphan SECDEF RPC lockdown (get_user_dashboard IDOR closed) | SQL |
+| #118 | 4.93 | credit RPC input validation (mint-attack vector closed) | code |
+| #114 | 4.89 | A2A tasks/get + tasks/cancel unauthenticated IDORs | code |
+| #115 | 4.90 | /api/v1/checkout creates 2nd Stripe sub on plan change (HIGH financial) | code |
+
+**P1 — high (merge this week):**
+| PR | Lane | Type |
+|----|------|------|
+| #111 | 4.86 | sub cancel doesn't revoke tr_live_ keys (premium-feature leak) — code |
+| #124 | 4.99 | REVOKE writes on 8 one-policy SELECT tables — SQL |
+| #123 | 4.98 | REVOKE writes on 8 zero-policy registry tables — SQL |
+| #101 | 4.77 | RPC SECDEF hotfix to unbreak /discover post-lockdown — code |
+| #102 | 4.76 | Tavily cred body-leak + redactCreds widening — code |
+| #100 | 0.1 | record anon-read lockdown completion — SQL/admin |
+
+**P2 — medium defense-in-depth (batchable):**
+- #79-#85: body-size guards (DoS class, 4 routes)
+- #95 (Lane 4.71): /api/check error redaction
+- #94 (Lane 4.70): gateway.ts silent-error sweep (4 sites)
+- #92 (Lane 4.68): byok DELETE silent-failure fix
+- #91 (Lane 4.67): getUserFromSession silent-error capture
+- #90 (Lane 4.66): auth/callback silent-error capture
+- #89 (Lane 4.65): Stripe webhook add_credits RPC error handling
+- #96-#99 (Lane 4.72-4.75): adapter fetch timeouts (4 batches)
+- #103, #104 (Lane 4.78-4.79): redact body-cred class
+
+**P3 — audit memos (no code, can defer or close-as-info):**
+- #129 (Lane 4.100), #136 (Lane 4.106), #137 (Lane 4.107) — these document blockers that need **Justin action** (Vercel env yank + Supabase SQL run); merging the memo doesn't ship the fix
+- #110 (4.85), #109 (4.84), #108 (4.83), #107 (4.82), #105 (4.80), #113 (4.88), #112 (4.87): audit memos pointing at Codex tickets
+- Lane 6.x ToS audits (#88, #125-128, #130, #133): doc-only
+
+**P4 — drift guards / tests (low security impact, but ratchet quality):**
+- #71-#76 (Lane 4.50-4.55): test fixes + drift guards
+- #83 (Lane 4.61), #82 (Lane 4.59), #81 (Lane 4.58), #80 (Lane 4.57): body-guard chain tests
+- #78 (Lane 6.10), #77 (Lane 6.8.1): copy/data drift guards
+- #106 (Lane 4.81): URL-cred-leak drift test
+
+### Recommended merge order (P0 only, ~7 PRs to flip prod)
+
+```
+gh pr merge 122 --squash   # authenticated WRITE REVOKE
+gh pr merge 121 --squash   # anon WRITE REVOKE
+gh pr merge 117 --squash   # gateway RPC EXECUTE lockdown
+gh pr merge 119 --squash   # orphan SECDEF lockdown
+gh pr merge 118 --squash   # credit RPC input val
+gh pr merge 114 --squash   # A2A IDOR fix
+gh pr merge 115 --squash   # checkout double-sub fix
+```
+
+If any rebase mid-stream, switch order — these 7 are largely independent (4 SQL, 3 code on different routes). After P0 lands, the rest can flow numerically.
+
+### Justin-blockers separate from PR queue
+
+1. Run `scripts/lockdown-anon-writes-and-admin-tables.sql` (Lane 4.107) — Supabase SQL editor, ~30s. **No PR ships this**; only Justin's hand on the SQL editor closes it.
+2. Yank `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` from Vercel prod (Lane 4.100 P0).
+3. Decide P1+P2 cadence; can flow once P0 merged.
+
+### Loop status
+
+NOT stopping per directive. Tick 56+ continues anchoring to `origin/master`. Open question: do I keep generating audit memos for endpoints whose fixes are already staged, or pivot to a higher-leverage activity until merge throughput resumes? Default to keep auditing (≤1 endpoint/tick) so the master baseline stays mapped — but cap any tick-output to ≤30 lines if it duplicates an open-PR finding class.
