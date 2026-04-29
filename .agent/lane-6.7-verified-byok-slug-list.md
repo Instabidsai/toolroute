@@ -170,7 +170,7 @@ if (BYOK_REQUIRED_SLUGS.has(adapter.slug) ||
       : "provider terms are ambiguous; ToolRoute requires BYOK pending written authorization";
     throw new GatewayError(
       `Provider ${adapter.slug} requires your own API key (${reason}). ` +
-      `Register a key at /dashboard/byok before calling this tool.`,
+      `Register a key at /dashboard/providers before calling this tool.`,
       402,
       "byok_required"
     );
