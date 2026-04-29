@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-// Walk src/app/api and assert every numeric query-param read used as a
+// Walk src/app/** and assert every numeric query-param read used as a
 // list-size / pagination bound is BOTH clamped (Math.min) AND NaN-guarded
 // (Number.isFinite). Without both, an anon attacker can hit
 // `?limit=999999999` (DB scan / bandwidth) or `?limit=abc` → NaN
@@ -11,8 +11,13 @@ import { join, relative } from "node:path";
 // Lane 4.47 — the live probe that found this:
 //   /api/search?q=a&limit=999999  → 200, 42KB (entire catalog)
 //   /api/search?q=a&limit=abc     → 200, 42KB (NaN treated as unlimited)
+//
+// Lane 4.118 — scope broadened from src/app/api/ to src/app/** to cover
+// non-/api route handlers (mcp, auth/callback, llms*.txt). Pre-extension
+// audit confirmed no current pagination usage in non-/api routes; this
+// locks in coverage for future drift. Sibling to Lane 4.116/4.117.
 
-const API_ROOT = join(process.cwd(), "src", "app", "api");
+const APP_ROOT = join(process.cwd(), "src", "app");
 const PAGINATION_PARAMS =
   /searchParams\.get\(\s*['"`](limit|offset|page|page_size|per_page|days|count|size)['"`]\s*\)/;
 // Detect parseInt result flowing somewhere — used to find files that DO
@@ -42,10 +47,10 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-describe("pagination clamping (Lane 4.47)", () => {
-  it("every API route that integer-parses a pagination param clamps it AND guards NaN", () => {
+describe("pagination clamping (Lane 4.47 + 4.118 — src/app/**)", () => {
+  it("every route that integer-parses a pagination param clamps it AND guards NaN", () => {
     const violations: { file: string; reason: string }[] = [];
-    for (const file of walk(API_ROOT)) {
+    for (const file of walk(APP_ROOT)) {
       const content = readFileSync(file, "utf8");
       if (!PAGINATION_PARAMS.test(content)) continue;
       if (!PARSE_INT_QUERY.test(content)) continue;

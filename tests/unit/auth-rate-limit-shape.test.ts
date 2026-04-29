@@ -94,7 +94,10 @@ describe("Lane 4.27 — auth/signup rate-limit shape (drift prevention)", () => 
   });
 
   it("no /api/v1/login or password-reset route exists (any new auth route requires audit update)", () => {
-    const allRoutes = listAllRoutes(API_V1_ROOT);
+    // Lane 4.118 — broadened from API_V1_ROOT to src/app/** to cover non-/api
+    // route handlers (Next.js App Router accepts route.ts anywhere). Sibling
+    // to Lane 4.116/4.117 scope extensions.
+    const allRoutes = listAllRoutes(join(process.cwd(), "src", "app"));
     const authClassRoutes = allRoutes.filter((p) => {
       const lower = p.toLowerCase();
       return (
@@ -114,8 +117,11 @@ describe("Lane 4.27 — auth/signup rate-limit shape (drift prevention)", () => 
     ).toEqual([]);
   });
 
-  it("no signInWithPassword/resetPasswordForEmail/signInWithOtp calls in src/app/api", () => {
-    const allRoutes = listAllRoutes(join(process.cwd(), "src", "app", "api"));
+  it("no signInWithPassword/resetPasswordForEmail/signInWithOtp calls in src/app/**", () => {
+    // Lane 4.118 — broadened from src/app/api/ to src/app/** to cover
+    // non-/api route handlers. Pre-extension audit confirmed no current
+    // violations outside /api/.
+    const allRoutes = listAllRoutes(join(process.cwd(), "src", "app"));
     const violations: string[] = [];
     const pat = /signInWithPassword|resetPasswordForEmail|signInWithOtp/;
     for (const r of allRoutes) {
@@ -126,7 +132,7 @@ describe("Lane 4.27 — auth/signup rate-limit shape (drift prevention)", () => 
     }
     expect(
       violations,
-      `Unauthenticated auth-mutation call found in src/app/api/. Lane 4.27 audit assumes only /api/v1/signup is brute-forceable. Update audit + drift test before merging:\n${violations.join("\n")}`
+      `Unauthenticated auth-mutation call found in src/app/**. Lane 4.27 audit assumes only /api/v1/signup is brute-forceable. Update audit + drift test before merging:\n${violations.join("\n")}`
     ).toEqual([]);
   });
 });
