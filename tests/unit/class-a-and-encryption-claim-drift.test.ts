@@ -131,6 +131,20 @@ function publicReadableFiles(): string[] {
     if (existsSync(openapi)) files.push(openapi);
     const wellKnownOpenapi = join(publicDir, ".well-known", "openapi.json");
     if (existsSync(wellKnownOpenapi)) files.push(wellKnownOpenapi);
+    // Agent-discovery manifests — same class as openapi.json: an agent that
+    // reads /.well-known/ai-plugin.json, /agents.json, /.well-known/mcp.json,
+    // /.well-known/agent.json, or /.well-known/agent-card.json should not see
+    // Class-A slug references without the BYOK qualifier.
+    const agentManifests = [
+      join(publicDir, "agents.json"),
+      join(publicDir, ".well-known", "agent-card.json"),
+      join(publicDir, ".well-known", "agent.json"),
+      join(publicDir, ".well-known", "ai-plugin.json"),
+      join(publicDir, ".well-known", "mcp.json"),
+    ];
+    for (const f of agentManifests) {
+      if (existsSync(f)) files.push(f);
+    }
   }
   return files;
 }
