@@ -402,7 +402,7 @@ export default function Article() {
                 <li>Developer writes a Tavily integration: specific URL, specific headers, specific response parsing.</li>
                 <li>Developer writes a Resend integration: different URL, different headers, different response format.</li>
                 <li>Developer configures Kong routes for both, sets rate limits per route.</li>
-                <li>Agent calls <code className="bg-bg-surface px-1 py-0.5 rounded">POST /api/tavily/search</code> and <code className="bg-bg-surface px-1 py-0.5 rounded">POST /api/resend/send</code> with separate auth headers.</li>
+                <li>Agent calls <code className="bg-bg-surface px-1 py-0.5 rounded">POST /api/tavily/search</code> and <code className="bg-bg-surface px-1 py-0.5 rounded">POST /api/resend/send</code> with separate auth headers (Resend is a Class-A provider — BYOK required either way).</li>
                 <li>Developer maintains both integrations as APIs change.</li>
               </ol>
             </div>

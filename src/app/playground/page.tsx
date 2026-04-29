@@ -271,6 +271,7 @@ function highlightJson(obj: unknown): string {
 
 export default function PlaygroundPage() {
   const allTools = TOOL_CATALOG.flatMap((g) => g.tools);
+  // Default to search/web (BYOK required — Class-A premium provider)
   const defaultSlug = "search/web";
 
   const [selectedTool, setSelectedTool] = useState(defaultSlug);

@@ -142,10 +142,11 @@ export default function Article() {
             screen-capture, and two dozen others.
           </p>
           <p>
-            Every entry looked like this:
+            Every entry looked like this (note: Supabase is a Class-A provider on ToolRoute &mdash; BYOK required &mdash; this example is just MCP config):
           </p>
           <pre className="bg-bg-card border border-border rounded-lg p-4 overflow-x-auto text-xs">
 {`{
+  // BYOK required for Class-A providers (Supabase below) on the gateway
   "supabase": {
     "command": "npx",
     "args": ["-y", "@supabase/mcp-server-supabase"]
@@ -358,7 +359,7 @@ export default function Article() {
             <code className="bg-bg-card px-1.5 py-0.5 rounded text-accent text-xs mx-1">
               supergateway --stdio &quot;npx @supabase/mcp&quot; --port 18901
             </code>
-            . Run one instance per server under a process manager (pm2,
+            (Supabase is a Class-A provider on ToolRoute &mdash; BYOK required &mdash; this is the local MCP package, not the gateway). Run one instance per server under a process manager (pm2,
             systemd, Windows Task Scheduler). Point <code className="bg-bg-card px-1.5 py-0.5 rounded text-accent text-xs">.mcp.json</code>
             entries at each port.
           </p>
