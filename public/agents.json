@@ -90,17 +90,17 @@
     "key_tools": [
       {"id": "auto/route", "description": "Natural-language routing. Describe your task, ToolRoute picks and runs the right tool."},
       {"id": "toolroute/check_before_build", "description": "Search first — before writing code to do something, check if a tool already exists."},
-      {"id": "search/web", "description": "Web search via Brave or fallback."},
+      {"id": "search/web", "description": "Web search via Brave or fallback. BYOK required (premium provider).", "byok_required": true},
       {"id": "firecrawl/scrape", "description": "Scrape a webpage as markdown."},
-      {"id": "claude/chat", "description": "Chat completion via Anthropic Claude."},
+      {"id": "claude/chat", "description": "Chat completion via Anthropic Claude. BYOK required — Anthropic ToS forbids resale.", "byok_required": true},
       {"id": "openai/chat", "description": "Chat completion via OpenAI."},
-      {"id": "elevenlabs/text-to-speech", "description": "Text to speech."},
+      {"id": "elevenlabs/text-to-speech", "description": "Text to speech. BYOK required (premium provider).", "byok_required": true},
       {"id": "deepgram/transcribe", "description": "Speech to text."},
-      {"id": "resend/send-email", "description": "Send transactional email."},
+      {"id": "resend/send-email", "description": "Send transactional email. BYOK required (premium provider).", "byok_required": true},
       {"id": "twilio/send-sms", "description": "Send SMS."},
-      {"id": "stripe/create-payment-link", "description": "Create a Stripe payment link."},
+      {"id": "stripe/create-payment-link", "description": "Create a Stripe payment link. BYOK required (premium provider).", "byok_required": true},
       {"id": "github/search-repos", "description": "Search GitHub repositories."},
-      {"id": "context7/query-docs", "description": "Live versioned documentation lookup."}
+      {"id": "context7/query-docs", "description": "Live versioned documentation lookup. BYOK required (premium provider).", "byok_required": true}
     ]
   },
   "pricing": {
@@ -128,5 +128,5 @@
     "allowed": ["GPTBot", "ClaudeBot", "anthropic-ai", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "Google-Extended", "CCBot", "Applebot-Extended", "cohere-ai", "MistralAI-User", "YouBot", "DuckAssistBot"],
     "disallowed": ["Bytespider", "Diffbot"]
   },
-  "updated_at": "2026-04-16"
+  "updated_at": "2026-04-29"
 }
