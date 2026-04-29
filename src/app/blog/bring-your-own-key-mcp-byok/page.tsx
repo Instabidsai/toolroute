@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Bring Your Own API Key (BYOK) for MCP Tools — How It Works",
     description:
-      "Use your existing provider keys through an MCP gateway. No double-billing. Keys encrypted at rest.",
+      "Use your existing provider keys through an MCP gateway. No double-billing. Encryption at rest is on the security roadmap (Codex ticket #52).",
     url: "https://toolroute.ai/blog/bring-your-own-key-mcp-byok",
     type: "article",
     publishedTime: "2026-04-16T00:00:00Z",
@@ -346,9 +346,12 @@ curl https://toolroute.ai/api/v1/key \\
           </p>
           <ul className="space-y-1.5 text-text-dim pl-4">
             <li>
-              <strong>Encrypted at rest.</strong> Every BYOK key is encrypted
-              using AES-256-GCM before it touches the database. The encryption
-              key is stored separately from the data.
+              <strong>Encryption at rest is on the security roadmap.</strong>{" "}
+              KMS-managed AES-256-GCM encryption of BYOK credentials is in
+              active development (Codex ticket #52). Today, BYOK keys are
+              stored in Supabase with row-level access controls — only the
+              owning user can read their own keys via RLS — and existing rows
+              will be migrated when the encryption layer ships.
             </li>
             <li>
               <strong>Never logged.</strong> API keys do not appear in request
