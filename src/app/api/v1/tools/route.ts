@@ -16,6 +16,11 @@ function byokSuffix(slug: string): string {
   return "";
 }
 
+function byokRequired(slug: string | null): boolean {
+  if (!slug) return false;
+  return BYOK_REQUIRED_SLUGS.has(slug) || BYOK_INSUFFICIENT_SLUGS.has(slug);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const format = request.nextUrl.searchParams.get("format");
@@ -199,7 +204,12 @@ function parseCostString(cost: string | null): Record<string, unknown> {
 }
 
 function withAvailability<
-  T extends { id?: unknown; slug?: unknown; tool_slug?: unknown },
+  T extends {
+    id?: unknown;
+    slug?: unknown;
+    tool_slug?: unknown;
+    description?: unknown;
+  },
 >(tool: T) {
   const toolSlug =
     typeof tool.slug === "string"
@@ -210,11 +220,23 @@ function withAvailability<
           ? tool.tool_slug
           : null;
   const availability = getToolAvailability(toolSlug);
+  // Disclose BYOK requirement on the canonical slug (not tool.id, which may
+  // be a per-tool ID like "brave-search" mapping to adapter "search").
+  const adapterSlug = availability.adapter_slug ?? toolSlug;
+  const isByokRequired = byokRequired(adapterSlug);
+  const baseDescription =
+    typeof tool.description === "string" ? tool.description : null;
+  const description =
+    baseDescription !== null && isByokRequired
+      ? `${baseDescription}${byokSuffix(adapterSlug ?? "")}`
+      : baseDescription;
 
   return {
     ...tool,
+    description: description ?? tool.description,
     status: availability.status,
     adapter_slug: availability.adapter_slug,
+    byok_required: isByokRequired,
   };
 }
 
