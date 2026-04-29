@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import { getPaymentMethodSummary, getStripeClient } from "@/lib/stripe-billing";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,6 +71,8 @@ const VALID_AMOUNTS_CENTS = [1000, 2500, 5000, 10000];
 
 export async function PATCH(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.settings);
+
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 
