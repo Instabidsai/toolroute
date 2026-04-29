@@ -85,7 +85,8 @@ After every PR build, smoke-test these four endpoints and confirm in PR descript
 
 Codex does NOT do these. Listed for visibility:
 
-- 0.1 Justin runs `scripts/lockdown-anon-writers.sql` in Supabase SQL editor.
+- 0.1 ~~Justin runs `scripts/lockdown-anon-writers.sql`~~ **DONE 2026-04-28 by Claude via Supabase Mgmt API.** Ran v1 (`lockdown-anon-read-leaks.sql`) + v2 (`lockdown-anon-read-leaks-v2.sql`). All 8 sensitive tables locked: usage_events / inventory / tool_requests / api_keys / user_provider_keys → blanket REVOKE. gateway_users / gateway_usage_log / credit_transactions → owner-scoped RLS (auth.uid() filter). Anon-read probe confirmed: 401 on usage_events / api_keys / inventory.
+- 0.1b **NEW DONE 2026-04-28 by Claude:** Added `gateway_users.role text NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin'))` + index. Unblocks Codex Lane 8.1 (admin/health dashboard auth gate).
 - 0.2 Justin funds Tavily / Firecrawl / ElevenLabs / Deepgram / Replicate / Anthropic.
 - 0.3 Justin picks pricing model: master-pool / BYOK / hybrid (default: hybrid).
 - 0.4 Justin reviews legal pages from Lane 7.
