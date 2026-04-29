@@ -1,9 +1,10 @@
 # Lane 4.109 — `llms-full.txt` has 3 sibling drifts: Class-A misclassification + BYOK undercount + premature encryption claim
 
-**Owner:** Claude (auditor)
+**Owner:** Claude (auditor + impl)
 **Started:** 2026-04-29
+**Closed:** 2026-04-29 via PR #165 (commit 2e03506)
 **Severity:** MEDIUM (public discovery surface; misleads AI agents on auth + encryption posture)
-**Action:** Codex ticket — refresh `public/llms-full.txt` (last touched 2026-04-15) to align with Lane 4.100/4.102/4.103/4.106 findings + Codex ticket #52 status. Estimate: ~30 min copy edit.
+**Status:** CLOSED — drifts #1 (Class-A misclassification across adapter section headers) and #3 (AES-256 claim) were already addressed in earlier Lane 4.110/4.111 sweeps; this PR closes the remaining surface (llms.txt headcount, FAQ "Can I use my own API keys?", pricing plan tables) and ships `tests/unit/llms-txt-class-a-disclosure.test.ts` as a per-section-header drift guard.
 
 ## TL;DR
 
