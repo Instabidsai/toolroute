@@ -470,7 +470,7 @@ BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 ---
 
 ### 14. image -- AI Image Generation (fal.ai)
-BYOK: Yes | Pricing: $0.02-$0.03/call
+BYOK required (Class-A — Fal.ai premium provider, BYOK enforced at runtime once Codex #23 ships) | Pricing: $0.02-$0.03/call
 
 #### image/generate
 **Input:**
@@ -648,7 +648,7 @@ Pricing: $0.02/asset
 ---
 
 ### 23. translate -- DeepL Translation
-BYOK: Yes | Pricing: $0.00005/character
+BYOK required (Class-A — DeepL premium provider, BYOK enforced at runtime once Codex #23 ships) | Pricing: $0.00005/character
 
 #### translate/text
 **Input:**
@@ -726,7 +726,7 @@ BYOK required (Class-A — premium provider) | Pricing: $0.002/call
 ---
 
 ### 27. apollo -- Contact Enrichment & Prospecting
-BYOK: Yes | Pricing: $0.01-$0.03/call
+BYOK insufficient (Apollo §3(g)(1) restricts even non-resale integration; pending Justin decision on adapter status) | Pricing: $0.01-$0.03/call
 
 #### apollo/search-people
 **Input:**
@@ -1081,9 +1081,11 @@ Response includes `routing` object with `selected_tool`, `confidence`, `reason`,
 
 Register your own API key for supported providers to get zero-markup routing.
 
-**36 BYOK-supported adapters:** claude, openai, replicate, whisper, search, firecrawl, elevenlabs, deepgram, vapi, twilio, sendgrid, resend, image, pexels, unsplash, removebg, screenshot, heygen, creatomate, shotstack, mux, translate, pdf, stripe, apollo, creatify, shippo, supabase, sentry, dataforseo, postiz, outscraper, github, textbelt.
+**BYOK required (Class-A — provider ToS forbids resale via master pool):** claude, replicate, search, context7, elevenlabs, vapi, sendgrid, resend, image, unsplash, heygen, shotstack, mux, translate, stripe, supabase, sentry, postiz, calendar, drive. Master-pool routing for these is broken-by-design; once Codex #23 (BYOK runtime gate) ships, calls without a registered BYOK key return 402 byok_required. See Lane 4.100/4.102/4.106/6.14 for the audit chain.
 
-**2 BYOK-only adapters** (no pooled key available): calendar, drive.
+**BYOK insufficient (even passthrough may violate ToS — pending decision):** apollo (§3(g)(1) bans non-resale integration).
+
+**BYOK optional (master pool currently routes; ToS posture ambiguous — register your own key for guaranteed availability and zero-markup pricing):** openai, whisper, firecrawl, deepgram, twilio, pexels, removebg, screenshot, creatomate, pdf, creatify, shippo, dataforseo, outscraper, github, textbelt.
 
 **Register:**
 ```
