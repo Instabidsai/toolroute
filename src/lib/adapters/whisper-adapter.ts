@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const API_URL = "https://api.openai.com/v1/audio/transcriptions";
 
@@ -42,8 +43,8 @@ export const whisperAdapter: ToolAdapter = {
         const model = (input.model as string) ?? "whisper-1";
         const language = input.language as string | undefined;
 
-        // Download the audio file from the URL
-        const audioRes = await fetch(audioUrl);
+        // Download the audio file from the URL — user-supplied, tighter cap to bound SSRF risk
+        const audioRes = await fetchWithTimeout(audioUrl, { timeoutMs: 30_000 });
         if (!audioRes.ok) {
           return {
             success: false,
@@ -75,12 +76,13 @@ export const whisperAdapter: ToolAdapter = {
           );
         }
 
-        const res = await fetch(API_URL, {
+        const res = await fetchWithTimeout(API_URL, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
           },
           body: formData,
+          timeoutMs: 120_000,
         });
 
         if (!res.ok) {
@@ -122,9 +124,10 @@ export const whisperAdapter: ToolAdapter = {
     // Whisper has no lightweight ping endpoint; check that the API key is valid
     // by hitting the models endpoint
     try {
-      const res = await fetch("https://api.openai.com/v1/models/whisper-1", {
+      const res = await fetchWithTimeout("https://api.openai.com/v1/models/whisper-1", {
         method: "GET",
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 function getCredentials(byokKey?: string): {
   accountSid: string;
@@ -68,13 +69,14 @@ export const twilioAdapter: ToolAdapter = {
         params.append("From", from);
         params.append("Body", body);
 
-        const res = await fetch(`${baseUrl(accountSid)}/Messages.json`, {
+        const res = await fetchWithTimeout(`${baseUrl(accountSid)}/Messages.json`, {
           method: "POST",
           headers: {
             Authorization: authHeader,
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: params.toString(),
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -113,13 +115,14 @@ export const twilioAdapter: ToolAdapter = {
         params.append("From", from);
         params.append("Url", url);
 
-        const res = await fetch(`${baseUrl(accountSid)}/Calls.json`, {
+        const res = await fetchWithTimeout(`${baseUrl(accountSid)}/Calls.json`, {
           method: "POST",
           headers: {
             Authorization: authHeader,
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: params.toString(),
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -143,11 +146,12 @@ export const twilioAdapter: ToolAdapter = {
       if (operation === "list-messages") {
         const limit = (input.limit as number) ?? 20;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${baseUrl(accountSid)}/Messages.json?PageSize=${limit}`,
           {
             method: "GET",
             headers: { Authorization: authHeader },
+            timeoutMs: 15_000,
           }
         );
 
@@ -193,11 +197,12 @@ export const twilioAdapter: ToolAdapter = {
       Buffer.from(`${accountSid}:${authToken}`).toString("base64");
 
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${baseUrl(accountSid)}.json`,
         {
           method: "GET",
           headers: { Authorization: authHeader },
+          timeoutMs: 10_000,
         }
       );
       return { healthy: res.ok, latency_ms: Date.now() - start };
