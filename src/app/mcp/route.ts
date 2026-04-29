@@ -34,6 +34,15 @@ const MCP_CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, Mcp-Session-Id",
 };
 
+// Lane 4.119 — auth-gated POST responses must emit private, no-store
+// per Lane 4.48. /mcp tools/call validates Bearer tr_live_; downstream
+// proxies must not cache user-specific JSON-RPC payloads keyed by URL.
+// OPTIONS preflight keeps MCP_CORS-only (no body, intentionally cacheable).
+const MCP_AUTHED_HEADERS = {
+  ...MCP_CORS,
+  "Cache-Control": "private, no-store",
+};
+
 export async function POST(request: NextRequest) {
   try {
     assertBodyUnder(request, BODY_LIMITS.mcp);
@@ -45,7 +54,7 @@ export async function POST(request: NextRequest) {
           id: null,
           error: { code: -32600, message: err.message },
         },
-        { status: err.status, headers: MCP_CORS }
+        { status: err.status, headers: MCP_AUTHED_HEADERS }
       );
     }
     throw err;
@@ -61,7 +70,7 @@ export async function POST(request: NextRequest) {
         id: null,
         error: { code: -32700, message: "Parse error: invalid JSON" },
       },
-      { status: 400, headers: MCP_CORS }
+      { status: 400, headers: MCP_AUTHED_HEADERS }
     );
   }
 
@@ -184,7 +193,7 @@ export async function POST(request: NextRequest) {
       };
   }
 
-  return NextResponse.json(response, { headers: MCP_CORS });
+  return NextResponse.json(response, { headers: MCP_AUTHED_HEADERS });
 }
 
 export async function OPTIONS() {

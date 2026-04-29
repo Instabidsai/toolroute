@@ -7,17 +7,29 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// Lane 4.119 — auth/callback redirects must emit private, no-store per
+// Lane 4.48. The OAuth `?code=` URL is single-use; if a downstream proxy
+// caches the 302 it could replay another user's session bootstrap.
+function withNoStore(response: NextResponse): NextResponse {
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
 
   if (!code) {
-    return NextResponse.redirect(
-      new URL("/login?error=missing_auth_code", requestUrl.origin)
+    return withNoStore(
+      NextResponse.redirect(
+        new URL("/login?error=missing_auth_code", requestUrl.origin)
+      )
     );
   }
 
-  const response = NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+  const response = withNoStore(
+    NextResponse.redirect(new URL("/dashboard", requestUrl.origin))
+  );
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -37,8 +49,10 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.user) {
-    return NextResponse.redirect(
-      new URL("/login?error=auth_exchange_failed", requestUrl.origin)
+    return withNoStore(
+      NextResponse.redirect(
+        new URL("/login?error=auth_exchange_failed", requestUrl.origin)
+      )
     );
   }
 
@@ -70,8 +84,10 @@ export async function GET(request: NextRequest) {
       .eq("id", user.id);
     if (updateErr) {
       console.error("auth/callback: gateway_users update failed", updateErr.message, { userId: user.id });
-      return NextResponse.redirect(
-        new URL("/login?error=profile_sync_failed", requestUrl.origin)
+      return withNoStore(
+        NextResponse.redirect(
+          new URL("/login?error=profile_sync_failed", requestUrl.origin)
+        )
       );
     }
   } else {
@@ -87,8 +103,10 @@ export async function GET(request: NextRequest) {
     });
     if (insertErr) {
       console.error("auth/callback: gateway_users insert failed", insertErr.message, { userId: user.id });
-      return NextResponse.redirect(
-        new URL("/login?error=profile_create_failed", requestUrl.origin)
+      return withNoStore(
+        NextResponse.redirect(
+          new URL("/login?error=profile_create_failed", requestUrl.origin)
+        )
       );
     }
   }

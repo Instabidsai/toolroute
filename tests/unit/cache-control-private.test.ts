@@ -13,15 +13,21 @@ import { join, relative } from "node:path";
 // A's payload to user B. Vercel itself doesn't cache, but the moment any
 // downstream layer is added, a cross-user data leak surface opens.
 //
-// Detection rule: file in src/app/api references `validateRequest`,
+// Detection rule: file in src/app/** references `validateRequest`,
 // `validateAdmin`, `getSession`, `auth.getUser`, or `cookies()` -> route
 // is auth-gated -> must use `AUTHED_RESPONSE_HEADERS` (or include
 // `private` + `no-store` cache-control somewhere in the file).
 //
 // Allowlist: pure anon catalog routes (e.g. /api/v1/tools,
 // /api/v1/health) intentionally use plain CORS_HEADERS.
+//
+// Lane 4.119 — scope broadened from src/app/api/ to src/app/** to cover
+// non-/api route handlers (mcp, auth/callback). Pre-extension audit
+// found and fixed gaps on src/app/mcp/route.ts (added MCP_AUTHED_HEADERS
+// with private,no-store) and src/app/auth/callback/route.ts (wrapped all
+// redirects in withNoStore() helper). Sibling to Lane 4.116/4.117/4.118.
 
-const API_ROOT = join(process.cwd(), "src", "app", "api");
+const APP_ROOT = join(process.cwd(), "src", "app");
 
 const AUTH_HINTS = [
   /\bvalidateRequest\b/,
@@ -37,6 +43,11 @@ const REQUIRED_HEADERS = [
   /\bNO_STORE_HEADERS\b/,
   /['"]Cache-Control['"]\s*:\s*['"][^'"]*\bprivate\b[^'"]*\bno-store\b/,
   /['"]Cache-Control['"]\s*:\s*['"][^'"]*\bno-store\b[^'"]*\bprivate\b/,
+  // Lane 4.119 — also accept Headers.set(...) form used by auth/callback
+  // wrapping NextResponse.redirect (object-literal syntax doesn't apply
+  // to redirect responses; .headers.set() is the idiomatic way).
+  /\.set\s*\(\s*['"]Cache-Control['"][\s,]+['"][^'"]*\bprivate\b[^'"]*\bno-store\b/,
+  /\.set\s*\(\s*['"]Cache-Control['"][\s,]+['"][^'"]*\bno-store\b[^'"]*\bprivate\b/,
 ];
 
 // Routes that intentionally don't need auth headers (pure anon).
@@ -73,10 +84,10 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-describe("Cache-Control private,no-store on authed routes (Lane 4.48)", () => {
-  it("every API route that reads an auth credential emits Cache-Control: private, no-store", () => {
+describe("Cache-Control private,no-store on authed routes (Lane 4.48 + 4.119 — src/app/**)", () => {
+  it("every route that reads an auth credential emits Cache-Control: private, no-store", () => {
     const violations: { file: string; reason: string }[] = [];
-    for (const file of walk(API_ROOT)) {
+    for (const file of walk(APP_ROOT)) {
       const content = readFileSync(file, "utf8");
       const isAuthed = AUTH_HINTS.some((re) => re.test(content));
       if (!isAuthed) continue;
