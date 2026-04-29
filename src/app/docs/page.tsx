@@ -288,7 +288,8 @@ const toolsByCategory = [
   -d '{"tool": "claude/chat", "input": {
     "messages": [{"role": "user", "content": "Explain REST APIs in 2 sentences."}],
     "max_tokens": 256
-  }}'`,
+  }}'
+# BYOK required (Class-A — register your Anthropic key via /api/v1/byok first)`,
       },
       {
         slug: "openai",
@@ -332,7 +333,8 @@ const toolsByCategory = [
   -d '{"tool": "replicate/run", "input": {
     "model": "stability-ai/sdxl",
     "input": {"prompt": "a cat astronaut"}
-  }}'`,
+  }}'
+# BYOK required (Class-A — register your Replicate token via /api/v1/byok first)`,
       },
       {
         slug: "whisper",
@@ -375,7 +377,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "search/web", "input": {"query": "best MCP tools 2026"}}'`,
+  -d '{"tool": "search/web", "input": {"query": "best MCP tools 2026"}}'
+# BYOK required (Class-A — register your Brave Search key via /api/v1/byok first)`,
       },
       {
         slug: "context7",
@@ -392,7 +395,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "context7/query-docs", "input": {"query": "server actions", "library": "next.js"}}'`,
+  -d '{"tool": "context7/query-docs", "input": {"query": "server actions", "library": "next.js"}}'
+# BYOK required (Class-A — register your Context7 key via /api/v1/byok first)`,
       },
       {
         slug: "firecrawl",
@@ -434,7 +438,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "elevenlabs/text-to-speech", "input": {"text": "Hello from ToolRoute!"}}'`,
+  -d '{"tool": "elevenlabs/text-to-speech", "input": {"text": "Hello from ToolRoute!"}}'
+# BYOK required (Class-A — register your ElevenLabs key via /api/v1/byok first)`,
       },
       {
         slug: "deepgram",
@@ -470,7 +475,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "vapi/create-call", "input": {"assistant_id": "asst_xxx"}}'`,
+  -d '{"tool": "vapi/create-call", "input": {"assistant_id": "asst_xxx"}}'
+# BYOK required (Class-A — register your Vapi key via /api/v1/byok first)`,
       },
       {
         slug: "twilio",
@@ -517,7 +523,8 @@ const toolsByCategory = [
   -d '{"tool": "sendgrid/send-email", "input": {
     "to": "user@example.com", "from": "noreply@yourapp.com",
     "subject": "Welcome!", "html": "<h1>Welcome</h1>"
-  }}'`,
+  }}'
+# BYOK required (Class-A — register your SendGrid key via /api/v1/byok first)`,
       },
       {
         slug: "resend",
@@ -539,6 +546,7 @@ const toolsByCategory = [
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
   -d '{"tool": "resend/send-email", "input": {
+    "_comment": "BYOK required (Class-A — register your Resend key via /api/v1/byok first)",
     "from": "hi@yourapp.com", "to": "user@example.com",
     "subject": "Hello!", "html": "<p>Hi there</p>"
   }}'`,
@@ -600,7 +608,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "unsplash/search", "input": {"query": "office workspace"}}'`,
+  -d '{"tool": "unsplash/search", "input": {"query": "office workspace"}}'
+# BYOK required (Class-A — register your Unsplash key via /api/v1/byok first)`,
       },
       {
         slug: "removebg",
@@ -660,7 +669,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "heygen/create-video", "input": {"script": "Welcome to our product demo."}}'`,
+  -d '{"tool": "heygen/create-video", "input": {"script": "Welcome to our product demo."}}'
+# BYOK required (Class-A — register your HeyGen key via /api/v1/byok first)`,
       },
       {
         slug: "creatomate",
@@ -694,7 +704,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "shotstack/render", "input": {"timeline": {"tracks": [...]}}}'`,
+  -d '{"tool": "shotstack/render", "input": {"timeline": {"tracks": [...]}}}'
+# BYOK required (Class-A — register your Shotstack key via /api/v1/byok first)`,
       },
       {
         slug: "mux",
@@ -711,7 +722,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "mux/create-asset", "input": {"input_url": "https://example.com/video.mp4"}}'`,
+  -d '{"tool": "mux/create-asset", "input": {"input_url": "https://example.com/video.mp4"}}'
+# BYOK required (Class-A — register your Mux key via /api/v1/byok first)`,
       },
     ],
   },
@@ -790,7 +802,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "stripe/list-customers", "input": {"limit": 5}}'`,
+  -d '{"tool": "stripe/list-customers", "input": {"limit": 5}}'
+# BYOK required (Class-A — register your Stripe key via /api/v1/byok first)`,
       },
       {
         slug: "apollo",
@@ -871,7 +884,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "supabase/execute-sql", "input": {"project_ref": "abcdefghijkl", "sql": "SELECT count(*) FROM users"}}'`,
+  -d '{"tool": "supabase/execute-sql", "input": {"project_ref": "abcdefghijkl", "sql": "SELECT count(*) FROM users"}}'
+# BYOK required (Class-A — register your Supabase Management token via /api/v1/byok first)`,
       },
       {
         slug: "sentry",
@@ -889,7 +903,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "sentry/list-issues", "input": {"organization": "my-org", "project": "my-app"}}'`,
+  -d '{"tool": "sentry/list-issues", "input": {"organization": "my-org", "project": "my-app"}}'
+# BYOK required (Class-A — register your Sentry auth token via /api/v1/byok first)`,
       },
       {
         slug: "dataforseo",
@@ -931,7 +946,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "postiz/create-post", "input": {"content": "Check out our new API!"}}'`,
+  -d '{"tool": "postiz/create-post", "input": {"content": "Check out our new API!"}}'
+# BYOK required (Class-A — register your Postiz key via /api/v1/byok first)`,
       },
       {
         slug: "outscraper",
@@ -996,7 +1012,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "calendar/list-events", "input": {"max_results": 5}}'`,
+  -d '{"tool": "calendar/list-events", "input": {"max_results": 5}}'
+# BYOK required (Class-A — register your Google OAuth token via /api/v1/byok first)`,
       },
       {
         slug: "drive",
@@ -1013,7 +1030,8 @@ const toolsByCategory = [
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "drive/search", "input": {"query": "quarterly report"}}'`,
+  -d '{"tool": "drive/search", "input": {"query": "quarterly report"}}'
+# BYOK required (Class-A — register your Google OAuth token via /api/v1/byok first)`,
       },
     ],
   },
@@ -1311,7 +1329,8 @@ export default function DocsPage() {
             <Param name="tool" type="string" required>
               Tool identifier in{" "}
               <InlineCode>provider/operation</InlineCode> format. Example:{" "}
-              <InlineCode>elevenlabs/text-to-speech</InlineCode>
+              <InlineCode>elevenlabs/text-to-speech</InlineCode>{" "}
+              (BYOK required — Class-A premium provider).
             </Param>
             <Param name="input" type="object" required>
               Tool-specific input parameters. See each tool&apos;s documentation below.
@@ -1557,6 +1576,7 @@ def toolroute(tool: str, input: dict) -> dict:
     return r.json()
 
 result = toolroute("firecrawl/scrape", {"url": "https://example.com"})
+# BYOK required: elevenlabs is Class-A — register your key via /api/v1/byok first
 audio = toolroute("elevenlabs/text-to-speech", {"text": "Hello!"})
 repos = toolroute("github/search-repos", {"query": "mcp tools"})`}
         </CodeBlock>
@@ -1577,6 +1597,7 @@ repos = toolroute("github/search-repos", {"query": "mcp tools"})`}
 }
 
 const page = await toolroute("firecrawl/scrape", { url: "https://example.com" });
+// BYOK required: claude is Class-A — register your Anthropic key via /api/v1/byok first
 const chat = await toolroute("claude/chat", {
   messages: [{ role: "user", content: "Hello!" }],
 });`}

@@ -247,7 +247,7 @@ npx @anthropic/mcp-playwright --http --port 18901 &
 # Start Semgrep MCP on port 18902
 python -m mcp_server_semgrep --http --port 18902 &
 
-# Start Context7 on port 18903
+# Start Context7 on port 18903 (Class-A — BYOK required on ToolRoute gateway)
 npx @context7/mcp --http --port 18903 &`}
               </code>
             </pre>

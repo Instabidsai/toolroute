@@ -14,6 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+// Note: Supabase is a Class-A provider on ToolRoute — BYOK required for the gateway.
+// The import below is the local TypeScript SDK type, not a gateway tool slug.
 import type { User } from "@supabase/supabase-js";
 
 const sidebarLinks = [

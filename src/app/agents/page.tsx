@@ -110,6 +110,7 @@ Authorization: Bearer tr_live_xxx
 Content-Type: application/json
 
 {
+  "_comment": "BYOK required (Class-A — ElevenLabs). Register your key first: POST /api/v1/byok",
   "tool": "elevenlabs/text-to-speech",
   "operation": "synthesize",
   "input": { "text": "Hello world", "voice_id": "rachel" }

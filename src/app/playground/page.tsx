@@ -31,33 +31,33 @@ const TOOL_CATALOG: CategoryGroup[] = [
   {
     label: "AI & LLM",
     tools: [
-      { slug: "claude/chat", label: "Claude Chat" },
-      { slug: "openai/chat", label: "OpenAI Chat" },
-      { slug: "openai/image", label: "OpenAI Image" },
-      { slug: "replicate/run", label: "Replicate Run" },
+      { slug: "claude/chat", label: "Claude Chat (BYOK required)" },
+      { slug: "openai/chat", label: "OpenAI Chat (BYOK required)" },
+      { slug: "openai/image", label: "OpenAI Image (BYOK required)" },
+      { slug: "replicate/run", label: "Replicate Run (BYOK required)" },
     ],
   },
   {
     label: "Search",
     tools: [
-      { slug: "search/web", label: "Web Search" },
-      { slug: "context7/search", label: "Context7 Docs" },
+      { slug: "search/web", label: "Web Search (BYOK required)" },
+      { slug: "context7/search", label: "Context7 Docs (BYOK required)" },
       { slug: "firecrawl/scrape", label: "Firecrawl Scrape" },
     ],
   },
   {
     label: "Voice",
     tools: [
-      { slug: "elevenlabs/text-to-speech", label: "ElevenLabs TTS" },
+      { slug: "elevenlabs/text-to-speech", label: "ElevenLabs TTS (BYOK required)" },
       { slug: "deepgram/transcribe-url", label: "Deepgram Transcribe" },
-      { slug: "vapi/create-call", label: "Vapi Create Call" },
+      { slug: "vapi/create-call", label: "Vapi Create Call (BYOK required)" },
     ],
   },
   {
     label: "Email",
     tools: [
-      { slug: "sendgrid/send-email", label: "SendGrid Email" },
-      { slug: "resend/send-email", label: "Resend Email" },
+      { slug: "sendgrid/send-email", label: "SendGrid Email (BYOK required)" },
+      { slug: "resend/send-email", label: "Resend Email (BYOK required)" },
     ],
   },
   {
@@ -65,23 +65,23 @@ const TOOL_CATALOG: CategoryGroup[] = [
     tools: [
       { slug: "image/generate", label: "Image Generate" },
       { slug: "pexels/search-photos", label: "Pexels Photos" },
-      { slug: "unsplash/search", label: "Unsplash Search" },
+      { slug: "unsplash/search", label: "Unsplash Search (BYOK required)" },
       { slug: "removebg/remove", label: "RemoveBG" },
     ],
   },
   {
     label: "Video",
     tools: [
-      { slug: "heygen/create-video", label: "HeyGen Video" },
+      { slug: "heygen/create-video", label: "HeyGen Video (BYOK required)" },
       { slug: "creatomate/render", label: "Creatomate Render" },
-      { slug: "shotstack/render", label: "Shotstack Render" },
-      { slug: "mux/create-asset", label: "Mux Asset" },
+      { slug: "shotstack/render", label: "Shotstack Render (BYOK required)" },
+      { slug: "mux/create-asset", label: "Mux Asset (BYOK required)" },
     ],
   },
   {
     label: "Business",
     tools: [
-      { slug: "stripe/list-products", label: "Stripe Products" },
+      { slug: "stripe/list-products", label: "Stripe Products (BYOK required)" },
       { slug: "apollo/search-people", label: "Apollo People" },
       { slug: "shippo/create-shipment", label: "Shippo Shipment" },
     ],
@@ -103,26 +103,36 @@ const TOOL_CATALOG: CategoryGroup[] = [
 /* Example inputs per tool                                             */
 /* ------------------------------------------------------------------ */
 
+// Class-A providers (claude, openai, replicate, search, context7, elevenlabs,
+// vapi, sendgrid, resend, unsplash, heygen, shotstack, mux, stripe) require
+// BYOK — register your provider key via /api/v1/byok before calling them.
 const EXAMPLES: Record<string, Record<string, unknown>> = {
+  // BYOK required (Class-A premium provider)
   "search/web": { query: "best AI tools 2026", num_results: 5 },
+  // BYOK required (Class-A premium provider)
   "claude/chat": {
     messages: [{ role: "user", content: "What is ToolRoute?" }],
     max_tokens: 200,
   },
+  // BYOK required (Class-A premium provider)
   "openai/chat": {
     messages: [{ role: "user", content: "Explain API gateways in one paragraph" }],
     max_tokens: 200,
   },
+  // BYOK required (Class-A premium provider)
   "openai/image": {
     prompt: "A futuristic city skyline at sunset, cyberpunk style",
     size: "1024x1024",
   },
+  // BYOK required (Class-A premium provider)
   "replicate/run": {
     model: "stability-ai/sdxl",
     input: { prompt: "A photorealistic mountain landscape" },
   },
+  // BYOK required (Class-A premium provider)
   "context7/search": { query: "Next.js app router", library: "nextjs" },
   "firecrawl/scrape": { url: "https://example.com", formats: ["markdown"] },
+  // BYOK required (Class-A premium provider)
   "elevenlabs/text-to-speech": {
     text: "Hello from ToolRoute, the OpenRouter for tools.",
     voice_id: "21m00Tcm4TlvDq8ikWAM",
@@ -131,16 +141,19 @@ const EXAMPLES: Record<string, Record<string, unknown>> = {
     url: "https://example.com/audio.mp3",
     model: "nova-2",
   },
+  // BYOK required (Class-A premium provider)
   "vapi/create-call": {
     phone_number: "+15551234567",
     assistant_id: "your-assistant-id",
   },
+  // BYOK required (Class-A premium provider)
   "sendgrid/send-email": {
     to: "user@example.com",
     from: "hello@toolroute.ai",
     subject: "Test from ToolRoute",
     text: "This is a test email sent via ToolRoute.",
   },
+  // BYOK required (Class-A premium provider)
   "resend/send-email": {
     to: "user@example.com",
     from: "hello@toolroute.ai",
@@ -153,8 +166,10 @@ const EXAMPLES: Record<string, Record<string, unknown>> = {
     height: 512,
   },
   "pexels/search-photos": { query: "sunset beach", per_page: 3 },
+  // BYOK required (Class-A premium provider)
   "unsplash/search": { query: "mountains", per_page: 3 },
   "removebg/remove": { image_url: "https://example.com/photo.jpg" },
+  // BYOK required (Class-A premium provider)
   "heygen/create-video": {
     script: "Welcome to ToolRoute, the OpenRouter for tools.",
     avatar_id: "default",
@@ -163,13 +178,16 @@ const EXAMPLES: Record<string, Record<string, unknown>> = {
     template_id: "your-template-id",
     modifications: { "Title.text": "Hello World" },
   },
+  // BYOK required (Class-A premium provider)
   "shotstack/render": {
     timeline: {
       tracks: [{ clips: [{ asset: { type: "title", text: "Hello" } }] }],
     },
     output: { format: "mp4" },
   },
+  // BYOK required (Class-A premium provider)
   "mux/create-asset": { input: "https://example.com/video.mp4" },
+  // BYOK required (Class-A premium provider)
   "stripe/list-products": { limit: 5 },
   "apollo/search-people": {
     q_keywords: "CEO SaaS",
@@ -253,6 +271,7 @@ function highlightJson(obj: unknown): string {
 
 export default function PlaygroundPage() {
   const allTools = TOOL_CATALOG.flatMap((g) => g.tools);
+  // Default to search/web (BYOK required — Class-A premium provider)
   const defaultSlug = "search/web";
 
   const [selectedTool, setSelectedTool] = useState(defaultSlug);

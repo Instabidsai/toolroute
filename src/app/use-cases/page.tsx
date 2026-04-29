@@ -58,6 +58,7 @@ for (const result of research.results) {
   });
 
   await toolroute.execute({
+    // BYOK required (Class-A — Supabase)
     tool: "supabase/insert",
     input: {
       table: "research_findings",
@@ -98,7 +99,7 @@ await toolroute.execute({
       "Generate written content with AI, produce video assets with code-driven rendering, and distribute across social channels automatically. Ideal for marketing teams shipping content at scale without manual handoffs.",
     tools: ["Claude (BYOK)", "Remotion", "Postiz"],
     toolSlugs: ["claude-api", "remotion", "postiz"],
-    snippet: `// Requires BYOK for Claude — see /dashboard/byok
+    snippet: `// BYOK required for Claude (Class-A) — see /dashboard/byok
 const article = await toolroute.execute({
   tool: "claude/chat",
   input: {
@@ -113,6 +114,7 @@ const video = await toolroute.execute({
 });
 
 await toolroute.execute({
+  // BYOK required (Class-A — Postiz)
   tool: "postiz/schedule",
   input: {
     platforms: ["twitter", "linkedin"],
@@ -134,7 +136,7 @@ await toolroute.execute({
 });
 
 for (const lead of leads.contacts) {
-  // Requires BYOK for Claude + Resend
+  // BYOK required for Claude + Resend (Class-A premium providers)
   const email = await toolroute.execute({
     tool: "claude/chat",
     input: {
@@ -144,6 +146,7 @@ for (const lead of leads.contacts) {
   });
 
   await toolroute.execute({
+    // BYOK required (Class-A — Resend)
     tool: "resend/send-email",
     input: { to: lead.email, subject: email.subject, html: email.body }
   });
@@ -157,6 +160,7 @@ for (const lead of leads.contacts) {
     tools: ["Context7", "Supabase", "Resend (BYOK)"],
     toolSlugs: ["context7", "supabase", "resend"],
     snippet: `const docs = await toolroute.execute({
+  // BYOK required (Class-A — Context7)
   tool: "context7/search",
   input: { query: ticket.question, library: "your-docs" }
 });
@@ -171,7 +175,7 @@ const customer = await toolroute.execute({
 
 const reply = await generateReply(docs, customer, ticket);
 
-// Requires BYOK for Resend
+// BYOK required for Resend (Class-A premium provider)
 await toolroute.execute({
   tool: "resend/send-email",
   input: { to: ticket.email, subject: \`Re: \${ticket.subject}\`, html: reply }
@@ -191,6 +195,7 @@ await toolroute.execute({
 
 // Monitor for 5 minutes post-deploy
 const errors = await toolroute.execute({
+  // BYOK required (Class-A — Sentry)
   tool: "sentry/query",
   input: {
     project: "my-app",
@@ -229,6 +234,7 @@ for (const domain of domains) {
   });
 
   await toolroute.execute({
+    // BYOK required (Class-A — Supabase)
     tool: "supabase/upsert",
     input: {
       table: "enriched_leads",
@@ -244,7 +250,7 @@ for (const domain of domains) {
       "Transcribe incoming audio with speech-to-text, process the transcript through AI to understand intent and generate a response, then convert the reply back to natural speech. Build phone bots, voice assistants, and audio interfaces.",
     tools: ["Whisper STT (BYOK)", "Claude (BYOK)", "ElevenLabs TTS (BYOK)"],
     toolSlugs: ["whisper", "claude-api", "elevenlabs"],
-    snippet: `// Requires BYOK for Whisper (STT) + Claude + ElevenLabs
+    snippet: `// BYOK required for Whisper (STT) + Claude + ElevenLabs (Class-A premium providers)
 const transcript = await toolroute.execute({
   tool: "whisper/transcribe",
   input: { audio: incomingAudioBuffer }
@@ -260,6 +266,7 @@ const response = await toolroute.execute({
 });
 
 const speech = await toolroute.execute({
+  // BYOK required (Class-A — ElevenLabs)
   tool: "elevenlabs/text-to-speech",
   input: {
     text: response.content,
