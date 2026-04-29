@@ -80,7 +80,7 @@ const terms: Term[] = [
     id: "byok",
     term: "BYOK (Bring Your Own Key)",
     definition:
-      "BYOK is a billing model where users register their own API keys for third-party providers with a gateway. When a BYOK key is configured, requests route through the user's own account at the provider, incurring zero markup from the gateway. Keys are typically encrypted at rest (AES-256) and never stored in plaintext.",
+      "BYOK is a billing model where users register their own API keys for third-party providers with a gateway. When a BYOK key is configured, requests route through the user's own account at the provider, incurring zero markup from the gateway. Keys are stored with database-level access controls; encryption at rest with KMS-managed AES-256-GCM is on the security roadmap (Codex ticket #52).",
     seeAlso: ["api-gateway", "credits", "prepaid-billing"],
     blogLink: {
       href: "/blog/bring-your-own-key-mcp-byok",
