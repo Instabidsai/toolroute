@@ -48,7 +48,7 @@
                   }
                 },
                 "claude-chat": {
-                  "summary": "Chat with Claude",
+                  "summary": "Chat with Claude (BYOK required — Anthropic ToS forbids resale)",
                   "value": {
                     "tool": "claude/chat",
                     "input": {
@@ -58,7 +58,7 @@
                   }
                 },
                 "elevenlabs-tts": {
-                  "summary": "Text to speech",
+                  "summary": "Text to speech (BYOK required — premium provider)",
                   "value": {
                     "tool": "elevenlabs/text-to-speech",
                     "input": { "text": "Hello world", "voice_id": "21m00Tcm4TlvDq8ikWAM" }
@@ -93,14 +93,14 @@
                   }
                 },
                 "github-search": {
-                  "summary": "Search GitHub repos",
+                  "summary": "Search GitHub repos (BYOK required — premium provider)",
                   "value": {
                     "tool": "github/search-repos",
                     "input": { "query": "mcp server typescript", "per_page": 5 }
                   }
                 },
                 "sendgrid-email": {
-                  "summary": "Send an email",
+                  "summary": "Send an email (BYOK required — premium provider)",
                   "value": {
                     "tool": "sendgrid/send-email",
                     "input": {
