@@ -194,7 +194,7 @@ Claude is fixing the `check_rate_limit` RPC. Do not modify `src/lib/gateway.ts` 
 
 ## Lane 4 — Security hardening (CLAUDE OWNS — do not touch)
 
-Claude is auditing RLS policies and resale rights. Do not modify SQL migrations or `src/lib/gateway.ts`.
+Claude is auditing RLS policies, financial-flow correctness, silent-error classes, and drift guards. Do not modify SQL migrations or `src/lib/gateway.ts`.
 
 ### 4.4 — RLS regression guard (DONE 2026-04-27)
 - **File:** `scripts/verify-rls-lockdown.mjs`
@@ -202,6 +202,42 @@ Claude is auditing RLS policies and resale rights. Do not modify SQL migrations 
 - **How to run:** `node scripts/verify-rls-lockdown.mjs` — exits 1 on any leak.
 - **Result of first run:** 2 confirmed leaks (`usage_events`, `inventory`); 5 permissive-but-empty (`tool_requests`, `gateway_usage_log`, `api_keys`, `user_provider_keys`, `gateway_users`).
 - **Follow-up Lane 4.5 needed:** Existing lockdown SQL only covers 3 of the 8 sensitive tables. Need to extend `scripts/lockdown-anon-read-leaks.sql` (or new file) to also lock `api_keys`, `user_provider_keys`, `gateway_usage_log`, `gateway_users`. A single row in any of those leaks key hashes / billing data / PII to the public internet.
+
+### Lane 4 progress since 4.4 (PRs #71–#92, awaiting Codex review)
+
+**Status as of 2026-04-28:** 22 Claude-owned PRs open against master. Lane 0.1 anon probe still returns HTTP 200 — Justin has not yet run the lockdown SQL, so `usage_events` continues to leak.
+
+#### Drift / type-safety guards
+- **#71 [4.50]** UsageEvent TS type drift: `tool_slug` → `tool_id`
+- **#72 [4.51]** estimateCost drift guard against return-0 bypass
+- **#73 [4.52]** credit deduction TOCTOU audit + Codex inspection ticket
+- **#74 [4.53]** actual_cost adapter dead-path audit + drift guard
+- **#75 [4.54]** honor `provider.max_price` + audit unimplemented billing-control claim
+- **#76 [4.55]** fix stale cogs-leak-audit assertion post Lane 4.11 refactor
+- **#79 [4.56]** body-size guard coverage drift guard + Lane 4.38 missing-merge audit
+- **PR #70 (merged)** [4.49] drift guard banning `.select("*")` on COGS/PII/credential tables
+
+#### Body-size guards (full surface coverage, per Hard Rule #59)
+- **#80 [4.57]** byok + keys + signup (auth boundary trio)
+- **#81 [4.58]** checkout + settings (billing surface)
+- **#82 [4.59]** registry trio (admin)
+- **#83 [4.60]** admin/providers (16KB)
+- **#84 [4.61]** api/check (4KB)
+- **#85 [4.62]** webhooks/stripe (64KB) — last drift offender
+
+#### Silent-error sweep (supabase-js `.rpc/.insert/.update` returning `{data, error}`)
+- **#89 [4.65]** Stripe webhook: 4 `add_credits` call sites now capture errors + return 500. Prevents silent revenue loss when Stripe charged but credits not granted.
+- **#90 [4.66]** auth/callback: gateway_users insert/update errors. **Discovered third signup path** — Lane 4.64 audit had only modeled two.
+- **#91 [4.67]** getUserFromSession: gateway_users select+insert error capture (lazy auto-provision path)
+- **#92 [4.68]** api/v1/byok DELETE: capture errors + verify affected rows (returns 404 if not found, 500 on DB error)
+
+#### Audits (findings flagged, fixes pending Justin decision)
+- **#86 [4.63]** Stripe refund/dispute clawback gap (HIGH financial leak) — needs Justin: Codex ticket vs Claude impl
+- **#87 [4.64]** starter-credit policy drift across OAuth-vs-password paths — needs Justin: Option A ($0 everywhere) vs Option B ($1 everywhere). Note: post-#90 the audit needs updating to reflect 3 signup paths, not 2.
+
+### 4.5 — Lockdown SQL extension (BLOCKED on Justin)
+- **File:** `scripts/lockdown-anon-read-leaks-v2.sql` (delivered prior)
+- **Status:** Justin must execute in Supabase SQL editor with service-role JWT. Probe re-run every loop tick; HTTP 200 → still leaks.
 
 ---
 
@@ -241,7 +277,23 @@ Claude is auditing RLS policies and resale rights. Do not modify SQL migrations 
 
 ## Lane 6 — Resale rights audit (CLAUDE OWNS — do not touch)
 
-Claude is reading provider ToS for resale clauses.
+Claude is reading provider ToS for resale clauses, gating the gateway accordingly, and auditing public copy for false claims about provider coverage.
+
+### Lane 6 progress (PRs #77/#78/#88, awaiting Codex review)
+
+#### Per-provider gating (Lane 6.5–6.7)
+- **6.5/6.6** Tier-A/B/C provider classification: rentable, BYOK-required, prohibited
+- **6.7** BYOK-required provider list enforced in execute path; tier-copy on `/dashboard/providers`. Initial implementation had a stale URL — fixed in PR #78.
+
+#### Operational guardrails
+- **#77 [6.8.1]** Extract Lane 6.7 BYOK slug Sets to shared TS data module (single source of truth)
+- **#88 [6.8.2]** Quarterly ToS recheck checklist (doc-only) — schedules systematic re-reads to catch ToS changes that flip a provider from rentable → BYOK
+- **#78 [6.10]** `/dashboard/providers` tier-copy drift guard (failing-snapshot test pattern, Hard Rule #59) + Lane 6.7 URL fix
+
+#### Pending Justin decision
+- **Lane 5.2 / 6.8.3** Funded provider keys (Tavily / Firecrawl / ElevenLabs / Deepgram / Replicate) — Justin needs to provide. Deepgram needs sales-channel access for resale rights.
+- **Lane 6.9** Build-vs-delete decision on false billing-control claims surfaced by Lane 4.54 audit
+- **Lane 6.10 D13/D14** Pre-launch copy audit findings (per shared feedback memory `feedback_pre_launch_copy_audit_for_tiered_gates.md`)
 
 ---
 
@@ -364,6 +416,30 @@ Claude is reading provider ToS for resale clauses.
 
 - [lane-0.0] track build queue + investigate src/content -> https://github.com/Instabidsai/toolroute/pull/1
 - [lane-1.1] build /signup page -> https://github.com/Instabidsai/toolroute/pull/2
+
+### Claude-owned (Lane 4 + Lane 6) — awaiting Codex review as of 2026-04-28
+- [lane-4.50] UsageEvent TS type drift -> #71
+- [lane-4.51] estimateCost return-0 drift guard -> #72
+- [lane-4.52] credit deduction TOCTOU audit -> #73
+- [lane-4.53] actual_cost adapter dead-path audit -> #74
+- [lane-4.54] honor provider.max_price + audit billing-control claim -> #75
+- [lane-4.55] cogs-leak-audit assertion fix post Lane 4.11 refactor -> #76
+- [lane-6.8.1] BYOK slug Sets shared module -> #77
+- [lane-6.10] tier-copy drift guard + Lane 6.7 URL fix -> #78
+- [lane-4.56] body-size guard coverage drift guard -> #79
+- [lane-4.57] body-size guards on byok+keys+signup -> #80
+- [lane-4.58] body-size guards on checkout+settings -> #81
+- [lane-4.59] body-size guards on registry trio -> #82
+- [lane-4.60] body-size guard on admin/providers -> #83
+- [lane-4.61] body-size guard on api/check -> #84
+- [lane-4.62] body-size guard on webhooks/stripe -> #85
+- [lane-4.63] Stripe refund/dispute clawback gap audit -> #86 (NEEDS JUSTIN)
+- [lane-4.64] starter-credit policy drift audit -> #87 (NEEDS JUSTIN — note: 3 signup paths, not 2)
+- [lane-6.8.2] quarterly ToS recheck checklist -> #88
+- [lane-4.65] Stripe webhook add_credits silent-error fix -> #89
+- [lane-4.66] auth/callback gateway_users error capture -> #90
+- [lane-4.67] getUserFromSession error capture -> #91
+- [lane-4.68] api/v1/byok DELETE error capture + 404 -> #92
 
 ## Done
 (Claude moves rows here after merge)
