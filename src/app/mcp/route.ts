@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { listAdapters } from "@/lib/adapters/index";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 import { GatewayError } from "@/lib/gateway-types";
+import {
+  BYOK_REQUIRED_SLUGS,
+  BYOK_INSUFFICIENT_SLUGS,
+} from "@/lib/byok-required-slugs";
+
+function byokSuffix(slug: string): string {
+  if (BYOK_REQUIRED_SLUGS.has(slug)) return " (BYOK required)";
+  if (BYOK_INSUFFICIENT_SLUGS.has(slug)) return " (BYOK required)";
+  return "";
+}
 
 // JSON-RPC types
 interface JsonRpcRequest {
@@ -78,7 +88,7 @@ export async function POST(request: NextRequest) {
         for (const op of adapter.operations) {
           tools.push({
             name: `${adapter.slug}/${op}`,
-            description: `${adapter.name}: ${op}`,
+            description: `${adapter.name}: ${op}${byokSuffix(adapter.slug)}`,
             inputSchema: {
               type: "object" as const,
               properties: {
