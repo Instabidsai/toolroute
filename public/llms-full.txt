@@ -203,7 +203,7 @@ All operations are called via `POST /api/v1/execute` with the tool ID in `provid
 ---
 
 ### 1. claude -- Anthropic Claude LLM
-BYOK: Yes | Pricing: $0.003/1K chars
+BYOK required (Class-A — premium provider) | Pricing: $0.003/1K chars
 
 #### claude/chat
 Send a multi-turn conversation to Claude.
@@ -219,8 +219,9 @@ Send a multi-turn conversation to Claude.
 ```json
 {"tool": "claude/chat", "input": {"messages": [{"role": "user", "content": "Hello!"}]}}
 ```
+> BYOK required (claude is Class-A — pass your Anthropic key via /api/v1/byok).
 
-#### claude/complete
+#### claude/complete (BYOK required)
 Alias for claude/chat. Same input and output format.
 
 ---
@@ -260,7 +261,7 @@ Pricing: Free
 ---
 
 ### 3. replicate -- Run Any ML Model
-BYOK: Yes | Pricing: $0.01/run
+BYOK required (Class-A — premium provider) | Pricing: $0.01/run
 
 #### replicate/run
 **Input:**
@@ -268,7 +269,7 @@ BYOK: Yes | Pricing: $0.01/run
 - `input` (object) -- Model-specific input parameters
 - `version` (string) -- Version hash
 
-#### replicate/list-models
+#### replicate/list-models (BYOK required)
 **Input:**
 - `owner` (string) -- Filter by model owner
 
@@ -289,7 +290,7 @@ BYOK: Yes | Pricing: $0.01/call
 ---
 
 ### 5. search -- Web Search (Brave)
-BYOK: Yes | Pricing: $0.003/call
+BYOK required (Class-A — premium provider) | Pricing: $0.003/call
 
 #### search/web
 **Input:**
@@ -309,7 +310,7 @@ BYOK: Yes | Pricing: $0.003/call
 ---
 
 ### 6. context7 -- Library Documentation
-BYOK: No | Pricing: $0.001/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 
 #### context7/search
 **Input:**
@@ -348,7 +349,7 @@ Pricing: $0.003/call
 ---
 
 ### 8. elevenlabs -- Text-to-Speech
-BYOK: Yes | Pricing: $0.0003/character
+BYOK required (Class-A — premium provider) | Pricing: $0.0003/character
 
 #### elevenlabs/text-to-speech
 **Input:**
@@ -358,7 +359,7 @@ BYOK: Yes | Pricing: $0.0003/character
 
 Returns: `audio_base64` (base64-encoded MP3), `content_type`, `char_count`
 
-#### elevenlabs/voices
+#### elevenlabs/voices (BYOK required)
 **Input:** (none required)
 
 Pricing: $0.0001/call
@@ -384,7 +385,7 @@ Alias for deepgram/transcribe. Same input.
 ---
 
 ### 10. vapi -- Voice AI Agents
-BYOK: Yes | Pricing: $0.001-$0.05/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001-$0.05/call
 
 #### vapi/create-call
 **Input:**
@@ -394,15 +395,15 @@ BYOK: Yes | Pricing: $0.001-$0.05/call
 
 Pricing: $0.05/call
 
-#### vapi/list-calls
+#### vapi/list-calls (BYOK required)
 **Input:**
 - `limit` (number, default: 10)
 
-#### vapi/get-call
+#### vapi/get-call (BYOK required)
 **Input:**
 - `call_id` (string, REQUIRED)
 
-#### vapi/list-assistants
+#### vapi/list-assistants (BYOK required)
 **Input:**
 - `limit` (number, default: 10)
 
@@ -436,7 +437,7 @@ Pricing: $0.001/call
 ---
 
 ### 12. sendgrid -- Email Sending
-BYOK: Yes | Pricing: $0.001/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 
 #### sendgrid/send-email
 **Input:**
@@ -449,7 +450,7 @@ BYOK: Yes | Pricing: $0.001/call
 ---
 
 ### 13. resend -- Modern Email Delivery
-BYOK: Yes | Pricing: $0.001/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 
 #### resend/send-email
 **Input:**
@@ -463,7 +464,7 @@ BYOK: Yes | Pricing: $0.001/call
 - `bcc` (string|string[])
 - `tags` (array)
 
-#### resend/list-emails
+#### resend/list-emails (BYOK required)
 **Input:** (none required)
 
 ---
@@ -511,7 +512,7 @@ BYOK: Yes | Pricing: $0.001/call
 ---
 
 ### 16. unsplash -- High-Resolution Stock Photos
-BYOK: Yes | Pricing: $0.001/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 
 #### unsplash/search
 **Input:**
@@ -523,7 +524,7 @@ BYOK: Yes | Pricing: $0.001/call
 - `count` (number, default: 1)
 - `query` (string) -- Optional topic filter
 
-#### unsplash/get-photo
+#### unsplash/get-photo (BYOK required)
 **Input:**
 - `id` (string, REQUIRED) -- Unsplash photo ID
 
@@ -560,7 +561,7 @@ BYOK: Yes | Pricing: $0.005/call
 ---
 
 ### 19. heygen -- AI Avatar Videos
-BYOK: Yes | Pricing: $0.001-$0.50/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001-$0.50/call
 
 #### heygen/create-video
 **Input:**
@@ -572,11 +573,11 @@ BYOK: Yes | Pricing: $0.001-$0.50/call
 
 Pricing: $0.50/video
 
-#### heygen/list-avatars
+#### heygen/list-avatars (BYOK required)
 **Input:**
 - `limit` (number, default: 20)
 
-#### heygen/get-video
+#### heygen/get-video (BYOK required)
 **Input:**
 - `video_id` (string, REQUIRED)
 
@@ -603,7 +604,7 @@ Pricing: $0.50/render
 ---
 
 ### 21. shotstack -- Video Editing API
-BYOK: Yes | Pricing: $0.001-$0.30/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001-$0.30/call
 
 #### shotstack/render
 **Input:**
@@ -623,7 +624,7 @@ Pricing: $0.30/render
 ---
 
 ### 22. mux -- Video Hosting & Streaming
-BYOK: Yes (format: "TOKEN_ID:TOKEN_SECRET") | Pricing: $0.001-$0.02/call
+BYOK required (Class-A — premium provider, format: "TOKEN_ID:TOKEN_SECRET") | Pricing: $0.001-$0.02/call
 
 #### mux/create-asset
 **Input:**
@@ -632,15 +633,15 @@ BYOK: Yes (format: "TOKEN_ID:TOKEN_SECRET") | Pricing: $0.001-$0.02/call
 
 Pricing: $0.02/asset
 
-#### mux/get-asset
+#### mux/get-asset (BYOK required)
 **Input:**
 - `asset_id` (string, REQUIRED)
 
-#### mux/list-assets
+#### mux/list-assets (BYOK required)
 **Input:**
 - `limit` (number, default: 20)
 
-#### mux/create-playback
+#### mux/create-playback (BYOK required)
 **Input:**
 - `asset_id` (string, REQUIRED)
 
@@ -704,7 +705,7 @@ Pricing: $0.005/call
 ---
 
 ### 26. stripe -- Payments
-BYOK: Yes | Pricing: $0.002/call
+BYOK required (Class-A — premium provider) | Pricing: $0.002/call
 
 #### stripe/list-customers
 **Input:**
@@ -715,11 +716,11 @@ BYOK: Yes | Pricing: $0.002/call
 - `line_items` (array, REQUIRED) -- Array of {price: string, quantity: number}
 - `after_completion_url` (string) -- Redirect URL after payment
 
-#### stripe/list-products
+#### stripe/list-products (BYOK required)
 **Input:**
 - `limit` (number, default: 10)
 
-#### stripe/get-balance
+#### stripe/get-balance (BYOK required)
 **Input:** (none required)
 
 ---
@@ -806,25 +807,25 @@ Pricing: $0.05/label
 ---
 
 ### 30. supabase -- Database Operations
-BYOK: Yes | Pricing: $0.001/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 
 #### supabase/execute-sql
 **Input:**
 - `project_ref` (string, REQUIRED) -- Supabase project reference
 - `sql` (string, REQUIRED) -- SQL query
 
-#### supabase/list-tables
+#### supabase/list-tables (BYOK required)
 **Input:**
 - `project_ref` (string, REQUIRED)
 
-#### supabase/insert
+#### supabase/insert (BYOK required)
 **Input:**
 - `project_url` (string, REQUIRED) -- Full project URL
 - `anon_key` (string, REQUIRED) -- Project anon key
 - `table` (string, REQUIRED) -- Table name
 - `data` (object, REQUIRED) -- Row data
 
-#### supabase/select
+#### supabase/select (BYOK required)
 **Input:**
 - `project_url` (string, REQUIRED)
 - `anon_key` (string, REQUIRED)
@@ -835,7 +836,7 @@ BYOK: Yes | Pricing: $0.001/call
 ---
 
 ### 31. sentry -- Error Tracking
-BYOK: Yes | Pricing: $0.001/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001/call
 
 #### sentry/list-issues
 **Input:**
@@ -844,12 +845,12 @@ BYOK: Yes | Pricing: $0.001/call
 - `query` (string, default: "is:unresolved")
 - `limit` (number, default: 10)
 
-#### sentry/get-issue
+#### sentry/get-issue (BYOK required)
 **Input:**
 - `organization` (string, REQUIRED)
 - `issue_id` (string, REQUIRED)
 
-#### sentry/list-events
+#### sentry/list-events (BYOK required)
 **Input:**
 - `organization` (string, REQUIRED)
 - `issue_id` (string, REQUIRED)
@@ -878,7 +879,7 @@ BYOK: Yes (format: "login:password") | Pricing: $0.002/call
 ---
 
 ### 33. postiz -- Social Media Posting
-BYOK: Yes | Pricing: $0.001-$0.002/call
+BYOK required (Class-A — premium provider) | Pricing: $0.001-$0.002/call
 
 #### postiz/create-post
 **Input:**
@@ -888,11 +889,11 @@ BYOK: Yes | Pricing: $0.001-$0.002/call
 
 Pricing: $0.002/call
 
-#### postiz/list-posts
+#### postiz/list-posts (BYOK required)
 **Input:**
 - `limit` (number, default: 20)
 
-#### postiz/get-integrations
+#### postiz/get-integrations (BYOK required)
 **Input:** (none required)
 
 ---
@@ -945,7 +946,7 @@ BYOK: Yes | Pricing: $0.001/call
 ---
 
 ### 36. calendar -- Google Calendar
-BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
+BYOK required (Class-A — Google OAuth token required, BYOK-only) | Pricing: $0.001/call
 
 #### calendar/list-events
 **Input:**
@@ -954,7 +955,7 @@ BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
 - `time_min` (string) -- ISO datetime
 - `time_max` (string) -- ISO datetime
 
-#### calendar/create-event
+#### calendar/create-event (BYOK required)
 **Input:**
 - `summary` (string, REQUIRED) -- Event title
 - `start` (string, REQUIRED) -- ISO datetime
@@ -971,7 +972,7 @@ BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
 ---
 
 ### 37. drive -- Google Drive
-BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
+BYOK required (Class-A — Google OAuth token required, BYOK-only) | Pricing: $0.001/call
 
 #### drive/list-files
 **Input:**
@@ -979,18 +980,18 @@ BYOK: BYOK-only (Google OAuth token required) | Pricing: $0.001/call
 - `folder_id` (string) -- Folder to list
 - `query` (string) -- Drive search query
 
-#### drive/search
+#### drive/search (BYOK required)
 **Input:**
 - `query` (string, REQUIRED) -- Full-text search query
 - `page_size` (number, default: 20)
 
-#### drive/get-content
+#### drive/get-content (BYOK required)
 **Input:**
 - `file_id` (string, REQUIRED) -- Drive file ID
 
 Returns text content or base64-encoded binary.
 
-#### drive/upload-text
+#### drive/upload-text (BYOK required)
 **Input:**
 - `name` (string, REQUIRED) -- File name
 - `content` (string, REQUIRED) -- File content
@@ -1188,6 +1189,10 @@ ToolRoute is available as an MCP server with 7 tools for direct integration into
 
 ## SDK Examples
 
+> Note: examples below reference premium providers (`claude/`, `elevenlabs/`,
+> etc.) — those are Class-A adapters where BYOK is required by the provider
+> ToS. Pass your own provider key via `/api/v1/byok` before calling them.
+
 ### Python
 ```python
 import requests
@@ -1202,6 +1207,7 @@ def toolroute(tool: str, input: dict) -> dict:
     return r.json()
 
 result = toolroute("firecrawl/scrape", {"url": "https://example.com"})
+# BYOK required: elevenlabs is Class-A — register your key via /api/v1/byok first
 audio = toolroute("elevenlabs/text-to-speech", {"text": "Hello!"})
 repos = toolroute("github/search-repos", {"query": "mcp tools"})
 ```
@@ -1222,6 +1228,7 @@ async function toolroute(tool, input) {
 }
 
 const page = await toolroute("firecrawl/scrape", { url: "https://example.com" });
+// BYOK required: claude is Class-A — register your Anthropic key via /api/v1/byok first
 const chat = await toolroute("claude/chat", {
   messages: [{ role: "user", content: "Hello!" }],
 });
