@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.deepgram.com/v1";
 
@@ -55,13 +56,14 @@ export const deepgramAdapter: ToolAdapter = {
           punctuate: String(punctuate),
         });
 
-        const res = await fetch(`${BASE_URL}/listen?${params.toString()}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/listen?${params.toString()}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Token ${apiKey}`,
           },
           body: JSON.stringify({ url }),
+          timeoutMs: 90_000,
         });
 
         if (!res.ok) {
@@ -115,8 +117,9 @@ export const deepgramAdapter: ToolAdapter = {
 
     try {
       // Use the projects endpoint to verify the key works
-      const res = await fetch("https://api.deepgram.com/v1/projects", {
+      const res = await fetchWithTimeout("https://api.deepgram.com/v1/projects", {
         headers: { Authorization: `Token ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

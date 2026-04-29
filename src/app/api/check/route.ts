@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
         { status: e.status }
       );
     }
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("api/check error:", e instanceof Error ? e.message : e);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

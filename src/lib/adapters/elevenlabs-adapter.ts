@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.elevenlabs.io/v1";
 const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
@@ -44,7 +45,7 @@ export const elevenlabsAdapter: ToolAdapter = {
         const voiceId = (input.voice_id as string) || DEFAULT_VOICE_ID;
         const modelId = (input.model_id as string) || DEFAULT_MODEL_ID;
 
-        const res = await fetch(`${BASE_URL}/text-to-speech/${voiceId}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/text-to-speech/${voiceId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -54,6 +55,7 @@ export const elevenlabsAdapter: ToolAdapter = {
             text,
             model_id: modelId,
           }),
+          timeoutMs: 60_000,
         });
 
         if (!res.ok) {
@@ -80,9 +82,10 @@ export const elevenlabsAdapter: ToolAdapter = {
       }
 
       if (operation === "voices") {
-        const res = await fetch(`${BASE_URL}/voices`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/voices`, {
           method: "GET",
           headers: { "xi-api-key": apiKey },
+          timeoutMs: 10_000,
         });
 
         if (!res.ok) {
@@ -117,9 +120,10 @@ export const elevenlabsAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/voices`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/voices`, {
         method: "GET",
         headers: { "xi-api-key": apiKey },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

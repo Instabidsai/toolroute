@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.apollo.io/api/v1";
 
@@ -56,7 +57,9 @@ export const apolloAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Apollo search-people failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Apollo search-people failed: ${res.status} ${errText}`
+            ),
             provider: "apollo",
           };
         }
@@ -110,7 +113,9 @@ export const apolloAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Apollo enrich failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Apollo enrich failed: ${res.status} ${errText}`
+            ),
             provider: "apollo",
           };
         }
@@ -161,7 +166,9 @@ export const apolloAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Apollo search-companies failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Apollo search-companies failed: ${res.status} ${errText}`
+            ),
             provider: "apollo",
           };
         }

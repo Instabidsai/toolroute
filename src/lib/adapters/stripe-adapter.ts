@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.stripe.com/v1";
 
@@ -37,7 +38,7 @@ export const stripeAdapter: ToolAdapter = {
         const limit = (input.limit as number) ?? 10;
         const url = `${BASE_URL}/customers?limit=${limit}`;
 
-        const res = await fetch(url, { method: "GET", headers });
+        const res = await fetchWithTimeout(url, { method: "GET", headers, timeoutMs: 15_000 });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -91,13 +92,14 @@ export const stripeAdapter: ToolAdapter = {
           );
         }
 
-        const res = await fetch(`${BASE_URL}/payment_links`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/payment_links`, {
           method: "POST",
           headers: {
             ...headers,
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: params.toString(),
+          timeoutMs: 20_000,
         });
 
         if (!res.ok) {
@@ -122,7 +124,7 @@ export const stripeAdapter: ToolAdapter = {
         const limit = (input.limit as number) ?? 10;
         const url = `${BASE_URL}/products?limit=${limit}&active=true`;
 
-        const res = await fetch(url, { method: "GET", headers });
+        const res = await fetchWithTimeout(url, { method: "GET", headers, timeoutMs: 15_000 });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -143,9 +145,10 @@ export const stripeAdapter: ToolAdapter = {
       }
 
       if (operation === "get-balance") {
-        const res = await fetch(`${BASE_URL}/balance`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/balance`, {
           method: "GET",
           headers,
+          timeoutMs: 10_000,
         });
 
         if (!res.ok) {
@@ -185,9 +188,10 @@ export const stripeAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/balance`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/balance`, {
         method: "GET",
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

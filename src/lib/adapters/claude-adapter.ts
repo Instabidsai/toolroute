@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -63,7 +64,7 @@ export const claudeAdapter: ToolAdapter = {
           body.temperature = input.temperature;
         }
 
-        const res = await fetch(API_URL, {
+        const res = await fetchWithTimeout(API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -115,7 +116,7 @@ export const claudeAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetchWithTimeout(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -127,6 +128,7 @@ export const claudeAdapter: ToolAdapter = {
           max_tokens: 10,
           messages: [{ role: "user", content: "ping" }],
         }),
+        timeoutMs: 15_000, // health check ping
       });
 
       return { healthy: res.ok, latency_ms: Date.now() - start };
