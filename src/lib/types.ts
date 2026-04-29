@@ -65,7 +65,7 @@ export interface InventoryItem {
 
 export interface UsageEvent {
   id: string;
-  tool_slug: string;
+  tool_id: string;
   company: string;
   action: string;
   outcome: string;

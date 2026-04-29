@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
   // Live schema has no email_verified column; store verification state in metadata.
   if (existing) {
-    await admin
+    const { error: updateErr } = await admin
       .from("gateway_users")
       .update({
         email: email || existing.email,
@@ -68,8 +68,14 @@ export async function GET(request: NextRequest) {
         updated_at: verifiedAt,
       })
       .eq("id", user.id);
+    if (updateErr) {
+      console.error("auth/callback: gateway_users update failed", updateErr.message, { userId: user.id });
+      return NextResponse.redirect(
+        new URL("/login?error=profile_sync_failed", requestUrl.origin)
+      );
+    }
   } else {
-    await admin.from("gateway_users").insert({
+    const { error: insertErr } = await admin.from("gateway_users").insert({
       id: user.id,
       email,
       display_name: email ? email.split("@")[0] : "ToolRoute user",
@@ -79,6 +85,12 @@ export async function GET(request: NextRequest) {
       lifetime_usage: 0,
       metadata,
     });
+    if (insertErr) {
+      console.error("auth/callback: gateway_users insert failed", insertErr.message, { userId: user.id });
+      return NextResponse.redirect(
+        new URL("/login?error=profile_create_failed", requestUrl.origin)
+      );
+    }
   }
 
   return response;
