@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.resend.com";
 
@@ -55,10 +56,11 @@ export const resendAdapter: ToolAdapter = {
         if (input.bcc) body.bcc = input.bcc;
         if (input.tags) body.tags = input.tags;
 
-        const res = await fetch(`${BASE_URL}/emails`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/emails`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 20_000,
         });
 
         if (!res.ok) {
@@ -80,9 +82,10 @@ export const resendAdapter: ToolAdapter = {
       }
 
       if (operation === "list-emails") {
-        const res = await fetch(`${BASE_URL}/emails`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/emails`, {
           method: "GET",
           headers,
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -122,9 +125,10 @@ export const resendAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/domains`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/domains`, {
         method: "GET",
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

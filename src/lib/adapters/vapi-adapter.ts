@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.vapi.ai";
 
@@ -55,10 +56,11 @@ export const vapiAdapter: ToolAdapter = {
         if (phoneNumberId) body.phoneNumberId = phoneNumberId;
         if (customer) body.customer = customer;
 
-        const res = await fetch(`${BASE_URL}/call`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/call`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
+          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
@@ -83,8 +85,9 @@ export const vapiAdapter: ToolAdapter = {
         const limit = (input.limit as number) || 10;
         const params = new URLSearchParams({ limit: String(limit) });
 
-        const res = await fetch(`${BASE_URL}/call?${params}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/call?${params}`, {
           headers: { Authorization: `Bearer ${apiKey}` },
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -115,8 +118,9 @@ export const vapiAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/call/${callId}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/call/${callId}`, {
           headers: { Authorization: `Bearer ${apiKey}` },
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -141,8 +145,9 @@ export const vapiAdapter: ToolAdapter = {
         const limit = (input.limit as number) || 10;
         const params = new URLSearchParams({ limit: String(limit) });
 
-        const res = await fetch(`${BASE_URL}/assistant?${params}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/assistant?${params}`, {
           headers: { Authorization: `Bearer ${apiKey}` },
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -182,8 +187,9 @@ export const vapiAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/call?limit=1`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/call?limit=1`, {
         headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

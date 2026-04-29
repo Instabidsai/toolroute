@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://textbelt.com";
 
@@ -39,10 +40,11 @@ export const textbeltAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/text`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/text`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone, message, key: apiKey }),
+          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
@@ -84,8 +86,9 @@ export const textbeltAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
-          `${BASE_URL}/status/${encodeURIComponent(text_id)}`
+        const res = await fetchWithTimeout(
+          `${BASE_URL}/status/${encodeURIComponent(text_id)}`,
+          { timeoutMs: 10_000 }
         );
 
         if (!res.ok) {
@@ -121,7 +124,9 @@ export const textbeltAdapter: ToolAdapter = {
     const start = Date.now();
     try {
       // Textbelt quota check endpoint works without a real key
-      const res = await fetch(`${BASE_URL}/quota/textbelt`);
+      const res = await fetchWithTimeout(`${BASE_URL}/quota/textbelt`, {
+        timeoutMs: 10_000,
+      });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
       return { healthy: false, latency_ms: Date.now() - start };
