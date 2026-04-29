@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.byok);
+
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 
@@ -99,6 +102,8 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.byok);
+
     const authHeader = request.headers.get("authorization");
     const { userId } = await getUserFromSession(authHeader);
 
@@ -114,11 +119,27 @@ export async function DELETE(request: NextRequest) {
 
     const sb = supabaseAdmin();
 
-    await sb
+    const { data: deactivated, error: deactivateErr } = await sb
       .from("user_provider_keys")
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq("user_id", userId)
-      .eq("tool_slug", tool_slug);
+      .eq("tool_slug", tool_slug)
+      .select("id");
+
+    if (deactivateErr) {
+      console.error("BYOK deactivate error:", deactivateErr.message, { userId, tool_slug });
+      return NextResponse.json(
+        { error: { message: "Failed to remove provider key", code: "deactivate_failed" } },
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
+      );
+    }
+
+    if (!deactivated || deactivated.length === 0) {
+      return NextResponse.json(
+        { error: { message: "No active provider key found for this tool", code: "not_found" } },
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
+      );
+    }
 
     return NextResponse.json(
       { message: "Provider key removed", tool_slug },
