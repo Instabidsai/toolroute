@@ -119,11 +119,27 @@ export async function DELETE(request: NextRequest) {
 
     const sb = supabaseAdmin();
 
-    await sb
+    const { data: deactivated, error: deactivateErr } = await sb
       .from("user_provider_keys")
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq("user_id", userId)
-      .eq("tool_slug", tool_slug);
+      .eq("tool_slug", tool_slug)
+      .select("id");
+
+    if (deactivateErr) {
+      console.error("BYOK deactivate error:", deactivateErr.message, { userId, tool_slug });
+      return NextResponse.json(
+        { error: { message: "Failed to remove provider key", code: "deactivate_failed" } },
+        { status: 500, headers: AUTHED_RESPONSE_HEADERS }
+      );
+    }
+
+    if (!deactivated || deactivated.length === 0) {
+      return NextResponse.json(
+        { error: { message: "No active provider key found for this tool", code: "not_found" } },
+        { status: 404, headers: AUTHED_RESPONSE_HEADERS }
+      );
+    }
 
     return NextResponse.json(
       { message: "Provider key removed", tool_slug },
