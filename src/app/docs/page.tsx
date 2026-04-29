@@ -1507,7 +1507,7 @@ export default function DocsPage() {
         {/* BYOK */}
         <SectionHeading id="byok">BYOK (Bring Your Own Key)</SectionHeading>
         <p className="text-text-dim text-sm leading-relaxed mb-4">
-          Register your own API keys for supported providers. Requests route through your key with zero markup. Keys are encrypted at rest with AES-256.
+          Register your own API keys for supported providers. Requests route through your key with zero markup. Keys are stored with database-level access controls; encryption at rest with KMS-managed AES-256-GCM is on the security roadmap (Codex ticket #52).
         </p>
         <p className="text-text-dim text-sm leading-relaxed mb-4">
           <strong className="text-text">BYOK-supported adapters:</strong> claude, openai, replicate, whisper, search (Brave), firecrawl, elevenlabs, deepgram, vapi, twilio, sendgrid, resend, image (fal.ai), pexels, unsplash, removebg, screenshot, heygen, creatomate, shotstack, mux, translate (DeepL), pdf, stripe, apollo, creatify, shippo, supabase, sentry, dataforseo, postiz, outscraper, github, textbelt.
@@ -2066,7 +2066,7 @@ if (!isValid) return res.status(401).json({ error: "Invalid signature" });`}
               title: "47 Gateway Adapters, BYOK Expansion",
               items: [
                 "Gateway adapters expanded from 14 to 47",
-                "BYOK support for 34 providers with AES-256 encryption",
+                "BYOK support for 34 providers (encryption at rest is planned, Codex ticket #52)",
                 "Auto-routing intelligence picks the best tool for natural language tasks",
                 "OpenAI function calling format at GET /api/v1/tools?format=openai",
               ],

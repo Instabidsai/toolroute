@@ -227,7 +227,8 @@ export async function GET(req: Request) {
           </h3>
           <p>
             Never store tokens in plaintext. Use authenticated encryption
-            (AES-256-GCM with a KMS-managed key), rotate the key annually,
+            (AES-256-GCM with a KMS-managed key — this is on the ToolRoute
+            security roadmap, Codex ticket #52), rotate the key annually,
             maintain an audit log for every token read. If you are in a
             regulated vertical, tokens must live in an HSM-backed store with
             strict IAM. Getting this wrong leaks every user&apos;s account.

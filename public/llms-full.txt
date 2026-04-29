@@ -1090,7 +1090,7 @@ POST /api/v1/byok
 {"provider": "elevenlabs", "api_key": "your-key-here"}
 ```
 
-Keys are encrypted at rest with AES-256. ToolRoute still handles routing, logging, and fallbacks.
+BYOK keys are stored in Supabase with row-level access controls (only the owning user can read their own keys via RLS). Encryption at rest with KMS-managed AES-256-GCM is on the security roadmap (Codex ticket #52); current keys will be migrated when the encryption layer ships. ToolRoute still handles routing, logging, and fallbacks.
 
 ---
 
