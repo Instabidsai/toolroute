@@ -230,13 +230,15 @@ Data & Enrichment (5):
 
 1 credit = $0.001 USD. Every tool lists its credit cost on /api/v1/tools.
 
-Typical costs per call:
+Typical costs per call (note: premium providers require BYOK — slugs like
+`openai/`, `resend/`, `elevenlabs/`, `stripe/` are billed against your own
+provider key plus a small ToolRoute orchestration credit):
 - firecrawl/scrape: 3 credits
-- openai/chat (gpt-4o, 1K tokens in/out): 15 credits
-- resend/send: 1 credit
-- elevenlabs/tts (30 sec): 12 credits
+- openai/chat (gpt-4o, 1K tokens in/out): 15 credits — BYOK required
+- resend/send: 1 credit — BYOK required
+- elevenlabs/tts (30 sec): 12 credits — BYOK required
 - apollo/enrich: 4 credits
-- stripe/charge: 2 credits
+- stripe/charge: 2 credits — BYOK required
 - semgrep/scan: 8 credits
 
 Plans:
