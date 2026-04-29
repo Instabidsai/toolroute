@@ -548,13 +548,22 @@ export async function getUserFromSession(
     throw new GatewayError("Invalid session token", 401, "invalid_session");
   }
 
-  // Auto-provision gateway_users row if first time
+  // Auto-provision gateway_users row if first time. Lazy fallback path —
+  // the primary signup paths (api/v1/signup + auth/callback) already
+  // create the row. This branch only fires when a session-authed request
+  // arrives before either of those completed (rare). See Lane 4.64
+  // audit (PR #87) for the starter-credit divergence vs the primary paths.
   const admin = supabaseAdmin();
-  const { data: existing } = await admin
+  const { data: existing, error: existingErr } = await admin
     .from("gateway_users")
     .select("id")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (existingErr) {
+    console.error("getUserFromSession: gateway_users select failed", existingErr.message, { userId: user.id });
+    throw new GatewayError("Profile lookup failed", 500, "profile_lookup_failed");
+  }
 
   if (!existing) {
     // Get free plan ID
@@ -564,7 +573,7 @@ export async function getUserFromSession(
       .eq("slug", "free")
       .single();
 
-    await admin.from("gateway_users").insert({
+    const { error: insertErr } = await admin.from("gateway_users").insert({
       id: user.id,
       email: user.email,
       display_name: user.user_metadata?.full_name ?? user.email,
@@ -572,6 +581,11 @@ export async function getUserFromSession(
       plan_slug: "free",
       credit_balance: 1.00, // $1 free starter credits
     });
+
+    if (insertErr) {
+      console.error("getUserFromSession: gateway_users insert failed", insertErr.message, { userId: user.id });
+      throw new GatewayError("Profile create failed", 500, "profile_create_failed");
+    }
   }
 
   return { userId: user.id, email: user.email ?? "" };
