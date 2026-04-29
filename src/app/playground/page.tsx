@@ -88,7 +88,7 @@ const TOOL_CATALOG: CategoryGroup[] = [
   },
   {
     label: "Translation",
-    tools: [{ slug: "translate/text", label: "Translate Text" }],
+    tools: [{ slug: "translate/text", label: "Translate Text (BYOK required)" }],
   },
   {
     label: "Platform",
@@ -198,6 +198,7 @@ const EXAMPLES: Record<string, Record<string, unknown>> = {
     address_to: { city: "New York", state: "NY", zip: "10001", country: "US" },
     parcels: [{ length: 10, width: 8, height: 4, weight: 2 }],
   },
+  // BYOK required (Class-A premium provider — DeepL, register key via /api/v1/byok)
   "translate/text": {
     text: "Hello, how are you?",
     target_lang: "ES",

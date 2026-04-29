@@ -560,7 +560,7 @@ const toolsByCategory = [
       {
         slug: "image",
         name: "Image Generation (fal.ai)",
-        description: "AI image generation and upscaling -- Flux, SDXL, Clarity Upscaler.",
+        description: "AI image generation and upscaling -- Flux, SDXL, Clarity Upscaler. BYOK required (Class-A premium provider).",
         operations: ["generate", "upscale"],
         pricing: "$0.02-$0.03/call",
         byok: "Yes",
@@ -569,12 +569,12 @@ const toolsByCategory = [
           { name: "prompt", type: "string", required: true, desc: "Image generation prompt." },
           { name: "model", type: "string", required: false, desc: "fal.ai model (default: fal-ai/flux/schnell)." },
           { name: "width", type: "number", required: false, desc: "Image width (default: 1024)." },
-          { name: "height", type: "number", required: false, desc: "Image height (default: 1024)." },
+          { name: "height", type: "number", required: false, desc: "Image height (default: 1024). BYOK required (Class-A premium provider)." },
         ],
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "image/generate", "input": {"prompt": "a futuristic city at sunset"}}'`,
+  -d '{"tool": "image/generate", "input": {"prompt": "a futuristic city at sunset"}}'`, // BYOK required
       },
       {
         slug: "pexels",
@@ -734,7 +734,7 @@ const toolsByCategory = [
       {
         slug: "translate",
         name: "DeepL Translation",
-        description: "High-quality text translation and language detection via DeepL.",
+        description: "High-quality text translation and language detection via DeepL. BYOK required (Class-A premium provider).",
         operations: ["text", "detect-language"],
         pricing: "$0.00005/char",
         byok: "Yes",
@@ -742,12 +742,12 @@ const toolsByCategory = [
         primaryParams: [
           { name: "text", type: "string", required: true, desc: "Text to translate." },
           { name: "target_lang", type: "string", required: true, desc: "Target language code (e.g. DE, FR, ES)." },
-          { name: "source_lang", type: "string", required: false, desc: "Source language (auto-detected if omitted)." },
+          { name: "source_lang", type: "string", required: false, desc: "Source language (auto-detected if omitted). BYOK required (Class-A premium provider)." },
         ],
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "translate/text", "input": {"text": "Hello world", "target_lang": "ES"}}'`,
+  -d '{"tool": "translate/text", "input": {"text": "Hello world", "target_lang": "ES"}}'`, // BYOK required
       },
       {
         slug: "pdf",
