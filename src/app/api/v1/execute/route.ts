@@ -52,7 +52,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await executeToolRequest(ctx, body.tool, body.input);
+    const maxPrice =
+      typeof body.provider?.max_price === "number"
+        ? body.provider.max_price
+        : undefined;
+    const result = await executeToolRequest(ctx, body.tool, body.input, {
+      max_price: maxPrice,
+    });
 
     if (!result.success) {
       return NextResponse.json(
