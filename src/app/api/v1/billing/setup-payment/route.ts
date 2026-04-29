@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import { getStripeClient } from "@/lib/stripe-billing";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 const CHECKOUT_ORIGIN = "https://toolroute.ai";
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.checkout);
     const authHeader = request.headers.get("authorization");
     const { userId, email } = await getUserFromSession(authHeader);
 
