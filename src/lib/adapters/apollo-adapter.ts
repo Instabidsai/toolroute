@@ -1,5 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
-import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.apollo.io/api/v1";
 
@@ -47,18 +47,19 @@ export const apolloAdapter: ToolAdapter = {
         if (input.per_page) body.per_page = input.per_page;
         if (input.page) body.page = input.page;
 
-        const res = await fetchWithTimeout(`${BASE_URL}/mixed_people/search`, {
+        const res = await fetch(`${BASE_URL}/mixed_people/search`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
-          timeoutMs: 20_000,
         });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Apollo search-people failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Apollo search-people failed: ${res.status} ${errText}`
+            ),
             provider: "apollo",
           };
         }
@@ -102,18 +103,19 @@ export const apolloAdapter: ToolAdapter = {
         if (input.domain) body.domain = input.domain;
         if (input.linkedin_url) body.linkedin_url = input.linkedin_url;
 
-        const res = await fetchWithTimeout(`${BASE_URL}/people/match`, {
+        const res = await fetch(`${BASE_URL}/people/match`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
-          timeoutMs: 20_000,
         });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Apollo enrich failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Apollo enrich failed: ${res.status} ${errText}`
+            ),
             provider: "apollo",
           };
         }
@@ -154,18 +156,19 @@ export const apolloAdapter: ToolAdapter = {
         if (input.per_page) body.per_page = input.per_page;
         if (input.page) body.page = input.page;
 
-        const res = await fetchWithTimeout(`${BASE_URL}/mixed_companies/search`, {
+        const res = await fetch(`${BASE_URL}/mixed_companies/search`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
-          timeoutMs: 20_000,
         });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Apollo search-companies failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Apollo search-companies failed: ${res.status} ${errText}`
+            ),
             provider: "apollo",
           };
         }
@@ -216,7 +219,7 @@ export const apolloAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/mixed_people/search`, {
+      const res = await fetch(`${BASE_URL}/mixed_people/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -224,7 +227,6 @@ export const apolloAdapter: ToolAdapter = {
           per_page: 1,
           person_titles: ["CEO"],
         }),
-        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

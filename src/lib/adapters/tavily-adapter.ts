@@ -1,5 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
-import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const TAVILY_BASE_URL = "https://api.tavily.com";
 
@@ -59,26 +59,34 @@ export const tavilyAdapter: ToolAdapter = {
           body.topic = input.topic;
         }
 
-        const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/search`, {
+        const res = await fetch(`${TAVILY_BASE_URL}/search`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
-          timeoutMs: 30_000,
         });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Tavily search failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Tavily search failed: ${res.status} ${errText}`
+            ),
             provider: "tavily",
           };
         }
 
-        const data = await res.json();
+        const data = (await res.json()) as Record<string, unknown>;
         return {
           success: true,
-          data,
+          data: {
+            answer: data.answer,
+            query: data.query,
+            follow_up_questions: data.follow_up_questions,
+            results: data.results,
+            images: data.images,
+            response_time: data.response_time,
+          },
           provider: "tavily",
           units_consumed: 1,
         };
@@ -99,26 +107,31 @@ export const tavilyAdapter: ToolAdapter = {
           urls,
         };
 
-        const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/extract`, {
+        const res = await fetch(`${TAVILY_BASE_URL}/extract`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
-          timeoutMs: 60_000,
         });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Tavily extract failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Tavily extract failed: ${res.status} ${errText}`
+            ),
             provider: "tavily",
           };
         }
 
-        const data = await res.json();
+        const data = (await res.json()) as Record<string, unknown>;
         return {
           success: true,
-          data,
+          data: {
+            results: data.results,
+            failed_results: data.failed_results,
+            response_time: data.response_time,
+          },
           provider: "tavily",
           units_consumed: 1,
         };
@@ -143,7 +156,7 @@ export const tavilyAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/search`, {
+      const res = await fetch(`${TAVILY_BASE_URL}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -151,7 +164,6 @@ export const tavilyAdapter: ToolAdapter = {
           query: "test",
           max_results: 1,
         }),
-        timeoutMs: 10_000,
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {

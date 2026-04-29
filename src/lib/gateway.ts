@@ -199,21 +199,33 @@ async function triggerAutoTopup(
   });
 
   if (paymentIntent.status === "succeeded") {
-    // Add credits
-    await sb.rpc("add_credits", {
+    // Add credits. The Stripe webhook (payment_intent.succeeded handler) is
+    // the primary credit-grant path for auto_topup and is idempotent on
+    // stripe_payment_id, so a failure here is recoverable. We still log
+    // loudly because silent failure here means the customer is charged but
+    // sees no immediate balance bump until the webhook arrives.
+    const { error: addCreditsErr } = await sb.rpc("add_credits", {
       p_user_id: userId,
       p_amount: amountCents / 100,
       p_type: "purchase",
       p_stripe_payment_id: paymentIntent.id,
       p_description: `Auto top-up $${(amountCents / 100).toFixed(2)}`,
     });
+    if (addCreditsErr) {
+      console.error("triggerAutoTopup: add_credits failed", addCreditsErr.message, {
+        userId,
+        amountCents,
+        paymentIntentId: paymentIntent.id,
+      });
+    }
   }
 }
 
 export async function executeToolRequest(
   ctx: GatewayContext,
   toolPath: string,
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
+  options?: { max_price?: number }
 ): Promise<ToolResult> {
   if (ctx.allowedTools && !ctx.allowedTools.includes(toolPath)) {
     throw new GatewayError(
@@ -225,6 +237,21 @@ export async function executeToolRequest(
 
   const { adapter, operation } = resolveAdapter(toolPath);
   const estimatedCost = adapter.estimateCost(operation, input);
+
+  if (
+    typeof options?.max_price === "number" &&
+    options.max_price >= 0 &&
+    estimatedCost > options.max_price
+  ) {
+    throw new GatewayError(
+      "Estimated cost $" +
+        estimatedCost.toFixed(4) +
+        " exceeds requested max_price $" +
+        options.max_price.toFixed(4),
+      402,
+      "max_price_exceeded"
+    );
+  }
 
   if (ctx.creditBalance < estimatedCost && estimatedCost > 0) {
     throw new GatewayError(
@@ -296,9 +323,12 @@ export async function executeToolRequest(
     const latencyMs = Date.now() - start;
     const errMsg = redactCreds(err instanceof Error ? err.message : String(err));
 
-    // Log the failed request
+    // Log the failed request. Don't throw if logging itself fails — the
+    // request already errored, and we still want to return a clean error
+    // shape to the caller. But do log loudly so missing usage rows don't
+    // become invisible billing-reconciliation gaps.
     const sb = supabaseAdmin();
-    await sb.rpc("log_gateway_request", {
+    const { error: logErr } = await sb.rpc("log_gateway_request", {
       p_user_id: ctx.userId,
       p_key_id: ctx.keyId,
       p_tool_slug: adapter.slug,
@@ -311,6 +341,13 @@ export async function executeToolRequest(
       p_error: errMsg,
       p_key_source: keySource,
     });
+    if (logErr) {
+      console.error("log_gateway_request failed (error path):", logErr.message, {
+        userId: ctx.userId,
+        toolSlug: adapter.slug,
+        requestId,
+      });
+    }
 
     return {
       success: false,
@@ -341,8 +378,13 @@ export async function executeToolRequest(
 
   const sb = supabaseAdmin();
 
-  // Log the request with key source and COGS
-  await sb.rpc("log_gateway_request", {
+  // Log the request with key source and COGS. If logging fails the request
+  // still completed successfully from the customer's perspective; we just
+  // lose the usage event — log_gateway_request feeds /admin/health, billing
+  // reconciliation, and per-tool COGS audits, so a silent loss here creates
+  // ghost revenue (we charged credits via deduct_credits below but no usage
+  // row exists to reconcile against). Log loudly.
+  const { error: logErr } = await sb.rpc("log_gateway_request", {
     p_user_id: ctx.userId,
     p_key_id: ctx.keyId,
     p_tool_slug: adapter.slug,
@@ -355,10 +397,19 @@ export async function executeToolRequest(
     p_error: result.error ? redactCreds(result.error) : null,
     p_key_source: keySource,
   });
+  if (logErr) {
+    console.error("log_gateway_request failed (success path):", logErr.message, {
+      userId: ctx.userId,
+      toolSlug: adapter.slug,
+      requestId,
+      finalCost,
+      costToUs,
+    });
+  }
 
   // Deduct credits for successful requests
   if (result.success && finalCost > 0) {
-    const { data: deductResult } = await sb.rpc("deduct_credits", {
+    const { data: deductResult, error: deductErr } = await sb.rpc("deduct_credits", {
       p_user_id: ctx.userId,
       p_amount: finalCost,
       p_tool_slug: adapter.slug,
@@ -366,7 +417,20 @@ export async function executeToolRequest(
       p_description: toolPath + " execution",
     });
 
-    if (deductResult && !(deductResult as Record<string, unknown>).success) {
+    // Two distinct silent-failure modes:
+    //  (a) RPC threw — supabase-js returns {data: null, error: <PostgrestError>}.
+    //      The previous code only checked deductResult.success, so this
+    //      branch was invisible: customer received service, no credits deducted,
+    //      no log. This is direct revenue loss.
+    //  (b) RPC returned success=false — handled below as before.
+    if (deductErr) {
+      console.error("deduct_credits RPC errored:", deductErr.message, {
+        userId: ctx.userId,
+        finalCost,
+        toolSlug: adapter.slug,
+        requestId,
+      });
+    } else if (deductResult && !(deductResult as Record<string, unknown>).success) {
       console.error("Credit deduction failed:", deductResult);
     }
 
@@ -484,13 +548,22 @@ export async function getUserFromSession(
     throw new GatewayError("Invalid session token", 401, "invalid_session");
   }
 
-  // Auto-provision gateway_users row if first time
+  // Auto-provision gateway_users row if first time. Lazy fallback path —
+  // the primary signup paths (api/v1/signup + auth/callback) already
+  // create the row. This branch only fires when a session-authed request
+  // arrives before either of those completed (rare). See Lane 4.64
+  // audit (PR #87) for the starter-credit divergence vs the primary paths.
   const admin = supabaseAdmin();
-  const { data: existing } = await admin
+  const { data: existing, error: existingErr } = await admin
     .from("gateway_users")
     .select("id")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (existingErr) {
+    console.error("getUserFromSession: gateway_users select failed", existingErr.message, { userId: user.id });
+    throw new GatewayError("Profile lookup failed", 500, "profile_lookup_failed");
+  }
 
   if (!existing) {
     // Get free plan ID
@@ -500,7 +573,7 @@ export async function getUserFromSession(
       .eq("slug", "free")
       .single();
 
-    await admin.from("gateway_users").insert({
+    const { error: insertErr } = await admin.from("gateway_users").insert({
       id: user.id,
       email: user.email,
       display_name: user.user_metadata?.full_name ?? user.email,
@@ -508,6 +581,11 @@ export async function getUserFromSession(
       plan_slug: "free",
       credit_balance: 1.00, // $1 free starter credits
     });
+
+    if (insertErr) {
+      console.error("getUserFromSession: gateway_users insert failed", insertErr.message, { userId: user.id });
+      throw new GatewayError("Profile create failed", 500, "profile_create_failed");
+    }
   }
 
   return { userId: user.id, email: user.email ?? "" };

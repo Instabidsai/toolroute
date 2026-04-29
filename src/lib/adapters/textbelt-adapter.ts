@@ -1,5 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
-import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://textbelt.com";
 
@@ -40,18 +40,19 @@ export const textbeltAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetchWithTimeout(`${BASE_URL}/text`, {
+        const res = await fetch(`${BASE_URL}/text`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone, message, key: apiKey }),
-          timeoutMs: 15_000,
         });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Textbelt send-sms failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Textbelt send-sms failed: ${res.status} ${errText}`
+            ),
             provider: "textbelt",
           };
         }
@@ -86,16 +87,17 @@ export const textbeltAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetchWithTimeout(
-          `${BASE_URL}/status/${encodeURIComponent(text_id)}`,
-          { timeoutMs: 10_000 }
+        const res = await fetch(
+          `${BASE_URL}/status/${encodeURIComponent(text_id)}`
         );
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Textbelt check-status failed: ${res.status} ${errText}`,
+            error: redactCreds(
+              `Textbelt check-status failed: ${res.status} ${errText}`
+            ),
             provider: "textbelt",
           };
         }
@@ -124,9 +126,7 @@ export const textbeltAdapter: ToolAdapter = {
     const start = Date.now();
     try {
       // Textbelt quota check endpoint works without a real key
-      const res = await fetchWithTimeout(`${BASE_URL}/quota/textbelt`, {
-        timeoutMs: 10_000,
-      });
+      const res = await fetch(`${BASE_URL}/quota/textbelt`);
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
       return { healthy: false, latency_ms: Date.now() - start };
