@@ -47,33 +47,55 @@ interface Provider {
   category: string;
 }
 
+// Lane 4.111-impl + Lane 6.10 — type per Lane 6.7 BYOK classification.
+// Source: .agent/lane-6.7-verified-byok-slug-list.md
+//   type:"pool" → AMBIGUOUS_DEFAULT_BYOK_SLUGS only (silent ToS / End User
+//                 carve-out / no-public-ToS — provider hasn't forbidden pool
+//                 routing). Today: openai, firecrawl, twilio, deepgram,
+//                 creatify, shippo, whisper, removebg, outscraper.
+//   type:"byok" → BYOK_REQUIRED_SLUGS (master-pool routing = direct ToS
+//                 breach) OR BYOK_INSUFFICIENT_SLUGS (BYOK alone may not
+//                 satisfy ToS — apollo pending Justin decision D4).
+// Drift guarded by tests/unit/dashboard-providers-tier-parity.test.ts.
 const PROVIDERS: Provider[] = [
-  { slug: "elevenlabs", name: "ElevenLabs", type: "pool", category: "Voice" },
-  { slug: "firecrawl", name: "Firecrawl", type: "pool", category: "Scraping" },
-  { slug: "openai", name: "OpenAI", type: "pool", category: "AI" },
-  { slug: "claude", name: "Claude (Anthropic)", type: "pool", category: "AI" },
-  { slug: "sendgrid", name: "SendGrid", type: "pool", category: "Email" },
-  { slug: "resend", name: "Resend", type: "pool", category: "Email" },
-  { slug: "twilio", name: "Twilio", type: "byok", category: "SMS/Voice" },
-  { slug: "github", name: "GitHub", type: "byok", category: "Code" },
+  // BYOK required — Class-A providers (Lane 6.7 BYOK_REQUIRED)
+  { slug: "elevenlabs", name: "ElevenLabs", type: "byok", category: "Voice" },
+  { slug: "claude", name: "Claude (Anthropic)", type: "byok", category: "AI" },
+  { slug: "sendgrid", name: "SendGrid", type: "byok", category: "Email" },
+  { slug: "resend", name: "Resend", type: "byok", category: "Email" },
   { slug: "stripe", name: "Stripe", type: "byok", category: "Payments" },
-  { slug: "calendar", name: "Google Calendar", type: "byok", category: "Productivity" },
-  { slug: "drive", name: "Google Drive", type: "byok", category: "Productivity" },
   { slug: "supabase", name: "Supabase", type: "byok", category: "Database" },
   { slug: "vapi", name: "Vapi", type: "byok", category: "Voice AI" },
-  { slug: "creatify", name: "Creatify", type: "pool", category: "Ads" },
-  { slug: "apollo", name: "Apollo.io", type: "pool", category: "Sales" },
-  { slug: "shippo", name: "Shippo", type: "pool", category: "Shipping" },
-  { slug: "search", name: "Brave Search", type: "pool", category: "Search" },
-  { slug: "image", name: "fal.ai (Image Gen)", type: "pool", category: "AI" },
-  { slug: "translate", name: "DeepL", type: "pool", category: "Translation" },
-  { slug: "whisper", name: "OpenAI Whisper", type: "pool", category: "AI" },
+  { slug: "calendar", name: "Google Calendar", type: "byok", category: "Productivity" },
+  { slug: "drive", name: "Google Drive", type: "byok", category: "Productivity" },
+  { slug: "sentry", name: "Sentry", type: "byok", category: "Monitoring" },
+  { slug: "search", name: "Brave Search", type: "byok", category: "Search" },
+  { slug: "image", name: "fal.ai (Image Gen)", type: "byok", category: "AI" },
+  { slug: "translate", name: "DeepL", type: "byok", category: "Translation" },
+  { slug: "replicate", name: "Replicate", type: "byok", category: "AI" },
+  { slug: "heygen", name: "HeyGen", type: "byok", category: "Video" },
+
+  // BYOK required — Class-B / Insufficient (Lane 6.7 BYOK_INSUFFICIENT)
+  // apollo §3(g)(1) bans even BYOK passthrough — listing as byok pending
+  // Justin decision D4 (remove adapter / pursue waiver / legal opinion).
+  { slug: "apollo", name: "Apollo.io", type: "byok", category: "Sales" },
+
+  // Pool available — AMBIGUOUS_DEFAULT_BYOK_SLUGS only (silent ToS / End User
+  // carve-out / no-public-ToS — flip to byok if provider ToS hardens).
+  { slug: "openai", name: "OpenAI", type: "pool", category: "AI" },
+  { slug: "firecrawl", name: "Firecrawl", type: "pool", category: "Scraping" },
+  { slug: "twilio", name: "Twilio", type: "pool", category: "SMS/Voice" },
   { slug: "deepgram", name: "Deepgram", type: "pool", category: "AI" },
-  { slug: "replicate", name: "Replicate", type: "pool", category: "AI" },
-  { slug: "heygen", name: "HeyGen", type: "pool", category: "Video" },
+  { slug: "creatify", name: "Creatify", type: "pool", category: "Ads" },
+  { slug: "shippo", name: "Shippo", type: "pool", category: "Shipping" },
+  { slug: "whisper", name: "OpenAI Whisper", type: "pool", category: "AI" },
   { slug: "removebg", name: "Remove.bg", type: "pool", category: "Image" },
   { slug: "outscraper", name: "Outscraper", type: "pool", category: "Scraping" },
-  { slug: "sentry", name: "Sentry", type: "byok", category: "Monitoring" },
+
+  // Non-Lane-6.7 — historically tagged byok (kept as-is).
+  // GitHub (Lane 4.104 audit shows master-pool token leaks private repos
+  // through "public" search-repos / get-readme / list-issues — byok safer).
+  { slug: "github", name: "GitHub", type: "byok", category: "Code" },
 ];
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
