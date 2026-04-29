@@ -29,52 +29,60 @@ interface AdapterInfo {
   status: AdapterStatus;
 }
 
+// Lane 4.111-impl: tiers sourced from Lane 6.7 BYOK classification.
+// Anything in BYOK_REQUIRED_SLUGS or BYOK_INSUFFICIENT_SLUGS MUST be `byok` —
+// showing those as `pool` claims master-pool routing the provider's ToS forbids.
+// Lane 4.112: slugs match adapter exports (deepl-adapter exports "translate",
+// image-gen-adapter exports "image"). Drift guarded by
+// tests/unit/status-page-class-a-drift.test.ts.
 const ADAPTERS: AdapterInfo[] = [
-  // Free — no key needed
+  // Free — internal aggregators + no-auth public endpoints
   { slug: "toolroute", name: "ToolRoute", category: "Meta", keyType: "free", status: "available" },
-  { slug: "context7", name: "Context7", category: "AI & LLM", keyType: "free", status: "available" },
   { slug: "auto", name: "Auto Router", category: "Meta", keyType: "free", status: "available" },
   { slug: "playwright", name: "Playwright", category: "Code & DevOps", keyType: "free", status: "available" },
   { slug: "pexels", name: "Pexels", category: "Image & Media", keyType: "free", status: "available" },
-  { slug: "unsplash", name: "Unsplash", category: "Image & Media", keyType: "free", status: "available" },
   { slug: "github", name: "GitHub", category: "Code & DevOps", keyType: "free", status: "available" },
 
-  // Pool ready — master keys available
-  { slug: "claude", name: "Claude", category: "AI & LLM", keyType: "pool", status: "pool_ready" },
+  // Pool ready — provider ToS permits master-pool routing (ambiguous/permissive tier)
   { slug: "openai", name: "OpenAI", category: "AI & LLM", keyType: "pool", status: "pool_ready" },
-  { slug: "elevenlabs", name: "ElevenLabs", category: "Voice & Audio", keyType: "pool", status: "pool_ready" },
   { slug: "firecrawl", name: "Firecrawl", category: "Search & Web", keyType: "pool", status: "pool_ready" },
-  { slug: "sendgrid", name: "SendGrid", category: "Email", keyType: "pool", status: "pool_ready" },
-  { slug: "resend", name: "Resend", category: "Email", keyType: "pool", status: "pool_ready" },
-  { slug: "supabase", name: "Supabase", category: "Data & Analytics", keyType: "pool", status: "pool_ready" },
-  { slug: "stripe", name: "Stripe", category: "Business", keyType: "pool", status: "pool_ready" },
   { slug: "twilio", name: "Twilio", category: "SMS", keyType: "pool", status: "pool_ready" },
-  { slug: "deepl", name: "DeepL", category: "Content", keyType: "pool", status: "pool_ready" },
-  { slug: "replicate", name: "Replicate", category: "AI & LLM", keyType: "pool", status: "pool_ready" },
   { slug: "deepgram", name: "Deepgram", category: "Voice & Audio", keyType: "pool", status: "pool_ready" },
-  { slug: "postiz", name: "Postiz", category: "Social & Outreach", keyType: "pool", status: "pool_ready" },
 
-  // BYOK — user brings own key
-  { slug: "whisper", name: "Whisper", category: "Voice & Audio", keyType: "byok", status: "needs_key" },
-  { slug: "search", name: "Web Search", category: "Search & Web", keyType: "byok", status: "needs_key" },
-  { slug: "image-gen", name: "Image Gen", category: "Image & Media", keyType: "byok", status: "needs_key" },
-  { slug: "screenshot", name: "Screenshot", category: "Code & DevOps", keyType: "byok", status: "needs_key" },
-  { slug: "pdf", name: "PDF Tools", category: "Content", keyType: "byok", status: "needs_key" },
+  // BYOK required — Class-A providers (provider ToS forbids master-pool resale)
+  { slug: "claude", name: "Claude", category: "AI & LLM", keyType: "byok", status: "needs_key" },
+  { slug: "replicate", name: "Replicate", category: "AI & LLM", keyType: "byok", status: "needs_key" },
+  { slug: "elevenlabs", name: "ElevenLabs", category: "Voice & Audio", keyType: "byok", status: "needs_key" },
+  { slug: "resend", name: "Resend", category: "Email", keyType: "byok", status: "needs_key" },
+  { slug: "sendgrid", name: "SendGrid", category: "Email", keyType: "byok", status: "needs_key" },
+  { slug: "stripe", name: "Stripe", category: "Business", keyType: "byok", status: "needs_key" },
+  { slug: "supabase", name: "Supabase", category: "Data & Analytics", keyType: "byok", status: "needs_key" },
+  { slug: "vapi", name: "Vapi", category: "Voice & Audio", keyType: "byok", status: "needs_key" },
+  { slug: "sentry", name: "Sentry", category: "Code & DevOps", keyType: "byok", status: "needs_key" },
   { slug: "calendar", name: "Calendar", category: "Productivity", keyType: "byok", status: "needs_key" },
   { slug: "drive", name: "Drive", category: "Productivity", keyType: "byok", status: "needs_key" },
+  { slug: "translate", name: "DeepL", category: "Content", keyType: "byok", status: "needs_key" },
+  { slug: "mux", name: "Mux", category: "Video", keyType: "byok", status: "needs_key" },
+  { slug: "unsplash", name: "Unsplash", category: "Image & Media", keyType: "byok", status: "needs_key" },
+  { slug: "image", name: "Image Gen", category: "Image & Media", keyType: "byok", status: "needs_key" },
+  { slug: "search", name: "Web Search", category: "Search & Web", keyType: "byok", status: "needs_key" },
+  { slug: "shotstack", name: "Shotstack", category: "Video", keyType: "byok", status: "needs_key" },
+  { slug: "heygen", name: "HeyGen", category: "Video", keyType: "byok", status: "needs_key" },
+  { slug: "postiz", name: "Postiz", category: "Social & Outreach", keyType: "byok", status: "needs_key" },
+  { slug: "context7", name: "Context7", category: "AI & LLM", keyType: "byok", status: "needs_key" },
+
+  // BYOK required — Class-B providers (silent ToS / End User carve-out — defensive byok)
+  { slug: "whisper", name: "Whisper", category: "Voice & Audio", keyType: "byok", status: "needs_key" },
+  { slug: "screenshot", name: "Screenshot", category: "Code & DevOps", keyType: "byok", status: "needs_key" },
+  { slug: "pdf", name: "PDF Tools", category: "Content", keyType: "byok", status: "needs_key" },
   { slug: "removebg", name: "Remove.bg", category: "Image & Media", keyType: "byok", status: "needs_key" },
-  { slug: "vapi", name: "Vapi", category: "Voice & Audio", keyType: "byok", status: "needs_key" },
   { slug: "creatify", name: "Creatify", category: "Video", keyType: "byok", status: "needs_key" },
   { slug: "apollo", name: "Apollo", category: "Social & Outreach", keyType: "byok", status: "needs_key" },
   { slug: "shippo", name: "Shippo", category: "Business", keyType: "byok", status: "needs_key" },
-  { slug: "sentry", name: "Sentry", category: "Code & DevOps", keyType: "byok", status: "needs_key" },
   { slug: "outscraper", name: "Outscraper", category: "Data & Analytics", keyType: "byok", status: "needs_key" },
   { slug: "textbelt", name: "Textbelt", category: "SMS", keyType: "byok", status: "needs_key" },
-  { slug: "heygen", name: "HeyGen", category: "Video", keyType: "byok", status: "needs_key" },
-  { slug: "mux", name: "Mux", category: "Video", keyType: "byok", status: "needs_key" },
   { slug: "dataforseo", name: "DataForSEO", category: "Data & Analytics", keyType: "byok", status: "needs_key" },
   { slug: "creatomate", name: "Creatomate", category: "Video", keyType: "byok", status: "needs_key" },
-  { slug: "shotstack", name: "Shotstack", category: "Video", keyType: "byok", status: "needs_key" },
 ];
 
 /* ---------- Helpers ---------- */
