@@ -1145,7 +1145,7 @@ Rate-limited requests return 429 with a Retry-After header.
 - 10 API keys
 - All tools access
 - Priority routing
-- BYOK support
+- BYOK (required for Class-A premium providers; optional elsewhere)
 - Usage analytics
 - Email support
 - $5/mo included credits
@@ -1156,7 +1156,7 @@ Rate-limited requests return 429 with a Retry-After header.
 - 50 API keys
 - All tools + custom adapters
 - Priority routing
-- BYOK support
+- BYOK (required for Class-A premium providers; optional elsewhere)
 - Dedicated support + SLA
 - $50/mo included credits
 
@@ -1247,7 +1247,7 @@ Prepaid credits. Buy credits, each tool call costs a small amount based on the u
 Requests return a 402 Payment Required response. Top up instantly from your dashboard or enable auto-top-up to never hit a wall.
 
 ### Can I use my own API keys?
-Yes. BYOK (Bring Your Own Key) is supported on Pro and Enterprise plans. Register your own API keys for any tool and pay zero markup on those calls.
+Yes — and for premium providers (Class-A: claude, openai, stripe, supabase, elevenlabs, sentry, search, replicate, vapi, calendar, drive, etc.) BYOK is required because the providers' ToS forbid resale via a master pool. Register at `/api/v1/byok` and ToolRoute routes at zero markup. For non-Class-A adapters, BYOK is optional — pooled keys handle calls today, but registering your own key still pays zero markup. Available on Pro and Enterprise plans. See the BYOK section above for the per-tier breakdown.
 
 ### How is this different from using tools directly?
 One key, one bill, automatic routing and fallbacks. Plus the intelligence layer picks the best tool for your task based on real usage data across hundreds of agents. No more managing 20 different API keys and accounts.
