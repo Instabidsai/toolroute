@@ -50,8 +50,10 @@ export default async function HomePage() {
         </h1>
         <p className="text-text-dim max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mb-10">
           ToolRoute is the OpenRouter for tools. One unified API to access 70+
-          best-in-class tools for AI agents. No more managing dozens of API keys,
-          accounts, and integrations.
+          best-in-class tools for AI agents. Most tools work on the shared
+          master pool with zero setup; premium providers (Anthropic, OpenAI,
+          Stripe, ElevenLabs and others) require BYOK to comply with their
+          resale terms — register your own key once, route through it forever.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <Link
@@ -92,7 +94,7 @@ export default async function HomePage() {
                 {"\n"}
                 <span className="text-text-dim">  -d </span>
                 <span className="text-accent">{"'"}</span>
-                <span className="text-cyan">{'{"tool": "elevenlabs/text-to-speech", "input": {"text": "Hello world"}}'}</span>
+                <span className="text-cyan">{'{"tool": "firecrawl/scrape", "input": {"url": "https://example.com"}}'}</span>
                 <span className="text-accent">{"'"}</span>
               </code>
             </pre>
