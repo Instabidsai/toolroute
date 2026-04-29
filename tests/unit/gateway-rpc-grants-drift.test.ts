@@ -32,6 +32,7 @@ import { describe, expect, it } from "vitest";
 const ROOT = process.cwd();
 const SRC = resolve(ROOT, "src");
 const LOCKDOWN_SQL = resolve(ROOT, "scripts/lockdown-gateway-rpcs.sql");
+const LANE_4_94_LOCKDOWN_SQL = resolve(ROOT, "scripts/lane-4.94-secdef-rpc-lockdown.sql");
 
 // RPCs that MUST be locked to service_role only. Calling these as anon
 // would let an attacker mint/drain credits, manipulate rate-limits,
@@ -105,8 +106,8 @@ function findRpcCallSites(): RpcCallSite[] {
   return sites;
 }
 
-function extractLockedDownRpcs(): Set<string> {
-  const sql = readFileSync(LOCKDOWN_SQL, "utf8");
+function extractLockedDownRpcsFromFile(path: string): Set<string> {
+  const sql = readFileSync(path, "utf8");
   // Match: REVOKE EXECUTE ON FUNCTION public.<name>(<args>)
   const REVOKE_REGEX = /REVOKE\s+EXECUTE\s+ON\s+FUNCTION\s+public\.([a-z_]+)\s*\(/gi;
   const GRANT_REGEX = /GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.([a-z_]+)\s*\(/gi;
@@ -118,6 +119,20 @@ function extractLockedDownRpcs(): Set<string> {
   // Both REVOKE and GRANT must appear for each locked RPC.
   return new Set([...revoked].filter((n) => granted.has(n)));
 }
+
+function extractLockedDownRpcs(): Set<string> {
+  return extractLockedDownRpcsFromFile(LOCKDOWN_SQL);
+}
+
+// Lane 4.94 surfaced two anon-callable SECURITY DEFINER RPCs that the
+// Lane 4.78 audit missed because they have ZERO callers in src/ — the
+// gateway-internal audit only enumerated RPCs called from code. Orphaned
+// SECDEF RPCs are still attack surface (DB-discoverable via pg_proc),
+// so this set is hard-coded here as a parallel registry.
+const LANE_4_94_LOCKED_RPCS = new Set([
+  "get_user_dashboard", // P0 IDOR — full PII + financial leak via uuid arg
+  "cleanup_rate_limits", // LOW — anon-callable maintenance fn
+]);
 
 describe("gateway RPC EXECUTE grants drift", () => {
   it("lockdown SQL covers every GATEWAY_INTERNAL RPC referenced in src/", () => {
@@ -184,5 +199,54 @@ describe("gateway RPC EXECUTE grants drift", () => {
       }
     }
     expect([...new Set(unknown)]).toEqual([]);
+  });
+});
+
+describe("Lane 4.94 — orphaned SECURITY DEFINER RPC lockdown", () => {
+  it("lane-4.94 SQL revokes + grants every RPC in LANE_4_94_LOCKED_RPCS", () => {
+    const locked = extractLockedDownRpcsFromFile(LANE_4_94_LOCKDOWN_SQL);
+    const missing: string[] = [];
+    for (const rpc of LANE_4_94_LOCKED_RPCS) {
+      if (!locked.has(rpc)) missing.push(rpc);
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("lane-4.94 SQL revokes from PUBLIC, anon, authenticated", () => {
+    const sql = readFileSync(LANE_4_94_LOCKDOWN_SQL, "utf8");
+    for (const rpc of LANE_4_94_LOCKED_RPCS) {
+      const re = new RegExp(
+        `REVOKE\\s+EXECUTE\\s+ON\\s+FUNCTION\\s+public\\.${rpc}\\s*\\([^)]*\\)\\s*FROM\\s+PUBLIC,\\s*anon,\\s*authenticated`,
+        "i",
+      );
+      expect(sql, `${rpc} REVOKE clause missing PUBLIC/anon/authenticated`).toMatch(re);
+    }
+  });
+
+  it("lane-4.94 SQL grants execute to service_role only", () => {
+    const sql = readFileSync(LANE_4_94_LOCKDOWN_SQL, "utf8");
+    for (const rpc of LANE_4_94_LOCKED_RPCS) {
+      const re = new RegExp(
+        `GRANT\\s+EXECUTE\\s+ON\\s+FUNCTION\\s+public\\.${rpc}\\s*\\([^)]*\\)\\s*TO\\s+service_role`,
+        "i",
+      );
+      expect(sql, `${rpc} GRANT clause missing service_role`).toMatch(re);
+    }
+  });
+
+  it("LANE_4_94_LOCKED_RPCS do not appear as callers in src/ (orphan invariant)", () => {
+    // If a future feature adds a caller for one of these, the lane-4.94
+    // assumption (orphaned, safe to lock) breaks — the call site would
+    // 403 post-lockdown unless it uses supabaseAdmin(). Force re-audit.
+    const calls = findRpcCallSites();
+    const calledNames = new Set(calls.map((c) => c.rpcName));
+    const newCallers: string[] = [];
+    for (const rpc of LANE_4_94_LOCKED_RPCS) {
+      if (calledNames.has(rpc)) newCallers.push(rpc);
+    }
+    expect(
+      newCallers,
+      "Lane 4.94 RPCs gained callers — re-classify into GATEWAY_INTERNAL_RPCS or audit caller for supabaseAdmin()",
+    ).toEqual([]);
   });
 });
