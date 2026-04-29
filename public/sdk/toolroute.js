@@ -26,13 +26,14 @@ class ToolRoute {
     return res.json();
   }
 
-  // Shortcuts
-  search(query, numResults = 5) { return this.execute("search/web", { query, num_results: numResults }); }
-  chat(message, model = "claude-sonnet-4-20250514") { return this.execute("claude/chat", { messages: [{ role: "user", content: message }], model }); }
+  // Shortcuts — premium providers require BYOK (register your provider key at /api/v1/byok).
+  // BYOK required: search, chat, translate, generateImage, tts.
+  search(query, numResults = 5) { return this.execute("search/web", { query, num_results: numResults }); } // BYOK required (premium provider)
+  chat(message, model = "claude-sonnet-4-20250514") { return this.execute("claude/chat", { messages: [{ role: "user", content: message }], model }); } // BYOK required — Anthropic ToS forbids resale
   scrape(url) { return this.execute("firecrawl/scrape", { url }); }
-  translate(text, targetLang) { return this.execute("translate/text", { text, target_lang: targetLang }); }
-  generateImage(prompt) { return this.execute("image/generate", { prompt }); }
-  tts(text) { return this.execute("elevenlabs/text-to-speech", { text }); }
+  translate(text, targetLang) { return this.execute("translate/text", { text, target_lang: targetLang }); } // BYOK required (premium provider)
+  generateImage(prompt) { return this.execute("image/generate", { prompt }); } // BYOK required (premium provider)
+  tts(text) { return this.execute("elevenlabs/text-to-speech", { text }); } // BYOK required (premium provider)
   auto(task) { return this.execute("auto/route", { task }); }
 
   async balance() {
