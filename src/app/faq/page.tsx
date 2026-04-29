@@ -93,13 +93,13 @@ const faqs: QA[] = [
   {
     id: "what-is-byok",
     q: "What is BYOK and does ToolRoute support it?",
-    a: "BYOK (Bring Your Own Key) lets you register your own API keys for third-party providers with the gateway. ToolRoute supports BYOK on every provider whose terms allow it — your requests route through your own account at the provider, you incur zero gateway markup, and keys are encrypted at rest with AES-256 (never stored in plaintext).",
+    a: "BYOK (Bring Your Own Key) lets you register your own API keys for third-party providers with the gateway. ToolRoute supports BYOK on every provider whose terms allow it — your requests route through your own account at the provider, you incur zero gateway markup, and keys are stored in Supabase with row-level access controls. Encryption at rest using KMS-managed AES-256-GCM is on the security roadmap (Codex ticket #52); current keys will be migrated when the encryption layer ships.",
     link: { href: "/blog/bring-your-own-key-mcp-byok", label: "BYOK explained" },
   },
   {
     id: "security",
     q: "Is ToolRoute secure?",
-    a: "All credentials are encrypted at rest with AES-256 and decrypted only at execution time in the gateway process memory. The gateway runs on Vercel with TLS 1.3, per-key rate limiting, full audit logs in Supabase, and signed webhook responses. Provider keys are never written to logs and are never returned to the client after registration.",
+    a: "BYOK credentials are stored in Supabase with row-level access controls (only the owning user can read their own keys via RLS). Encryption at rest using KMS-managed AES-256-GCM is on the security roadmap (Codex ticket #52); current keys will be migrated when the encryption layer ships. The gateway runs on Vercel with TLS 1.3, per-key rate limiting, full audit logs in Supabase, and signed webhook responses. Provider keys are never written to logs and are never returned to the client after registration.",
     link: { href: "/blog/mcp-server-security-best-practices", label: "MCP security best practices" },
   },
 
