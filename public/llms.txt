@@ -9,7 +9,7 @@ ToolRoute is an MCP gateway that lets AI agents execute tools through a single A
 - 51 API adapters with 152+ operations
 - 5 protocols: REST, MCP Streamable HTTP, A2A (Google), OpenAI Functions, SDKs
 - Prepaid credits billing with auto-top-up
-- BYOK (bring-your-own-key) support for 36 adapters
+- BYOK (bring-your-own-key) — required for 30+ premium providers (Anthropic, OpenAI, Stripe, Supabase, Sentry, ElevenLabs, etc.) per provider ToS; optional zero-markup passthrough for the rest
 - Free tier: 100 requests/day, $1 starter credits
 
 ## Quick Start
