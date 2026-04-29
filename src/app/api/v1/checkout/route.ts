@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getUserFromSession, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
 const CREDIT_PRICES: Record<string, { amount: number; priceId: string }> = {
   "5": { amount: 5, priceId: process.env.STRIPE_PRICE_CREDITS_5 ?? "" },
@@ -30,6 +31,8 @@ function getStripe() {
 
 export async function POST(request: NextRequest) {
   try {
+    assertBodyUnder(request, BODY_LIMITS.checkout);
+
     const authHeader = request.headers.get("authorization");
     const { userId, email } = await getUserFromSession(authHeader);
 
