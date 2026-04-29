@@ -2,7 +2,7 @@
 
 **Owner:** Claude (auditor; impl belongs to Codex ticket #23)
 **Started:** 2026-04-29
-**Severity:** P0 the day Codex #23 ships (latent today; gate doesn't exist yet)
+**Severity:** P0 **TODAY** for the `/api/a2a` surface (it forces every call through `auto/route`, bypassing every Class-A protection); P0-the-day-Codex-#23-ships for `/mcp` + `/api/v1/execute` where `auto/route` is one option among many.
 **Status:** OPEN — feeds Codex ticket #23 acceptance criteria so the gate isn't shipped with this bypass
 
 ## TL;DR
@@ -51,6 +51,41 @@ Confirmed via grep: `BYOK_REQUIRED_SLUGS` is **not imported** anywhere in `auto-
 ### Today (pre-#23) the bypass exists in same shape
 
 Even before the gate ships, calling `tool: "auto/route"` with `task: "send a marketing email"` resolves to `sendgrid` and dispatches with whatever BYOK key auto's row has (typically none) → falls back to the sendgrid env var → master-pool resale. Same ToS class as Lane 4.100. The day Codex #23 lands, the gate will block the **direct** path (`tool: "sendgrid/send"`) but leave this auto path open. That asymmetry is the regression.
+
+### Critical: `/api/a2a` is a forced auto/route surface — bypass is the entire A2A protocol today
+
+`src/app/api/a2a/route.ts:135`:
+```ts
+const result = await executeToolRequest(ctx, "auto/route", {
+  task: textContent,
+});
+```
+
+This means **every single A2A request** ToolRoute serves goes through `auto/route`. The Google A2A protocol path has no escape hatch to a direct slug — the user types a natural-language `task` and ToolRoute calls heuristic dispatch. Therefore:
+
+- Today (pre-Codex #23): every A2A call to a Class-A target (claude/openai/stripe/etc.) is master-pool resale. Same P0 class as Lane 4.100, just via a different entrypoint.
+- Day-of Codex #23: the gateway gate sees `slug = "auto"`, passes, and the bypass is preserved for the entire A2A surface.
+
+`/mcp` and `/api/v1/execute` accept `auto/route` as one option (the user controls `name` / `tool`), so the bypass exists there only when the user opts into auto. `/api/a2a` is the forced case.
+
+Volume framing: A2A traffic is small today, but Google's A2A push to AI agent ecosystem grows the surface. Shipping Codex #23 with the A2A bypass present means the gate's first day in production will block direct calls and silently green-light A2A-resold Class-A — exactly the auditing asymmetry that creates incident-class reports.
+
+### Two paths converge on the same gate point
+
+`auto-adapter.ts` has two paths into `bestMatch.adapterSlug`:
+
+1. **Heuristic match** (lines 94-852): keyword scoring → `bestMatch.adapterSlug`
+2. **Registry match** (lines 1096-1115): `check_before_build` RPC → `tool.tool_slug.split("/")[0]` → `bestMatch.adapterSlug`
+
+Both converge at line 1145 (`getAdapter(bestMatch.adapterSlug)` → `adapter.execute(...)`). The proposed Option B in-adapter gate at line 1145 closes both paths in one place. Codex #23 should NOT try to gate at the heuristic-vs-registry decision point — gate at the dispatch point (1145) so future routing strategies (LLM-backed routing, learned routing, etc.) are covered automatically.
+
+### `estimateCost` (line 1318) is safe
+
+`auto-adapter.ts:1318` also calls `getAdapter(match.adapterSlug)` but only for cost estimation — no execution, no key passthrough. Not a bypass surface.
+
+### `toolroute/check_before_build` is safe
+
+`src/lib/adapters/toolroute-adapter.ts` does not dispatch to other adapters — it only queries ToolRoute's own Supabase RPC for registry search. No Class-A passthrough class.
 
 ## Why the gate-point matters
 
@@ -150,11 +185,16 @@ describe("auto/route Class-A gate (Lane 4.113)", () => {
 
 - [x] Read `src/lib/gateway.ts:220-345` — confirmed gate point is at line 238 (`resolveAdapter(toolPath)`) and BYOK lookup at line 282-283 keys on `adapter.slug`
 - [x] Read `src/lib/adapters/auto-adapter.ts` (1327 lines) — confirmed `BYOK_REQUIRED_SLUGS` is not imported, no gate before `adapter.execute()` at line 1164
+- [x] Mapped both auto-adapter paths to bestMatch.adapterSlug (heuristic at line 1093, registry at line 1102) — both converge at the line 1145 dispatch point
+- [x] Confirmed `/api/a2a` hardcodes `tool: "auto/route"` at api/a2a/route.ts:135 — every A2A call rides this bypass today
+- [x] Confirmed `/mcp` (mcp/route.ts:143) and `/api/v1/execute` accept user-controlled tool slug — bypass is opt-in there
 - [x] Confirmed `toolroute/check_before_build` does NOT have the same bypass class — it only hits ToolRoute's own Supabase RPC
+- [x] Confirmed `estimateCost` path at auto-adapter.ts:1318 is read-only, not a bypass
+- [x] Confirmed `resolveAdapterSlug` (adapter-availability.ts:96) is name-aliasing for /tools catalog — no dispatch, not a bypass
 - [x] Drafted in-adapter gate sketch with the slug-resolution fix (lookup on resolved slug, not "auto")
 - [x] Drafted vitest skeleton for drift prevention
 - [ ] **CODEX #23:** bundle the auto-adapter in-adapter gate into the BYOK runtime gate ticket; ship the vitest as part of the same PR
-- [ ] **CLAUDE follow-up:** once Codex #23 lands, end-to-end test `tool: "auto/route"` with `task: "send to claude"` and verify it returns 402 byok_required when no BYOK row exists
+- [ ] **CLAUDE follow-up:** once Codex #23 lands, end-to-end test (a) `tool: "auto/route"` direct call and (b) `/api/a2a` with task targeting claude — both must return 402 byok_required when no BYOK row exists for the resolved slug
 
 ## Process-improvement note
 
