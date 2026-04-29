@@ -146,9 +146,16 @@ This requires `auto.execute()` to receive `ctx` (or at least `ctx.userId`). Toda
 
 The signature change is cleaner. Codex ticket #23 will already be touching the adapter contract — bundle it.
 
-## Drift-prevention test (proposed)
+## Drift-prevention test — SHIPPED 2026-04-29
 
-`tests/unit/auto-route-class-a-gate.test.ts` (failing-snapshot per Hard Rule #59, gated `AUTO_ROUTE_GATE_BASELINE=skip`):
+`tests/unit/auto-route-class-a-gate.test.ts` (failing-snapshot per Hard Rule #59, gated `AUTO_ROUTE_GATE_BASELINE=skip`). Source-file regex parser, not runtime import (Hard Rule #59).
+
+Default behavior (matches canonical PR #26 pattern):
+- `npx vitest run tests/unit/auto-route-class-a-gate.test.ts` → 5 fail / 1 pass — failures ARE the TODO list for Codex #23.
+- `AUTO_ROUTE_GATE_BASELINE=skip npx vitest run ...` → all skipped — green for sibling-lane PRs to merge.
+- When Codex #23 lands, unset the env; tests automatically pass.
+
+Original sketch below:
 
 ```ts
 describe("auto/route Class-A gate (Lane 4.113)", () => {
@@ -193,6 +200,7 @@ describe("auto/route Class-A gate (Lane 4.113)", () => {
 - [x] Confirmed `resolveAdapterSlug` (adapter-availability.ts:96) is name-aliasing for /tools catalog — no dispatch, not a bypass
 - [x] Drafted in-adapter gate sketch with the slug-resolution fix (lookup on resolved slug, not "auto")
 - [x] Drafted vitest skeleton for drift prevention
+- [x] **Shipped failing-snapshot drift test** `tests/unit/auto-route-class-a-gate.test.ts` (2026-04-29) — fails 5/6 today, will pass automatically when Codex #23 wires the gate; gated `AUTO_ROUTE_GATE_BASELINE=skip` for sibling-lane PRs
 - [ ] **CODEX #23:** bundle the auto-adapter in-adapter gate into the BYOK runtime gate ticket; ship the vitest as part of the same PR
 - [ ] **CLAUDE follow-up:** once Codex #23 lands, end-to-end test (a) `tool: "auto/route"` direct call and (b) `/api/a2a` with task targeting claude — both must return 402 byok_required when no BYOK row exists for the resolved slug
 
