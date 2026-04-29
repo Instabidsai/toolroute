@@ -30,8 +30,14 @@ const PATTERNS: RegExp[] = [
   /xai-[A-Za-z0-9_\-]{20,}/g,
   /gsk_[A-Za-z0-9_\-]{20,}/g,
   /rk_(?:live|test)_[A-Za-z0-9_\-]{8,}/g,
+  // Tavily keys
+  /tvly-[A-Za-z0-9_\-]{20,}/g,
   // ToolRoute's own customer keys
   /tr_(?:live|test)_[A-Za-z0-9_\-]{16,}/g,
+  // Generic api_key= / key= echoes in URL params or JSON bodies (Tavily, Apollo,
+  // Textbelt, screenshot all put creds in body — if a provider echoes the request
+  // back in an error envelope, redact the value half of the kv pair).
+  /(?:["']?(?:api_?key|access_?key|key|token)["']?\s*[:=]\s*["']?)[A-Za-z0-9_\-\.]{16,}["']?/gi,
 ];
 
 export function redactCreds(input: string | null | undefined): string {

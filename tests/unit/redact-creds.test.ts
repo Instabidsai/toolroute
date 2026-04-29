@@ -65,6 +65,39 @@ describe("redactCreds", () => {
     });
   });
 
+  describe("Tavily tvly- keys (Lane 4.76)", () => {
+    it("redacts tvly- prefixed keys", () => {
+      const input =
+        "Tavily 401: invalid key tvly-abc123def456ghi789jkl";
+      const out = redactCreds(input);
+      expect(out).not.toContain("tvly-abc123def456ghi789jkl");
+      expect(out).toContain("[REDACTED]");
+    });
+  });
+
+  describe("generic api_key=/key= echoes (Lane 4.76 — body-echo class)", () => {
+    it("redacts api_key= echoes from request-body-in-response leaks", () => {
+      const input =
+        'Tavily 500: {"error":"server","api_key":"tvly-abc123def456ghi789jkl"}';
+      const out = redactCreds(input);
+      expect(out).not.toContain("tvly-abc123def456ghi789jkl");
+      expect(out).toContain("[REDACTED]");
+    });
+
+    it("redacts unprefixed api_key= when value is long-enough", () => {
+      const input =
+        'Echo: api_key=somelongplaintextkeyvalue1234';
+      const out = redactCreds(input);
+      expect(out).not.toContain("somelongplaintextkeyvalue1234");
+      expect(out).toContain("[REDACTED]");
+    });
+
+    it("does not false-positive on the word 'keyword' or 'keys' in prose", () => {
+      const input = "These keys are needed; the keyword is required";
+      expect(redactCreds(input)).toBe(input);
+    });
+  });
+
   describe("ToolRoute's own customer keys", () => {
     it("redacts tr_live_ keys (production customer keys)", () => {
       const input =
