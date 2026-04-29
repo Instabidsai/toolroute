@@ -5,6 +5,16 @@ import {
   getToolAvailability,
   listAvailableAdapters,
 } from "@/lib/adapter-availability";
+import {
+  BYOK_REQUIRED_SLUGS,
+  BYOK_INSUFFICIENT_SLUGS,
+} from "@/lib/byok-required-slugs";
+
+function byokSuffix(slug: string): string {
+  if (BYOK_REQUIRED_SLUGS.has(slug)) return " (BYOK required)";
+  if (BYOK_INSUFFICIENT_SLUGS.has(slug)) return " (BYOK required)";
+  return "";
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +36,7 @@ export async function GET(request: NextRequest) {
             type: "function" as const,
             function: {
               name: funcName,
-              description: `${adapter.name}: ${op} — ${adapter.description}`,
+              description: `${adapter.name}: ${op} — ${adapter.description}${byokSuffix(adapter.slug)}`,
               parameters: {
                 type: "object" as const,
                 properties: {
@@ -57,7 +67,7 @@ export async function GET(request: NextRequest) {
           );
           tools.push({
             name: toolName,
-            description: `${adapter.name}: ${op}. ${adapter.description}`,
+            description: `${adapter.name}: ${op}. ${adapter.description}${byokSuffix(adapter.slug)}`,
             inputSchema: {
               type: "object",
               properties: {
@@ -100,7 +110,7 @@ export async function GET(request: NextRequest) {
           );
           tools.push({
             name: toolName,
-            description: `${adapter.name}: ${op} — ${adapter.description}`,
+            description: `${adapter.name}: ${op} — ${adapter.description}${byokSuffix(adapter.slug)}`,
             input_schema: {
               type: "object",
               properties: {
