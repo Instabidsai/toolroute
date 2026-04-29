@@ -41,7 +41,7 @@
                   }
                 },
                 "search-web": {
-                  "summary": "Web search",
+                  "summary": "Web search (BYOK required — premium provider)",
                   "value": {
                     "tool": "search/web",
                     "input": { "query": "best MCP servers 2026", "limit": 10 }
@@ -72,14 +72,14 @@
                   }
                 },
                 "image-generate": {
-                  "summary": "Generate an image",
+                  "summary": "Generate an image (BYOK required — premium provider)",
                   "value": {
                     "tool": "image/generate",
                     "input": { "prompt": "A futuristic city skyline at sunset", "size": "1024x1024" }
                   }
                 },
                 "translate-text": {
-                  "summary": "Translate text",
+                  "summary": "Translate text (BYOK required — premium provider)",
                   "value": {
                     "tool": "translate/text",
                     "input": { "text": "Hello, how are you?", "target_lang": "DE" }
@@ -112,7 +112,7 @@
                   }
                 },
                 "context7-docs": {
-                  "summary": "Query library docs",
+                  "summary": "Query library docs (BYOK required — premium provider)",
                   "value": {
                     "tool": "context7/query-docs",
                     "input": { "library_id": "vercel/next.js", "query": "how to use server actions" }
@@ -547,7 +547,7 @@
       "post": {
         "operationId": "registerByokKey",
         "summary": "Register a BYOK provider key",
-        "description": "Register your own API key for a supported provider. Requests will be routed through your key with zero markup. Keys are encrypted at rest with AES-256. Requires session authentication.",
+        "description": "Register your own API key for a supported provider. Requests will be routed through your key with zero markup. Keys are encrypted at rest with AES-256 (Codex ticket #52 — in active development). Requires session authentication.",
         "tags": ["BYOK"],
         "security": [{ "sessionAuth": [] }],
         "requestBody": {
@@ -1089,7 +1089,7 @@
         "properties": {
           "tool": {
             "type": "string",
-            "description": "Tool identifier in {adapter_slug}/{operation} format. 40 adapters with 107 operations available. Examples: firecrawl/scrape, claude/chat, search/web, image/generate, translate/text, auto/route.",
+            "description": "Tool identifier in {adapter_slug}/{operation} format. 40 adapters with 107 operations available. Premium providers (claude, image, translate, etc.) require BYOK — see /api/v1/byok. Examples: firecrawl/scrape, claude/chat, search/web, image/generate, translate/text, auto/route.",
             "example": "firecrawl/scrape"
           },
           "input": {
@@ -1307,7 +1307,7 @@
       "Context7ResolveInput": {
         "type": "object",
         "required": ["library"],
-        "description": "Input for context7/resolve-library",
+        "description": "BYOK required (premium provider). Input for context7/resolve-library",
         "properties": {
           "library": { "type": "string", "description": "Library or framework name (e.g. 'react', 'tailwindcss')" }
         }
@@ -1315,7 +1315,7 @@
       "Context7QueryInput": {
         "type": "object",
         "required": ["library_id", "query"],
-        "description": "Input for context7/query-docs",
+        "description": "BYOK required (premium provider). Input for context7/query-docs",
         "properties": {
           "library_id": { "type": "string", "description": "Library ID from resolve-library (e.g. 'vercel/next.js')" },
           "query": { "type": "string", "description": "Natural language question about the library" },
@@ -1325,7 +1325,7 @@
       "ElevenlabsTtsInput": {
         "type": "object",
         "required": ["text"],
-        "description": "Input for elevenlabs/text-to-speech",
+        "description": "BYOK required (premium provider). Input for elevenlabs/text-to-speech",
         "properties": {
           "text": { "type": "string", "description": "Text to convert to speech" },
           "voice_id": { "type": "string", "description": "ElevenLabs voice ID. Default: Rachel (21m00Tcm4TlvDq8ikWAM)" },
@@ -1334,7 +1334,7 @@
       },
       "ElevenlabsVoicesInput": {
         "type": "object",
-        "description": "Input for elevenlabs/voices (no parameters required)",
+        "description": "BYOK required (premium provider). Input for elevenlabs/voices (no parameters required)",
         "properties": {}
       },
       "FirecrawlScrapeInput": {
@@ -1366,7 +1366,7 @@
       "SendgridSendInput": {
         "type": "object",
         "required": ["to", "from", "subject"],
-        "description": "Input for sendgrid/send-email. At least one of text or html required.",
+        "description": "BYOK required (premium provider). Input for sendgrid/send-email. At least one of text or html required.",
         "properties": {
           "to": { "type": "string", "description": "Recipient email address" },
           "from": { "type": "string", "description": "Sender email address (must be verified in SendGrid)" },
@@ -1404,7 +1404,7 @@
       "ClaudeChatInput": {
         "type": "object",
         "required": ["messages"],
-        "description": "Input for claude/chat and claude/complete",
+        "description": "BYOK required — Anthropic ToS forbids resale. Input for claude/chat and claude/complete",
         "properties": {
           "messages": {
             "type": "array",
@@ -1456,7 +1456,7 @@
       "SearchWebInput": {
         "type": "object",
         "required": ["query"],
-        "description": "Input for search/web, search/news, search/images",
+        "description": "BYOK required (premium provider). Input for search/web, search/news, search/images",
         "properties": {
           "query": { "type": "string", "description": "Search query" },
           "limit": { "type": "integer", "default": 10, "description": "Max results to return" }
@@ -1465,7 +1465,7 @@
       "ImageGenerateInput": {
         "type": "object",
         "required": ["prompt"],
-        "description": "Input for image/generate",
+        "description": "BYOK required (premium provider). Input for image/generate",
         "properties": {
           "prompt": { "type": "string", "description": "Text description of the image to generate" },
           "size": { "type": "string", "default": "1024x1024", "description": "Image dimensions (e.g. 1024x1024, 512x512)" },
@@ -1475,7 +1475,7 @@
       "TranslateTextInput": {
         "type": "object",
         "required": ["text", "target_lang"],
-        "description": "Input for translate/text",
+        "description": "BYOK required (premium provider). Input for translate/text",
         "properties": {
           "text": { "type": "string", "description": "Text to translate" },
           "target_lang": { "type": "string", "description": "Target language code (e.g. DE, FR, ES, JA)" },

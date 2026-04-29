@@ -3,7 +3,7 @@
 **Owner:** Claude
 **Started:** 2026-04-29
 **Severity:** MEDIUM (agent-discoverable surface; same class as surface 1-5)
-**Status:** **partial** — 4 example summaries fixed; 40+ schema/path/description references still drift.
+**Status:** **CLOSED 2026-04-29** — surface 6 fixed 4 example summaries; surface 7 (PR pending) ground all 18 remaining drifts to 0 + extended drift test to walk both openapi.json files. CI guards forever.
 
 ## TL;DR
 
@@ -52,7 +52,7 @@ Drift inventory (file:line // Class-A slug // context):
 - [x] 4 example-block summaries fixed in both openapi files
 - [x] Build green
 - [x] Existing drift suite (4 files / 18 tests) still passes — no regression
-- [ ] **Future surface**: extend `tests/unit/class-a-and-encryption-claim-drift.test.ts` to walk `public/openapi.json` + `public/.well-known/openapi.json` AND grind down all 42 drifts. Open as Lane 4.111 surface 7.
+- [x] **Surface 7 (2026-04-29)**: extended `tests/unit/class-a-and-encryption-claim-drift.test.ts` to walk `public/openapi.json` + `public/.well-known/openapi.json`; ground 18 remaining drifts (4 example summaries + 1 path-description AES-256 + 1 schema-listing tool: + 12 schema descriptions per file) to 0; drift test green.
 
 ## Sibling
 
