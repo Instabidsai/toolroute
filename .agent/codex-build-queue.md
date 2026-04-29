@@ -85,8 +85,7 @@ After every PR build, smoke-test these four endpoints and confirm in PR descript
 
 Codex does NOT do these. Listed for visibility:
 
-- 0.1 ~~Justin runs `scripts/lockdown-anon-writers.sql`~~ **DONE 2026-04-28 by Claude via Supabase Mgmt API.** Ran v1 (`lockdown-anon-read-leaks.sql`) + v2 (`lockdown-anon-read-leaks-v2.sql`). All 8 sensitive tables locked: usage_events / inventory / tool_requests / api_keys / user_provider_keys → blanket REVOKE. gateway_users / gateway_usage_log / credit_transactions → owner-scoped RLS (auth.uid() filter). Anon-read probe confirmed: 401 on usage_events / api_keys / inventory.
-- 0.1b **NEW DONE 2026-04-28 by Claude:** Added `gateway_users.role text NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin'))` + index. Unblocks Codex Lane 8.1 (admin/health dashboard auth gate).
+- 0.1 Justin runs `scripts/lockdown-anon-writers.sql` in Supabase SQL editor.
 - 0.2 Justin funds Tavily / Firecrawl / ElevenLabs / Deepgram / Replicate / Anthropic.
 - 0.3 Justin picks pricing model: master-pool / BYOK / hybrid (default: hybrid).
 - 0.4 Justin reviews legal pages from Lane 7.
@@ -194,7 +193,7 @@ Claude is fixing the `check_rate_limit` RPC. Do not modify `src/lib/gateway.ts` 
 
 ## Lane 4 — Security hardening (CLAUDE OWNS — do not touch)
 
-Claude is auditing RLS policies, financial-flow correctness, silent-error classes, and drift guards. Do not modify SQL migrations or `src/lib/gateway.ts`.
+Claude is auditing RLS policies and resale rights. Do not modify SQL migrations or `src/lib/gateway.ts`.
 
 ### 4.4 — RLS regression guard (DONE 2026-04-27)
 - **File:** `scripts/verify-rls-lockdown.mjs`
@@ -202,42 +201,6 @@ Claude is auditing RLS policies, financial-flow correctness, silent-error classe
 - **How to run:** `node scripts/verify-rls-lockdown.mjs` — exits 1 on any leak.
 - **Result of first run:** 2 confirmed leaks (`usage_events`, `inventory`); 5 permissive-but-empty (`tool_requests`, `gateway_usage_log`, `api_keys`, `user_provider_keys`, `gateway_users`).
 - **Follow-up Lane 4.5 needed:** Existing lockdown SQL only covers 3 of the 8 sensitive tables. Need to extend `scripts/lockdown-anon-read-leaks.sql` (or new file) to also lock `api_keys`, `user_provider_keys`, `gateway_usage_log`, `gateway_users`. A single row in any of those leaks key hashes / billing data / PII to the public internet.
-
-### Lane 4 progress since 4.4 (PRs #71–#92, awaiting Codex review)
-
-**Status as of 2026-04-28:** 22 Claude-owned PRs open against master. Lane 0.1 anon probe still returns HTTP 200 — Justin has not yet run the lockdown SQL, so `usage_events` continues to leak.
-
-#### Drift / type-safety guards
-- **#71 [4.50]** UsageEvent TS type drift: `tool_slug` → `tool_id`
-- **#72 [4.51]** estimateCost drift guard against return-0 bypass
-- **#73 [4.52]** credit deduction TOCTOU audit + Codex inspection ticket
-- **#74 [4.53]** actual_cost adapter dead-path audit + drift guard
-- **#75 [4.54]** honor `provider.max_price` + audit unimplemented billing-control claim
-- **#76 [4.55]** fix stale cogs-leak-audit assertion post Lane 4.11 refactor
-- **#79 [4.56]** body-size guard coverage drift guard + Lane 4.38 missing-merge audit
-- **PR #70 (merged)** [4.49] drift guard banning `.select("*")` on COGS/PII/credential tables
-
-#### Body-size guards (full surface coverage, per Hard Rule #59)
-- **#80 [4.57]** byok + keys + signup (auth boundary trio)
-- **#81 [4.58]** checkout + settings (billing surface)
-- **#82 [4.59]** registry trio (admin)
-- **#83 [4.60]** admin/providers (16KB)
-- **#84 [4.61]** api/check (4KB)
-- **#85 [4.62]** webhooks/stripe (64KB) — last drift offender
-
-#### Silent-error sweep (supabase-js `.rpc/.insert/.update` returning `{data, error}`)
-- **#89 [4.65]** Stripe webhook: 4 `add_credits` call sites now capture errors + return 500. Prevents silent revenue loss when Stripe charged but credits not granted.
-- **#90 [4.66]** auth/callback: gateway_users insert/update errors. **Discovered third signup path** — Lane 4.64 audit had only modeled two.
-- **#91 [4.67]** getUserFromSession: gateway_users select+insert error capture (lazy auto-provision path)
-- **#92 [4.68]** api/v1/byok DELETE: capture errors + verify affected rows (returns 404 if not found, 500 on DB error)
-
-#### Audits (findings flagged, fixes pending Justin decision)
-- **#86 [4.63]** Stripe refund/dispute clawback gap (HIGH financial leak) — needs Justin: Codex ticket vs Claude impl
-- **#87 [4.64]** starter-credit policy drift across OAuth-vs-password paths — needs Justin: Option A ($0 everywhere) vs Option B ($1 everywhere). Note: post-#90 the audit needs updating to reflect 3 signup paths, not 2.
-
-### 4.5 — Lockdown SQL extension (BLOCKED on Justin)
-- **File:** `scripts/lockdown-anon-read-leaks-v2.sql` (delivered prior)
-- **Status:** Justin must execute in Supabase SQL editor with service-role JWT. Probe re-run every loop tick; HTTP 200 → still leaks.
 
 ---
 
@@ -277,23 +240,7 @@ Claude is auditing RLS policies, financial-flow correctness, silent-error classe
 
 ## Lane 6 — Resale rights audit (CLAUDE OWNS — do not touch)
 
-Claude is reading provider ToS for resale clauses, gating the gateway accordingly, and auditing public copy for false claims about provider coverage.
-
-### Lane 6 progress (PRs #77/#78/#88, awaiting Codex review)
-
-#### Per-provider gating (Lane 6.5–6.7)
-- **6.5/6.6** Tier-A/B/C provider classification: rentable, BYOK-required, prohibited
-- **6.7** BYOK-required provider list enforced in execute path; tier-copy on `/dashboard/providers`. Initial implementation had a stale URL — fixed in PR #78.
-
-#### Operational guardrails
-- **#77 [6.8.1]** Extract Lane 6.7 BYOK slug Sets to shared TS data module (single source of truth)
-- **#88 [6.8.2]** Quarterly ToS recheck checklist (doc-only) — schedules systematic re-reads to catch ToS changes that flip a provider from rentable → BYOK
-- **#78 [6.10]** `/dashboard/providers` tier-copy drift guard (failing-snapshot test pattern, Hard Rule #59) + Lane 6.7 URL fix
-
-#### Pending Justin decision
-- **Lane 5.2 / 6.8.3** Funded provider keys (Tavily / Firecrawl / ElevenLabs / Deepgram / Replicate) — Justin needs to provide. Deepgram needs sales-channel access for resale rights.
-- **Lane 6.9** Build-vs-delete decision on false billing-control claims surfaced by Lane 4.54 audit
-- **Lane 6.10 D13/D14** Pre-launch copy audit findings (per shared feedback memory `feedback_pre_launch_copy_audit_for_tiered_gates.md`)
+Claude is reading provider ToS for resale clauses.
 
 ---
 
@@ -367,30 +314,6 @@ Claude is reading provider ToS for resale clauses, gating the gateway accordingl
 
 ---
 
-## Lane 4.52-inspect — credit deduction TOCTOU audit (READ-ONLY)
-
-**Ticket:** dump `deduct_credits` and `add_credits` SQL function bodies via `mcp__supabase` so Claude's Lane 4.52 audit (`.agent/lane-4.52-credit-deduction-toctou-audit.md`) can resolve to atomic / non-atomic / row-locked.
-
-**Steps:**
-1. `mcp__supabase__execute_sql` (project ref `isbratmfnnzipzyoefbo`):
-   ```sql
-   SELECT p.proname, pg_get_functiondef(p.oid) AS def
-     FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public'
-      AND p.proname IN ('deduct_credits', 'add_credits')
-    ORDER BY p.proname;
-   ```
-2. Paste both bodies verbatim into the PR description.
-3. Append a `## Live RPC body (Codex inspection YYYY-MM-DD)` section to `.agent/lane-4.52-credit-deduction-toctou-audit.md` with the bodies + outcome label `(a)` atomic / `(b)` non-atomic / `(c)` row-locked.
-4. **Do NOT modify either function.** This is read-only inspection.
-5. PR title: `[lane-4.52-inspect] dump deduct_credits / add_credits bodies for TOCTOU audit`.
-
-**Estimate:** 0.25 hr.
-
-**Why this matters:** if outcome (b), there's a real concurrent-call double-spend. If (a) or (c), the audit closes with a spec-locking vitest only.
-
----
-
 ## Working order (suggested)
 
 1. Lane 1 (1.1 → 1.2 → 1.4 → 1.3 → 1.5 → 1.6) — gates everything.
@@ -416,30 +339,6 @@ Claude is reading provider ToS for resale clauses, gating the gateway accordingl
 
 - [lane-0.0] track build queue + investigate src/content -> https://github.com/Instabidsai/toolroute/pull/1
 - [lane-1.1] build /signup page -> https://github.com/Instabidsai/toolroute/pull/2
-
-### Claude-owned (Lane 4 + Lane 6) — awaiting Codex review as of 2026-04-28
-- [lane-4.50] UsageEvent TS type drift -> #71
-- [lane-4.51] estimateCost return-0 drift guard -> #72
-- [lane-4.52] credit deduction TOCTOU audit -> #73
-- [lane-4.53] actual_cost adapter dead-path audit -> #74
-- [lane-4.54] honor provider.max_price + audit billing-control claim -> #75
-- [lane-4.55] cogs-leak-audit assertion fix post Lane 4.11 refactor -> #76
-- [lane-6.8.1] BYOK slug Sets shared module -> #77
-- [lane-6.10] tier-copy drift guard + Lane 6.7 URL fix -> #78
-- [lane-4.56] body-size guard coverage drift guard -> #79
-- [lane-4.57] body-size guards on byok+keys+signup -> #80
-- [lane-4.58] body-size guards on checkout+settings -> #81
-- [lane-4.59] body-size guards on registry trio -> #82
-- [lane-4.60] body-size guard on admin/providers -> #83
-- [lane-4.61] body-size guard on api/check -> #84
-- [lane-4.62] body-size guard on webhooks/stripe -> #85
-- [lane-4.63] Stripe refund/dispute clawback gap audit -> #86 (NEEDS JUSTIN)
-- [lane-4.64] starter-credit policy drift audit -> #87 (NEEDS JUSTIN — note: 3 signup paths, not 2)
-- [lane-6.8.2] quarterly ToS recheck checklist -> #88
-- [lane-4.65] Stripe webhook add_credits silent-error fix -> #89
-- [lane-4.66] auth/callback gateway_users error capture -> #90
-- [lane-4.67] getUserFromSession error capture -> #91
-- [lane-4.68] api/v1/byok DELETE error capture + 404 -> #92
 
 ## Done
 (Claude moves rows here after merge)
@@ -521,56 +420,3 @@ Claude is reading provider ToS for resale clauses, gating the gateway accordingl
 [RESOLVED] lane-4.14 SQL @ 2026-04-28T16:46Z | Lane 4.92 closed via Supabase Mgmt API (owner-DDL credential available locally — re-classified per memory rule #69). Corrected two signature drifts (deduct_credits arg-type order; log_gateway_request 11→13 args), applied lockdown, dropped dead 12-arg log_gateway_request overload that caused PGRST203 ambiguity. All 5 RPCs (add_credits/deduct_credits/validate_api_key/check_rate_limit/log_gateway_request) now return HTTP 401 permission-denied to anon. Hive blocker 2cff1827 resolved. Memory rule #70 added (merged-PR-with-human-SQL ≠ closed). Loop resumes.
 
 [REVIEW-WAIT] lane-4.93 @ 2026-04-28T17:00Z | scripts/lane-4.93-credit-rpc-input-validation.sql APPLIED to prod via Mgmt API. Defense-in-depth post-4.92: add_credits + deduct_credits now RAISE 22023 on NULL/NaN/<=0 p_amount. Closes mint-attack vector deduct_credits(p_amount=-10) → balance + 10. All 5 caller sites already gate >0 (zero false-positive risk). Drift guard vitest ships (6/6 green). PR pending.
-
-[REVIEW-WAIT] lane-4.94 @ 2026-04-28T17:30Z | scripts/lane-4.94-secdef-rpc-lockdown.sql APPLIED to prod via Mgmt API. P0 IDOR closed: get_user_dashboard(uuid) returned full PII + financial payload (email, credit_balance, api_keys[], usage_7d[], recent_transactions[]) to anon JWT for arbitrary user UUIDs — bypassed Lane 4.1 RLS via SECURITY DEFINER. cleanup_rate_limits() also locked (LOW abuse-class). Both orphaned (zero callers in src/) — surfaced via pg_proc audit, NOT codebase scan (Lane 4.78 enumerated only 5 gateway-internal RPCs). Live re-probe both → HTTP 401. Drift guard extended in tests/unit/gateway-rpc-grants-drift.test.ts (4 new cases asserting REVOKE+GRANT+orphan-invariant; 9/9 total green). Hive blocker 8c645116 resolved. PR #119.
-
-[DOC] lane-4.95 @ 2026-04-28T17:50Z | .agent/lane-4.95-secdef-rpc-clean-state.md — closing-bookend attestation that pg_proc audit shows 12 SECDEF functions total in public schema: 7 locked to service_role (Lane 4.92 + 4.94), 5 intentionally anon-callable registry/discovery (allowlisted in REGISTRY_PUBLIC_RPCS test set). No third class of orphaned anon-callable SECDEF RPC remains. Generalizable rule captured: RPC audit must start at pg_proc (DB-truth) not grep .rpc( (code-truth) — Lane 4.78 missed two RPCs because it scanned src/ only. Discovery query checked in for quarterly replay.
-
-[REVIEW-WAIT] lane-4.96 @ 2026-04-28T17:55Z | scripts/lane-4.96-anon-write-grants-revoke.sql APPLIED to prod via Mgmt API. Defense-in-depth post-Lane-4.16: REVOKE INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER from anon on 6 financial tables (api_keys, credit_transactions, gateway_usage_log, gateway_users, usage_events, user_provider_keys). Lane 4.16 closed only SELECT — RLS was the sole defense for writes; any policy weakening would silently re-open mint/drain surface. Live re-probe of all 6 tables shows new error message "permission denied for table X" (was: "new row violates row-level security policy") — proves REVOKE fires at GRANT layer BEFORE RLS evaluation. All 7 write sites in src/ verified to use supabaseAdmin() (service_role bypasses GRANTs+RLS, zero false-positive risk). Drift guard tests/unit/anon-write-grants-drift.test.ts ships (8/8 green). PR #121.
-
-[REVIEW-WAIT] lane-4.97 @ 2026-04-28T18:15Z | scripts/lane-4.97-authenticated-write-revoke.sql APPLIED to prod via Mgmt API. **P0 SELF-MINT SURFACE CLOSED** — surfaced post-Lane-4.96. authenticated had full WRITE grants AND PUBLIC-role RLS policies (users_own_update USING auth.uid()=id, keys_own_insert WITH CHECK user_id=auth.uid(), byok_own_*) → any logged-in user could PATCH /rest/v1/gateway_users to set their own credit_balance to 999999 OR POST /rest/v1/api_keys with key_prefix:tr_live_ to mint a premium key bypassing Lane 4.3 paid-plan gate. Two-layer fix: REVOKE INSERT/UPDATE/DELETE/TRUNCATE from authenticated on 6 financial tables (GRANT layer) + DROP POLICY IF EXISTS on 7 backdoor PUBLIC policies (RLS layer). Both required because either alone is fragile to future role-grant or policy-recreation drift. Caller-side audit unchanged from Lane 4.96 (all 7 write sites use supabaseAdmin). Verification: 0 rows in role_table_grants for authenticated INSERT/UPDATE/DELETE/TRUNCATE on these tables; 0 rows in pg_policies for the 7 backdoor names. 3 owner-scope SELECT policies remain (intentional — dashboard reads). Drift guard tests/unit/authenticated-write-grants-drift.test.ts ships (16/16 green). PR #122.
-
-[REVIEW-WAIT] lane-4.98 @ 2026-04-28T19:00Z | scripts/lane-4.98-zero-policy-tables-write-revoke.sql APPLIED to prod via Mgmt API. Defense-in-depth — generalized audit after Lane 4.97 found 8 tables with RLS=on but ZERO policies AND wide anon+authenticated WRITE grants (conversations, discovery_feed, inventory, rate_limit_windows, tool_memory, tool_overrides, tool_providers, tool_requests). RLS default-deny was sole writeguard; any future migration disabling RLS or adding `USING (true)` silently re-opens writes — same fragility class as 4.96/4.97. Single-line fix per table: REVOKE INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER from anon, authenticated. Caller audit: only `src/app/api/admin/providers/route.ts:91` writes directly (admin-gated via validateAdmin + supabaseAdmin — service_role bypasses GRANT). Other 7 tables' writes go through SECDEF RPCs (check_rate_limit, log_tool_request, etc.) which run as their owner. Live anon-probe of 3/8 tables now returns 401 `permission denied for table X`. Drift guard tests/unit/zero-policy-tables-write-grants-drift.test.ts ships (10/10 green). PR #123.
-
-[REVIEW-WAIT] lane-4.99 @ 2026-04-28T20:05Z | scripts/lane-4.99-registry-tables-write-revoke.sql APPLIED to prod via Mgmt API. **TERMINAL SIBLING in WRITE-grant chain.** 8 registry tables with one SELECT-only policy + wide write grants (tools, category_beliefs, tool_pricing, tool_categories, plans, provider_health_log, skills, composites). Symmetric class to Lane 4.98 (zero-policy) — same fragility, just one SELECT policy more. CRITICAL constraint: SELECT must stay (server components feed /tools, /discover via anon client per `src/lib/api.ts` — Memory rule #58). REVOKE only INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER. Caller audit: 13 direct .from() call sites across src/ — ZERO writes, all .select(). Internal writes flow through SECDEF RPCs (challenge_tool, record_usage) + admin/cron via service_role. Verification: 16 rows now show only `SELECT` for anon+authenticated (was 7 privs each); GET /rest/v1/tools returns HTTP 200 + data (catalog OK); POST /rest/v1/tools returns 42501 permission denied. Drift guard tests/unit/registry-tables-write-grants-drift.test.ts ships (11/11 green) — includes a SELECT-protection assertion (no REVOKE clause may include SELECT). Post-4.99 invariant: zero anon/authenticated direct write grants remain on the gateway DB. PR pending.
-
-[REVIEW-WAIT] lane-6.9 @ 2026-04-28T20:35Z | .agent/lane-6.9-video-sms-tos-audit.md — 5 unaudited master-pool video/SMS adapters (mux, twilio, heygen, shotstack, creatify). **4 NEW STRUCTURAL BANS confirmed via direct ToS fetch:** Mux (§3.2 + non-sublicensable license), Twilio (§2.2(b)), HeyGen ("Frame, replicate, or develop an interface to access the Services...via an API and/or by white-labeling" — most explicit anti-aggregator clause to date), Shotstack (§4.4 "in any manner whatsoever"). Creatify flagged `ambiguous_unverified` — ToS page is JS-rendered SPA, WebFetch returned empty, manual browser fetch needed. Cumulative master-pool-incompatible list now 7 providers (Anthropic + Replicate + Tavily + these 4). Pattern: every commercial-output provider with per-unit COGS audited so far (12/13 verified) has explicit resale ban. Codex follow-up: extend BYOK-required Set in src/lib/byok-slugs.ts to add mux+twilio+heygen+shotstack — Lane 6.5-impl picks this up. lane-6-resale-audit.md updated with sibling pointer + cumulative list. PR pending.
-
-## REVIEW-WAIT — Lane 6.11 (search/translation/scraping ToS audit)
-- **Branch:** `lane-6.11-search-translation-tos-audit`
-- **Memo:** `.agent/lane-6.11-search-translation-tos-audit.md`
-- **PR:** pending (will pin number after `gh pr create`)
-- **Findings:** 1 confirmed forbidden (DeepL §8.1.4), 3 ambiguous_ask_legal (Outscraper, Creatomate, DataForSEO), 1 pdf_unverified (Exa).
-- **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` to add `deepl` (forbidden) + `outscraper`, `creatomate`, `dataforseo`, `exa`, `creatify` (ambiguous-default-to-BYOK).
-- **Cumulative state:** 8 verified `forbidden` master-pool providers (Anthropic, Replicate, Tavily, Mux, Twilio, HeyGen, Shotstack, DeepL). Zero providers in entire audit have unambiguous master-pool authorization.
-
-## REVIEW-WAIT — Lane 6.12 (productivity/CRM/email ToS audit)
-- **Branch:** `lane-6.12-productivity-crm-tos-audit`
-- **Memo:** `.agent/lane-6.12-productivity-crm-tos-audit.md`
-- **PR:** pending (will pin number after `gh pr create`)
-- **Findings:** 4 confirmed forbidden (Apollo §3(g)(1)+§3(g)(3)(ii)+§3(d), Linear §2.2(c), SendGrid via Twilio 301-redirect inheritance, Sentry §2.3(a)+(b)+(c)), 1 ambiguous_unverified (Shippo JS-rendered SPA).
-- **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` with `apollo`, `linear`, `sendgrid`, `sentry`, `shippo`.
-- **Cumulative state (22 providers attempted):** 12 verified `forbidden` master-pool providers, 9 ambiguous-default-to-BYOK, 2 byok_only ok. Zero providers have unambiguous master-pool authorization.
-
-## REVIEW-WAIT — Lane 6.13 (SaaS productivity ToS audit)
-- **Branch:** `lane-6.13-saas-productivity-tos-audit`
-- **Memo:** `.agent/lane-6.13-saas-productivity-tos-audit.md`
-- **PR:** pending (will pin number after `gh pr create`)
-- **Findings:** 4 confirmed forbidden (LinkedIn §3.1(8), HubSpot §8.E, Slack Applications+Commercial Distribution, GitHub §H conditional), 1 pdf_unverified (Notion MSA on Cloudfront).
-- **Codex follow-up:** extend BYOK-required Set in `src/lib/byok-slugs.ts` with `linkedin`, `hubspot`, `slack`, `github`, `notion`. Cumulative 20-slug Codex single-shot ticket now ready (mux, twilio, heygen, shotstack, deepl, apollo, linear, sendgrid, sentry, linkedin, hubspot, slack, github, outscraper, creatomate, dataforseo, exa, creatify, shippo, notion).
-- **Cumulative state (27 providers attempted):** 16 verified `forbidden`, 10 ambiguous-default-to-BYOK, 2 byok_only ok. Zero providers have unambiguous master-pool authorization.
-- **Audit class effectively exhausted:** only Stripe + Supabase remain (Lane 6.14, infrastructure providers — qualitatively different resale terms).
-
-## REVIEW-WAIT — Lane 4.100 (ACTIVE LEAK escalation: Anthropic + OpenAI master-pool keys live in prod)
-- **Branch:** `lane-4.100-master-pool-active-leak-audit`
-- **Memo:** `.agent/lane-4.100-master-pool-active-leak-audit.md`
-- **PR:** pending (will pin number after `gh pr create`)
-- **Severity:** P0 / CRITICAL
-- **Finding:** Vercel prod env-var inventory (verified via `/v10/projects/$PROJ/env` API 2026-04-28) confirms `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are SET as `production`-target. Combined with `/api/v1/execute` having NO BYOK enforcement gate (verified via full route read; `src/lib/byok-slugs.ts` does NOT exist), any `tr_live_` key holder calling `{tool:"claude"|"openai",...}` without BYOK falls through to ToolRoute's pooled inference — direct ToS breach (Anthropic) + COGS leak (both). 16 of 18 verified-forbidden master-pool env vars are NOT set in prod (latent), 2 ARE set (active leak).
-- **Justin actions (immediate):**
-  1. `vercel env rm ANTHROPIC_API_KEY production --yes` (or DELETE via API).
-  2. `vercel env rm OPENAI_API_KEY production --yes`.
-  3. Force redeploy: empty commit on `main` + push, OR `vercel deploy --prod --yes` from `.vercel/` dir.
-  4. Promote Codex ticket #23 (Lane 6.5-impl BYOK runtime gate) priority to P0.
-- **Codex follow-up:** ticket #23 expands scope to include the cumulative 26-slug BYOK list documented in the memo (16 forbidden + 10 ambiguous; Resend + ElevenLabs are byok-permitted and pass through naturally without needing a gate). Memo includes the explicit gate logic for `/api/v1/execute`, `/mcp`, `/api/a2a`.
-- **Why this matters for /loop directive:** Lane 4 = security hardening; this is a live active-leak finding gating production-readiness of the financial gateway. Anthropic could revoke ToolRoute's API key on detection (breaks every demo path).
