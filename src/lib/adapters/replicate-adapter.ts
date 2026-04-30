@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.replicate.com/v1";
 
@@ -73,7 +74,7 @@ export const replicateAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Replicate prediction failed: ${res.status} ${errText}`,
+            error: redactCreds(`Replicate prediction failed: ${res.status} ${errText}`),
             provider: "replicate",
           };
         }
@@ -135,7 +136,7 @@ export const replicateAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Replicate list-models failed: ${res.status} ${errText}`,
+            error: redactCreds(`Replicate list-models failed: ${res.status} ${errText}`),
             provider: "replicate",
           };
         }

@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const DEEPL_FREE_URL = "https://api-free.deepl.com/v2";
 const DEEPL_PRO_URL = "https://api.deepl.com/v2";
@@ -81,7 +82,7 @@ export const deeplAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `DeepL translate failed: ${res.status} ${errText}`,
+            error: redactCreds(`DeepL translate failed: ${res.status} ${errText}`),
             provider: "deepl",
           };
         }
@@ -127,7 +128,7 @@ export const deeplAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `DeepL detect-language failed: ${res.status} ${errText}`,
+            error: redactCreds(`DeepL detect-language failed: ${res.status} ${errText}`),
             provider: "deepl",
           };
         }

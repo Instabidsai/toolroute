@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const SLACK_API_URL = "https://slack.com/api";
 
@@ -67,7 +68,7 @@ export const slackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Slack send-message HTTP failed: ${res.status} ${errText}`,
+            error: redactCreds(`Slack send-message HTTP failed: ${res.status} ${errText}`),
             provider: "slack",
           };
         }
@@ -132,7 +133,7 @@ export const slackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Slack reply-thread HTTP failed: ${res.status} ${errText}`,
+            error: redactCreds(`Slack reply-thread HTTP failed: ${res.status} ${errText}`),
             provider: "slack",
           };
         }
@@ -179,7 +180,7 @@ export const slackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Slack read-channel HTTP failed: ${res.status} ${errText}`,
+            error: redactCreds(`Slack read-channel HTTP failed: ${res.status} ${errText}`),
             provider: "slack",
           };
         }
@@ -217,7 +218,7 @@ export const slackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Slack list-channels HTTP failed: ${res.status} ${errText}`,
+            error: redactCreds(`Slack list-channels HTTP failed: ${res.status} ${errText}`),
             provider: "slack",
           };
         }

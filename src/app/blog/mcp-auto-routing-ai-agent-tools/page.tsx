@@ -326,8 +326,7 @@ Authorization: Bearer tr_live_abc123
 Content-Type: application/json
 
 {
-  "tool": "firecrawl",
-  "operation": "scrape",
+  "tool": "firecrawl/scrape",
   "input": {
     "url": "https://example.com/pricing"
   }
@@ -344,8 +343,7 @@ Authorization: Bearer tr_live_abc123
 Content-Type: application/json
 
 {
-  "tool": "auto",
-  "operation": "route",
+  "tool": "auto/route",
   "input": {
     "task": "Scrape the pricing page at https://example.com/pricing and return the text content"
   }

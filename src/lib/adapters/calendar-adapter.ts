@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const GCAL_BASE = "https://www.googleapis.com/calendar/v3";
 
@@ -58,7 +59,7 @@ export const calendarAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Google Calendar list-events failed: ${res.status} ${errText}`,
+            error: redactCreds(`Google Calendar list-events failed: ${res.status} ${errText}`),
             provider: "google-calendar",
           };
         }
@@ -139,7 +140,7 @@ export const calendarAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Google Calendar create-event failed: ${res.status} ${errText}`,
+            error: redactCreds(`Google Calendar create-event failed: ${res.status} ${errText}`),
             provider: "google-calendar",
           };
         }
@@ -194,7 +195,7 @@ export const calendarAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Google Calendar check-availability failed: ${res.status} ${errText}`,
+            error: redactCreds(`Google Calendar check-availability failed: ${res.status} ${errText}`),
             provider: "google-calendar",
           };
         }

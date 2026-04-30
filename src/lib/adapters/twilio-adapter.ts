@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 function getCredentials(byokKey?: string): {
   accountSid: string;
@@ -83,7 +84,7 @@ export const twilioAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twilio send-sms failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twilio send-sms failed: ${res.status} ${errText}`),
             provider: "twilio",
           };
         }
@@ -129,7 +130,7 @@ export const twilioAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twilio make-call failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twilio make-call failed: ${res.status} ${errText}`),
             provider: "twilio",
           };
         }
@@ -159,7 +160,7 @@ export const twilioAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twilio list-messages failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twilio list-messages failed: ${res.status} ${errText}`),
             provider: "twilio",
           };
         }

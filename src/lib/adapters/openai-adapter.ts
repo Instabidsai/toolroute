@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.openai.com/v1";
 
@@ -64,7 +65,7 @@ export const openaiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `OpenAI chat failed: ${res.status} ${errText}`,
+            error: redactCreds(`OpenAI chat failed: ${res.status} ${errText}`),
             provider: "openai",
           };
         }
@@ -106,7 +107,7 @@ export const openaiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `OpenAI image generation failed: ${res.status} ${errText}`,
+            error: redactCreds(`OpenAI image generation failed: ${res.status} ${errText}`),
             provider: "openai",
           };
         }
@@ -148,7 +149,7 @@ export const openaiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `OpenAI embeddings failed: ${res.status} ${errText}`,
+            error: redactCreds(`OpenAI embeddings failed: ${res.status} ${errText}`),
             provider: "openai",
           };
         }
@@ -185,7 +186,7 @@ export const openaiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `OpenAI moderation failed: ${res.status} ${errText}`,
+            error: redactCreds(`OpenAI moderation failed: ${res.status} ${errText}`),
             provider: "openai",
           };
         }

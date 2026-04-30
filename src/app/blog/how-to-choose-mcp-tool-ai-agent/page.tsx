@@ -233,7 +233,7 @@ for i in {1..100}; do
   time curl -s -X POST https://toolroute.ai/api/v1/execute \\
     -H "Authorization: Bearer $TOOLROUTE_KEY" \\
     -H "Content-Type: application/json" \\
-    -d '{"tool":"tavily","operation":"search","input":{"query":"test"}}' \\
+  -d '{"tool":"tavily/search","input":{"query":"test"}}' \\
     > /dev/null
 done 2>&1 | grep real | sort`}</code>
             </pre>

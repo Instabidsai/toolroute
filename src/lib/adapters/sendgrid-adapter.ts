@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.sendgrid.com/v3";
 
@@ -105,7 +106,7 @@ export const sendgridAdapter: ToolAdapter = {
         const errText = await res.text().catch(() => res.statusText);
         return {
           success: false,
-          error: `SendGrid send-email failed: ${res.status} ${errText}`,
+          error: redactCreds(`SendGrid send-email failed: ${res.status} ${errText}`),
           provider: "sendgrid",
         };
       }

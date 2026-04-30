@@ -215,7 +215,7 @@ export default function Article() {
             </code>{" "}
             to a search service. An MCP gateway routes{" "}
             <code className="bg-bg-card px-1.5 py-0.5 rounded text-accent text-xs">
-              {`{"tool": "tavily", "operation": "search"}`}
+              {`{"tool": "tavily/search"}`}
             </code>{" "}
             to a Tavily adapter. The agent does not know or care about Tavily&apos;s
             URL structure, authentication method, or response format. It knows it
@@ -412,8 +412,8 @@ export default function Article() {
               </h3>
               <ol className="space-y-1.5 text-text-dim text-xs list-decimal pl-4">
                 <li>Developer gets one ToolRoute API key.</li>
-                <li>Agent calls <code className="bg-bg-surface px-1 py-0.5 rounded">{`POST /api/v1/execute {tool: "tavily", operation: "search"}`}</code>.</li>
-                <li>Agent calls <code className="bg-bg-surface px-1 py-0.5 rounded">{`POST /api/v1/execute {tool: "resend", operation: "send_email"}`}</code>.</li>
+                <li>Agent calls <code className="bg-bg-surface px-1 py-0.5 rounded">{`POST /api/v1/execute {tool: "tavily/search"}`}</code>.</li>
+                <li>Agent calls <code className="bg-bg-surface px-1 py-0.5 rounded">{`POST /api/v1/execute {tool: "resend/send-email"}`}</code> with BYOK required for Resend.</li>
                 <li>Gateway handles both upstream integrations. Agent sees identical response shapes.</li>
               </ol>
             </div>
@@ -553,7 +553,7 @@ export default function Article() {
             upstream tool&apos;s specific API contract: authentication format,
             request shape, response parsing, error codes. When you call{" "}
             <code className="bg-bg-card px-1.5 py-0.5 rounded text-accent text-xs">
-              {`{"tool": "firecrawl", "operation": "scrape"}`}
+              {`{"tool": "firecrawl/scrape"}`}
             </code>
             , the gateway resolves the Firecrawl adapter, injects the Firecrawl
             API key, transforms your input, makes the upstream call, normalizes

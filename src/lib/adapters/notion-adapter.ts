@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const NOTION_BASE_URL = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
@@ -65,7 +66,7 @@ export const notionAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Notion search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Notion search failed: ${res.status} ${errText}`),
             provider: "notion",
           };
         }
@@ -93,7 +94,7 @@ export const notionAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Notion get-page failed: ${res.status} ${errText}`,
+            error: redactCreds(`Notion get-page failed: ${res.status} ${errText}`),
             provider: "notion",
           };
         }
@@ -146,7 +147,7 @@ export const notionAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Notion create-page failed: ${res.status} ${errText}`,
+            error: redactCreds(`Notion create-page failed: ${res.status} ${errText}`),
             provider: "notion",
           };
         }
@@ -182,7 +183,7 @@ export const notionAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Notion query-database failed: ${res.status} ${errText}`,
+            error: redactCreds(`Notion query-database failed: ${res.status} ${errText}`),
             provider: "notion",
           };
         }

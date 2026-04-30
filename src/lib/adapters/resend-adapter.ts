@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.resend.com";
 
@@ -67,7 +68,7 @@ export const resendAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Resend send-email failed: ${res.status} ${errText}`,
+            error: redactCreds(`Resend send-email failed: ${res.status} ${errText}`),
             provider: "resend",
           };
         }
@@ -92,7 +93,7 @@ export const resendAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Resend list-emails failed: ${res.status} ${errText}`,
+            error: redactCreds(`Resend list-emails failed: ${res.status} ${errText}`),
             provider: "resend",
           };
         }

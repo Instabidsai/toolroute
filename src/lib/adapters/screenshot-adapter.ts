@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const SCREENSHOTONE_URL = "https://api.screenshotone.com/take";
 
@@ -53,7 +54,7 @@ export const screenshotAdapter: ToolAdapter = {
             const errText = await res.text().catch(() => res.statusText);
             return {
               success: false,
-              error: `ScreenshotOne capture failed: ${res.status} ${errText}`,
+              error: redactCreds(`ScreenshotOne capture failed: ${res.status} ${errText}`),
               provider: "screenshotone",
             };
           }
@@ -106,7 +107,7 @@ export const screenshotAdapter: ToolAdapter = {
             const errText = await res.text().catch(() => res.statusText);
             return {
               success: false,
-              error: `ScreenshotOne fullpage failed: ${res.status} ${errText}`,
+              error: redactCreds(`ScreenshotOne fullpage failed: ${res.status} ${errText}`),
               provider: "screenshotone",
             };
           }

@@ -8,6 +8,11 @@ import {
 } from "./gateway-types";
 import type { ToolAdapter } from "./gateway-types";  // Used by resolveAdapter return type
 import { getAdapter, listAdapters } from "./adapters/index";
+import {
+  AMBIGUOUS_DEFAULT_BYOK_SLUGS,
+  BYOK_INSUFFICIENT_SLUGS,
+  BYOK_REQUIRED_SLUGS,
+} from "./byok-required-slugs";
 import { redactCreds } from "./redact-creds";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -162,6 +167,29 @@ function resolveAdapter(
   return { adapter, operation };
 }
 
+function byokGateError(slug: string, hasByokKey: boolean): GatewayError | null {
+  if (BYOK_INSUFFICIENT_SLUGS.has(slug)) {
+    return new GatewayError(
+      `Tool "${slug}" is not available through ToolRoute until provider resale approval is resolved.`,
+      403,
+      "forbidden_resale"
+    );
+  }
+
+  if (
+    !hasByokKey &&
+    (BYOK_REQUIRED_SLUGS.has(slug) || AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(slug))
+  ) {
+    return new GatewayError(
+      `Tool "${slug}" requires BYOK. Register your provider key before executing this tool.`,
+      402,
+      "byok_required"
+    );
+  }
+
+  return null;
+}
+
 async function triggerAutoTopup(
   userId: string,
   stripeCustomerId: string,
@@ -290,6 +318,11 @@ export async function executeToolRequest(
     keySource = "byok";
   }
 
+  const directGateError = byokGateError(adapter.slug, Boolean(resolvedKey));
+  if (directGateError) {
+    throw directGateError;
+  }
+
   // 2. If no BYOK, check for master key in tool_providers
   if (!resolvedKey) {
     const { data: providerRow } = await sb0
@@ -312,14 +345,51 @@ export async function executeToolRequest(
 
   // 3. If neither BYOK nor master, adapter falls back to its own env var
   //    (resolvedKey stays undefined, adapter uses process.env internally)
+  async function resolveKeyForSlug(slug: string): Promise<string | undefined> {
+    const { data: targetByokRow } = await sb0
+      .from("user_provider_keys")
+      .select("api_key_encrypted")
+      .eq("user_id", ctx.userId)
+      .eq("tool_slug", slug)
+      .eq("is_active", true)
+      .eq("prefer_own_key", true)
+      .single();
+
+    if (targetByokRow?.api_key_encrypted) {
+      return targetByokRow.api_key_encrypted;
+    }
+
+    const targetGateError = byokGateError(slug, false);
+    if (targetGateError) {
+      throw targetGateError;
+    }
+
+    const { data: targetProviderRow } = await sb0
+      .from("tool_providers")
+      .select("auth_key_encrypted")
+      .eq("tool_slug", slug)
+      .eq("is_active", true)
+      .single();
+
+    return targetProviderRow?.auth_key_encrypted ?? undefined;
+  }
 
   const requestId = randomBytes(16).toString("hex");
   const start = Date.now();
 
   let result;
   try {
-    result = await adapter.execute(operation, input, resolvedKey);
+    result = await adapter.execute(operation, input, resolvedKey, {
+      userId: ctx.userId,
+      keyId: ctx.keyId,
+      allowedTools: ctx.allowedTools,
+      resolveKeyForSlug,
+    });
   } catch (err) {
+    if (err instanceof GatewayError) {
+      throw err;
+    }
+
     const latencyMs = Date.now() - start;
     const errMsg = redactCreds(err instanceof Error ? err.message : String(err));
 
@@ -551,8 +621,8 @@ export async function getUserFromSession(
   // Auto-provision gateway_users row if first time. Lazy fallback path —
   // the primary signup paths (api/v1/signup + auth/callback) already
   // create the row. This branch only fires when a session-authed request
-  // arrives before either of those completed (rare). See Lane 4.64
-  // audit (PR #87) for the starter-credit divergence vs the primary paths.
+  // arrives before either of those completed (rare), so it must match the
+  // primary no-free-credit signup invariant.
   const admin = supabaseAdmin();
   const { data: existing, error: existingErr } = await admin
     .from("gateway_users")
@@ -579,7 +649,7 @@ export async function getUserFromSession(
       display_name: user.user_metadata?.full_name ?? user.email,
       plan_id: freePlan?.id,
       plan_slug: "free",
-      credit_balance: 1.00, // $1 free starter credits
+      credit_balance: 0,
     });
 
     if (insertErr) {

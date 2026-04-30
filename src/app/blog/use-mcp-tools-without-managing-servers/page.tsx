@@ -204,18 +204,16 @@ curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer $TOOLROUTE_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "tavily",
-    "operation": "search",
+    "tool": "tavily/search",
     "input": { "query": "MCP server security 2026" }
   }'
 
-# Send an email via Resend
+# Send an email via Resend (BYOK required)
 curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer $TOOLROUTE_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "resend",
-    "operation": "send_email",
+    "tool": "resend/send-email",
     "input": {
       "to": "user@example.com",
       "subject": "Report ready",

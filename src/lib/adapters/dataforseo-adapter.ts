@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 function getAuth(byokKey?: string): string | null {
   if (byokKey) return byokKey;
@@ -73,7 +74,7 @@ export const dataforseoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `DataForSEO serp failed: ${res.status} ${errText}`,
+            error: redactCreds(`DataForSEO serp failed: ${res.status} ${errText}`),
             provider: "dataforseo",
           };
         }
@@ -113,7 +114,7 @@ export const dataforseoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `DataForSEO keywords failed: ${res.status} ${errText}`,
+            error: redactCreds(`DataForSEO keywords failed: ${res.status} ${errText}`),
             provider: "dataforseo",
           };
         }
@@ -150,7 +151,7 @@ export const dataforseoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `DataForSEO backlinks failed: ${res.status} ${errText}`,
+            error: redactCreds(`DataForSEO backlinks failed: ${res.status} ${errText}`),
             provider: "dataforseo",
           };
         }

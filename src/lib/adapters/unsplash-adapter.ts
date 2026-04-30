@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.unsplash.com";
 
@@ -58,7 +59,7 @@ export const unsplashAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Unsplash search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Unsplash search failed: ${res.status} ${errText}`),
             provider: "unsplash",
           };
         }
@@ -99,7 +100,7 @@ export const unsplashAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Unsplash random failed: ${res.status} ${errText}`,
+            error: redactCreds(`Unsplash random failed: ${res.status} ${errText}`),
             provider: "unsplash",
           };
         }
@@ -142,7 +143,7 @@ export const unsplashAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Unsplash get-photo failed: ${res.status} ${errText}`,
+            error: redactCreds(`Unsplash get-photo failed: ${res.status} ${errText}`),
             provider: "unsplash",
           };
         }

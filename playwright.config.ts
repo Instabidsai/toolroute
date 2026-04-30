@@ -13,8 +13,12 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "node ./node_modules/next/dist/bin/next start -p 3014",
+    command: "node ./scripts/start-standalone-e2e.mjs",
     url: "http://127.0.0.1:3014/signup",
+    env: {
+      HOSTNAME: "127.0.0.1",
+      PORT: "3014",
+    },
     reuseExistingServer: false,
     timeout: 120_000,
   },

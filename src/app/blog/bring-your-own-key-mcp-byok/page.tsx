@@ -205,8 +205,7 @@ curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_abc123..." \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "openai",
-    "operation": "chat_completion",
+    "tool": "openai/chat",
     "input": {
       "model": "gpt-4o",
       "messages": [

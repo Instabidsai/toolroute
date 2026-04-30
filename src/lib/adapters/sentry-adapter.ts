@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://sentry.io/api/0";
 
@@ -54,7 +55,7 @@ export const sentryAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sentry list-issues failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sentry list-issues failed: ${res.status} ${errText}`),
             provider: "sentry",
           };
         }
@@ -87,7 +88,7 @@ export const sentryAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sentry get-issue failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sentry get-issue failed: ${res.status} ${errText}`),
             provider: "sentry",
           };
         }
@@ -121,7 +122,7 @@ export const sentryAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sentry list-events failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sentry list-events failed: ${res.status} ${errText}`),
             provider: "sentry",
           };
         }

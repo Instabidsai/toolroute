@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com";
 
@@ -47,7 +48,7 @@ export const linkedinAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `LinkedIn get-profile failed: ${res.status} ${errText}`,
+            error: redactCreds(`LinkedIn get-profile failed: ${res.status} ${errText}`),
             provider: "linkedin",
           };
         }
@@ -123,7 +124,7 @@ export const linkedinAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `LinkedIn create-post failed: ${res.status} ${errText}`,
+            error: redactCreds(`LinkedIn create-post failed: ${res.status} ${errText}`),
             provider: "linkedin",
           };
         }

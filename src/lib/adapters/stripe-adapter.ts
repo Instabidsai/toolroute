@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.stripe.com/v1";
 
@@ -44,7 +45,7 @@ export const stripeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Stripe list-customers failed: ${res.status} ${errText}`,
+            error: redactCreds(`Stripe list-customers failed: ${res.status} ${errText}`),
             provider: "stripe",
           };
         }
@@ -106,7 +107,7 @@ export const stripeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Stripe create-payment-link failed: ${res.status} ${errText}`,
+            error: redactCreds(`Stripe create-payment-link failed: ${res.status} ${errText}`),
             provider: "stripe",
           };
         }
@@ -130,7 +131,7 @@ export const stripeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Stripe list-products failed: ${res.status} ${errText}`,
+            error: redactCreds(`Stripe list-products failed: ${res.status} ${errText}`),
             provider: "stripe",
           };
         }
@@ -155,7 +156,7 @@ export const stripeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Stripe get-balance failed: ${res.status} ${errText}`,
+            error: redactCreds(`Stripe get-balance failed: ${res.status} ${errText}`),
             provider: "stripe",
           };
         }

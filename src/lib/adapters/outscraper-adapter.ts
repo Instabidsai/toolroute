@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.app.outscraper.com";
 
@@ -53,7 +54,7 @@ export const outscraperAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Outscraper google-maps failed: ${res.status} ${errText}`,
+            error: redactCreds(`Outscraper google-maps failed: ${res.status} ${errText}`),
             provider: "outscraper",
           };
         }
@@ -86,7 +87,7 @@ export const outscraperAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Outscraper google-reviews failed: ${res.status} ${errText}`,
+            error: redactCreds(`Outscraper google-reviews failed: ${res.status} ${errText}`),
             provider: "outscraper",
           };
         }
@@ -118,7 +119,7 @@ export const outscraperAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Outscraper emails-and-contacts failed: ${res.status} ${errText}`,
+            error: redactCreds(`Outscraper emails-and-contacts failed: ${res.status} ${errText}`),
             provider: "outscraper",
           };
         }

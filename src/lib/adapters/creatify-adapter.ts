@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.creatify.ai/api";
 
@@ -76,7 +77,7 @@ export const creatifyAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Creatify create-ad failed: ${res.status} ${errText}`,
+            error: redactCreds(`Creatify create-ad failed: ${res.status} ${errText}`),
             provider: "creatify",
           };
         }
@@ -102,7 +103,7 @@ export const creatifyAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Creatify list-ads failed: ${res.status} ${errText}`,
+            error: redactCreds(`Creatify list-ads failed: ${res.status} ${errText}`),
             provider: "creatify",
           };
         }
@@ -137,7 +138,7 @@ export const creatifyAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Creatify get-ad failed: ${res.status} ${errText}`,
+            error: redactCreds(`Creatify get-ad failed: ${res.status} ${errText}`),
             provider: "creatify",
           };
         }

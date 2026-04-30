@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const GDRIVE_BASE = "https://www.googleapis.com/drive/v3";
 const GDRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3";
@@ -60,7 +61,7 @@ export const driveAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Google Drive list-files failed: ${res.status} ${errText}`,
+            error: redactCreds(`Google Drive list-files failed: ${res.status} ${errText}`),
             provider: "google-drive",
           };
         }
@@ -103,7 +104,7 @@ export const driveAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Google Drive search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Google Drive search failed: ${res.status} ${errText}`),
             provider: "google-drive",
           };
         }
@@ -141,7 +142,7 @@ export const driveAdapter: ToolAdapter = {
           const errText = await metaRes.text().catch(() => metaRes.statusText);
           return {
             success: false,
-            error: `Google Drive get metadata failed: ${metaRes.status} ${errText}`,
+            error: redactCreds(`Google Drive get metadata failed: ${metaRes.status} ${errText}`),
             provider: "google-drive",
           };
         }
@@ -178,7 +179,7 @@ export const driveAdapter: ToolAdapter = {
             .catch(() => contentRes.statusText);
           return {
             success: false,
-            error: `Google Drive get-content failed: ${contentRes.status} ${errText}`,
+            error: redactCreds(`Google Drive get-content failed: ${contentRes.status} ${errText}`),
             provider: "google-drive",
           };
         }
@@ -274,7 +275,7 @@ export const driveAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Google Drive upload-text failed: ${res.status} ${errText}`,
+            error: redactCreds(`Google Drive upload-text failed: ${res.status} ${errText}`),
             provider: "google-drive",
           };
         }

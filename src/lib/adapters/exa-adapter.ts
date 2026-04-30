@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const EXA_BASE_URL = "https://api.exa.ai";
 
@@ -83,7 +84,7 @@ export const exaAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Exa search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Exa search failed: ${res.status} ${errText}`),
             provider: "exa",
           };
         }
@@ -124,7 +125,7 @@ export const exaAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Exa find-similar failed: ${res.status} ${errText}`,
+            error: redactCreds(`Exa find-similar failed: ${res.status} ${errText}`),
             provider: "exa",
           };
         }
@@ -165,7 +166,7 @@ export const exaAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Exa get-contents failed: ${res.status} ${errText}`,
+            error: redactCreds(`Exa get-contents failed: ${res.status} ${errText}`),
             provider: "exa",
           };
         }

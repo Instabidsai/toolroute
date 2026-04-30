@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const EDIT_BASE_URL = "https://api.shotstack.io/edit/v1";
 const INGEST_BASE_URL = "https://api.shotstack.io/ingest/v1";
@@ -63,7 +64,7 @@ export const shotstackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shotstack render failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shotstack render failed: ${res.status} ${errText}`),
             provider: "shotstack",
           };
         }
@@ -95,7 +96,7 @@ export const shotstackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shotstack get-render failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shotstack get-render failed: ${res.status} ${errText}`),
             provider: "shotstack",
           };
         }
@@ -132,7 +133,7 @@ export const shotstackAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shotstack probe failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shotstack probe failed: ${res.status} ${errText}`),
             provider: "shotstack",
           };
         }

@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.pexels.com";
 
@@ -57,7 +58,7 @@ export const pexelsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Pexels photo search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Pexels photo search failed: ${res.status} ${errText}`),
             provider: "pexels",
           };
         }
@@ -107,7 +108,7 @@ export const pexelsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Pexels video search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Pexels video search failed: ${res.status} ${errText}`),
             provider: "pexels",
           };
         }
@@ -147,7 +148,7 @@ export const pexelsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Pexels curated failed: ${res.status} ${errText}`,
+            error: redactCreds(`Pexels curated failed: ${res.status} ${errText}`),
             provider: "pexels",
           };
         }
