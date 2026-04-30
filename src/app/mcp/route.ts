@@ -11,6 +11,7 @@ import {
   BYOK_REQUIRED_SLUGS,
   BYOK_INSUFFICIENT_SLUGS,
 } from "@/lib/byok-required-slugs";
+import { listAvailableAdapters } from "@/lib/adapter-availability";
 
 function byokSuffix(slug: string): string {
   if (BYOK_REQUIRED_SLUGS.has(slug)) return " (BYOK required)";
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
       break;
 
     case "tools/list": {
-      const adapters = listAdapters();
+      const adapters = listAvailableAdapters(listAdapters());
       const tools = [];
       for (const adapter of adapters) {
         for (const op of adapter.operations) {
