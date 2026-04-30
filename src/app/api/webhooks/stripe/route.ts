@@ -179,15 +179,29 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (planRow) {
+              // Plan flip is intentional on every subscription event.
               await sb
                 .from("gateway_users")
                 .update({
                   plan_id: planRow.id,
                   plan_slug: plan,
-                  stripe_customer_id: session.customer as string,
                   updated_at: new Date().toISOString(),
                 })
                 .eq("id", userId);
+
+              // stripe_customer_id is bind-once: only set if currently null
+              // (mirrors the credit-purchase path at line ~157). Webhook is
+              // signed today so this is defense-in-depth, not exploitable.
+              if (session.customer) {
+                await sb
+                  .from("gateway_users")
+                  .update({
+                    stripe_customer_id: session.customer as string,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", userId)
+                  .is("stripe_customer_id", null);
+              }
 
               // Add included plan credits (idempotent on session.subscription)
               const planCredits = PLAN_CREDITS[plan] ?? 0;
