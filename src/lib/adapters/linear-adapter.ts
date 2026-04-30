@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const LINEAR_API_URL = "https://api.linear.app/graphql";
 
@@ -18,7 +19,7 @@ async function graphql(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<{ data?: unknown; errors?: Array<{ message: string }> }> {
-  const res = await fetch(LINEAR_API_URL, {
+  const res = await fetchWithTimeout(LINEAR_API_URL, {
     method: "POST",
     headers: headers(apiKey),
     body: JSON.stringify({ query, variables }),

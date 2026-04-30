@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const SHEETS_BASE_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 
@@ -52,7 +53,7 @@ export const sheetsAdapter: ToolAdapter = {
         }
 
         const encodedRange = encodeURIComponent(range);
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${SHEETS_BASE_URL}/${spreadsheetId}/values/${encodedRange}`,
           {
             method: "GET",
@@ -86,7 +87,7 @@ export const sheetsAdapter: ToolAdapter = {
         }
 
         const encodedRange = encodeURIComponent(range);
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${SHEETS_BASE_URL}/${spreadsheetId}/values/${encodedRange}?valueInputOption=USER_ENTERED`,
           {
             method: "PUT",
@@ -121,7 +122,7 @@ export const sheetsAdapter: ToolAdapter = {
         }
 
         const encodedRange = encodeURIComponent(range);
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${SHEETS_BASE_URL}/${spreadsheetId}/values/${encodedRange}:append?valueInputOption=USER_ENTERED`,
           {
             method: "POST",
@@ -153,7 +154,7 @@ export const sheetsAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${SHEETS_BASE_URL}/${spreadsheetId}`, {
+        const res = await fetchWithTimeout(`${SHEETS_BASE_URL}/${spreadsheetId}`, {
           method: "GET",
           headers: hdrs,
         });
@@ -192,7 +193,7 @@ export const sheetsAdapter: ToolAdapter = {
 
     try {
       // Try to access the API — will fail with auth error but proves the endpoint is up
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${SHEETS_BASE_URL}/nonexistent?fields=spreadsheetId`,
         {
           method: "GET",

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 function getAuth(byokKey?: string): string | null {
   if (byokKey) return byokKey;
@@ -55,7 +56,7 @@ export const dataforseoAdapter: ToolAdapter = {
           (input.location_name as string) || "United States";
         const languageName = (input.language_name as string) || "English";
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           "https://api.dataforseo.com/v3/serp/google/organic/live",
           {
             method: "POST",
@@ -101,7 +102,7 @@ export const dataforseoAdapter: ToolAdapter = {
         const locationName =
           (input.location_name as string) || "United States";
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live",
           {
             method: "POST",
@@ -138,7 +139,7 @@ export const dataforseoAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           "https://api.dataforseo.com/v3/backlinks/backlinks/live",
           {
             method: "POST",
@@ -185,7 +186,7 @@ export const dataforseoAdapter: ToolAdapter = {
 
     try {
       // Use a lightweight endpoint to check connectivity
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         "https://api.dataforseo.com/v3/appendix/user_data",
         {
           headers: { Authorization: basicAuthHeader(auth) },

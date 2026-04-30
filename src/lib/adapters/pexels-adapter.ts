@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.pexels.com";
 
@@ -52,7 +53,7 @@ export const pexelsAdapter: ToolAdapter = {
           page: String(page),
         });
 
-        const res = await fetch(`${BASE_URL}/v1/search?${params}`, { headers });
+        const res = await fetchWithTimeout(`${BASE_URL}/v1/search?${params}`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -100,7 +101,7 @@ export const pexelsAdapter: ToolAdapter = {
           per_page: String(per_page),
         });
 
-        const res = await fetch(`${BASE_URL}/videos/search?${params}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/videos/search?${params}`, {
           headers,
         });
 
@@ -140,7 +141,7 @@ export const pexelsAdapter: ToolAdapter = {
           per_page: String(per_page),
         });
 
-        const res = await fetch(`${BASE_URL}/v1/curated?${params}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/v1/curated?${params}`, {
           headers,
         });
 
@@ -193,7 +194,7 @@ export const pexelsAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/v1/curated?per_page=1`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/v1/curated?per_page=1`, {
         headers: { Authorization: apiKey },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.creatify.ai/api";
 
@@ -67,7 +68,7 @@ export const creatifyAdapter: ToolAdapter = {
         if (input.duration) body.duration = input.duration;
         if (input.voice_id) body.voice_id = input.voice_id;
 
-        const res = await fetch(`${BASE_URL}/ads/`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/ads/`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -92,7 +93,7 @@ export const creatifyAdapter: ToolAdapter = {
       }
 
       if (operation === "list-ads") {
-        const res = await fetch(`${BASE_URL}/ads/`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/ads/`, {
           headers: {
             "X-API-ID": creds.apiId,
             "X-API-KEY": creds.apiKey,
@@ -127,7 +128,7 @@ export const creatifyAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/ads/${adId}/`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/ads/${adId}/`, {
           headers: {
             "X-API-ID": creds.apiId,
             "X-API-KEY": creds.apiKey,
@@ -171,7 +172,7 @@ export const creatifyAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/ads/`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/ads/`, {
         headers: {
           "X-API-ID": creds.apiId,
           "X-API-KEY": creds.apiKey,

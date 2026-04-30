@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const HTML2PDF_URL = "https://api.html2pdf.app/v1/generate";
 
@@ -48,7 +49,7 @@ export const pdfAdapter: ToolAdapter = {
           apiKey,
         });
 
-        const res = await fetch(`${HTML2PDF_URL}?${params}`, {
+        const res = await fetchWithTimeout(`${HTML2PDF_URL}?${params}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -124,7 +125,7 @@ export const pdfAdapter: ToolAdapter = {
           url,
         });
 
-        const res = await fetch(`${HTML2PDF_URL}?${params}`, {
+        const res = await fetchWithTimeout(`${HTML2PDF_URL}?${params}`, {
           method: "GET",
         });
 
@@ -187,7 +188,7 @@ export const pdfAdapter: ToolAdapter = {
     try {
       // Lightweight check — just verify the API accepts our key
       const params = new URLSearchParams({ apiKey });
-      const res = await fetch(`${HTML2PDF_URL}?${params}`, {
+      const res = await fetchWithTimeout(`${HTML2PDF_URL}?${params}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html: "<p>health check</p>" }),

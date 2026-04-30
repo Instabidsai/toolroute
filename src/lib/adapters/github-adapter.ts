@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const API_BASE = "https://api.github.com";
 
@@ -46,7 +47,7 @@ export const githubAdapter: ToolAdapter = {
           per_page: String(perPage),
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${API_BASE}/search/repositories?${params.toString()}`,
           { headers }
         );
@@ -93,7 +94,7 @@ export const githubAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/readme`,
           { headers }
         );
@@ -151,7 +152,7 @@ export const githubAdapter: ToolAdapter = {
           per_page: String(perPage),
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?${params.toString()}`,
           { headers }
         );
@@ -206,7 +207,7 @@ export const githubAdapter: ToolAdapter = {
     const start = Date.now();
     try {
       const headers = getHeaders();
-      const res = await fetch(`${API_BASE}/rate_limit`, { headers });
+      const res = await fetchWithTimeout(`${API_BASE}/rate_limit`, { headers });
       return { healthy: res.ok, latency_ms: Date.now() - start };
     } catch {
       return { healthy: false, latency_ms: Date.now() - start };

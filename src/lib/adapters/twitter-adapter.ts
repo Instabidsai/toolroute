@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const TWITTER_BASE_URL = "https://api.x.com/2";
 
@@ -56,7 +57,7 @@ export const twitterAdapter: ToolAdapter = {
           body.media = { media_ids: input.media_ids };
         }
 
-        const res = await fetch(`${TWITTER_BASE_URL}/tweets`, {
+        const res = await fetchWithTimeout(`${TWITTER_BASE_URL}/tweets`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -97,7 +98,7 @@ export const twitterAdapter: ToolAdapter = {
           "tweet.fields": "created_at,public_metrics,author_id",
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${TWITTER_BASE_URL}/tweets/search/recent?${params}`,
           { headers }
         );
@@ -136,7 +137,7 @@ export const twitterAdapter: ToolAdapter = {
           "tweet.fields": "created_at,text,author_id",
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${TWITTER_BASE_URL}/users/${userId}/mentions?${params}`,
           { headers }
         );
@@ -174,7 +175,7 @@ export const twitterAdapter: ToolAdapter = {
             "name,description,public_metrics,profile_image_url",
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${TWITTER_BASE_URL}/users/by/username/${username}?${params}`,
           { headers }
         );
@@ -207,7 +208,7 @@ export const twitterAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${TWITTER_BASE_URL}/tweets/${tweetId}`,
           { method: "DELETE", headers }
         );
@@ -249,7 +250,7 @@ export const twitterAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${TWITTER_BASE_URL}/users/me`, {
+      const res = await fetchWithTimeout(`${TWITTER_BASE_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

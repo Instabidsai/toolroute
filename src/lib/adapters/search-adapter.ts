@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BRAVE_WEB_URL = "https://api.search.brave.com/res/v1/web/search";
 const BRAVE_IMAGE_URL = "https://api.search.brave.com/res/v1/images/search";
@@ -54,7 +55,7 @@ export const searchAdapter: ToolAdapter = {
           count: String(numResults),
         });
 
-        const res = await fetch(`${BRAVE_WEB_URL}?${params}`, { headers });
+        const res = await fetchWithTimeout(`${BRAVE_WEB_URL}?${params}`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -90,7 +91,7 @@ export const searchAdapter: ToolAdapter = {
           search_type: "news",
         });
 
-        const res = await fetch(`${BRAVE_WEB_URL}?${params}`, { headers });
+        const res = await fetchWithTimeout(`${BRAVE_WEB_URL}?${params}`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -125,7 +126,7 @@ export const searchAdapter: ToolAdapter = {
           count: String(numResults),
         });
 
-        const res = await fetch(`${BRAVE_IMAGE_URL}?${params}`, { headers });
+        const res = await fetchWithTimeout(`${BRAVE_IMAGE_URL}?${params}`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -176,7 +177,7 @@ export const searchAdapter: ToolAdapter = {
 
     try {
       const params = new URLSearchParams({ q: "test", count: "1" });
-      const res = await fetch(`${BRAVE_WEB_URL}?${params}`, {
+      const res = await fetchWithTimeout(`${BRAVE_WEB_URL}?${params}`, {
         headers: {
           Accept: "application/json",
           "X-Subscription-Token": apiKey,

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL_V2 = "https://api.heygen.com/v2";
 const BASE_URL_V1 = "https://api.heygen.com/v1";
@@ -72,7 +73,7 @@ export const heygenAdapter: ToolAdapter = {
           dimension: { width, height },
         };
 
-        const res = await fetch(`${BASE_URL_V2}/video/generate`, {
+        const res = await fetchWithTimeout(`${BASE_URL_V2}/video/generate`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -100,7 +101,7 @@ export const heygenAdapter: ToolAdapter = {
       }
 
       if (operation === "list-avatars") {
-        const res = await fetch(`${BASE_URL_V2}/avatars`, {
+        const res = await fetchWithTimeout(`${BASE_URL_V2}/avatars`, {
           headers: { "X-Api-Key": apiKey },
         });
 
@@ -150,7 +151,7 @@ export const heygenAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${BASE_URL_V1}/video_status.get?video_id=${encodeURIComponent(video_id)}`,
           { headers: { "X-Api-Key": apiKey } }
         );
@@ -198,7 +199,7 @@ export const heygenAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL_V2}/avatars`, {
+      const res = await fetchWithTimeout(`${BASE_URL_V2}/avatars`, {
         headers: { "X-Api-Key": apiKey },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

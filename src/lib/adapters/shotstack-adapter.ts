@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const EDIT_BASE_URL = "https://api.shotstack.io/edit/v1";
 const INGEST_BASE_URL = "https://api.shotstack.io/ingest/v1";
@@ -54,7 +55,7 @@ export const shotstackAdapter: ToolAdapter = {
           body.output = { format: "mp4", resolution: "hd" };
         }
 
-        const res = await fetch(`${EDIT_BASE_URL}/render`, {
+        const res = await fetchWithTimeout(`${EDIT_BASE_URL}/render`, {
           method: "POST",
           headers: editHeaders,
           body: JSON.stringify(body),
@@ -88,7 +89,7 @@ export const shotstackAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${EDIT_BASE_URL}/render/${renderId}`, {
+        const res = await fetchWithTimeout(`${EDIT_BASE_URL}/render/${renderId}`, {
           headers: editHeaders,
         });
 
@@ -120,7 +121,7 @@ export const shotstackAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${INGEST_BASE_URL}/sources`, {
+        const res = await fetchWithTimeout(`${INGEST_BASE_URL}/sources`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -168,7 +169,7 @@ export const shotstackAdapter: ToolAdapter = {
     try {
       // Shotstack doesn't have a lightweight health endpoint,
       // so we use a GET on render with a dummy ID to check auth
-      const res = await fetch(`${EDIT_BASE_URL}/render`, {
+      const res = await fetchWithTimeout(`${EDIT_BASE_URL}/render`, {
         headers: { "x-api-key": apiKey },
       });
       // 200 or 404 both mean API is reachable and key is valid

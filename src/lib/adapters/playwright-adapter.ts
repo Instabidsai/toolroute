@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { assertSafePublicUrl, SSRFError } from "../ssrf-guard";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const THUM_BASE = "https://image.thum.io/get";
 
@@ -30,7 +31,7 @@ export const playwrightAdapter: ToolAdapter = {
         const imageUrl = `${THUM_BASE}/width/${width}/crop/${height}/${url}`;
 
         // Verify the service responds
-        const res = await fetch(imageUrl, { method: "HEAD" });
+        const res = await fetchWithTimeout(imageUrl, { method: "HEAD" });
         if (!res.ok) {
           return {
             success: false,
@@ -70,7 +71,7 @@ export const playwrightAdapter: ToolAdapter = {
           throw err;
         }
 
-        const res = await fetch(url, {
+        const res = await fetchWithTimeout(url, {
           headers: {
             "User-Agent":
               "Mozilla/5.0 (compatible; ToolRoute/1.0; +https://toolroute.ai)",
@@ -121,7 +122,7 @@ export const playwrightAdapter: ToolAdapter = {
         // Use urlbox.io free tier or fall back to screenshot with note
         // thum.io PDF is unreliable, so return a screenshot URL as fallback
         const screenshotUrl = `${THUM_BASE}/width/1280/noanimate/${url}`;
-        const res = await fetch(screenshotUrl, { method: "HEAD" });
+        const res = await fetchWithTimeout(screenshotUrl, { method: "HEAD" });
 
         if (!res.ok) {
           return {
@@ -157,7 +158,7 @@ export const playwrightAdapter: ToolAdapter = {
   async healthCheck(): Promise<{ healthy: boolean; latency_ms: number }> {
     const start = Date.now();
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${THUM_BASE}/width/320/crop/240/https://example.com`,
         { method: "HEAD" }
       );

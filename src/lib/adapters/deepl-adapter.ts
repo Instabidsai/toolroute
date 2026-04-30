@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const DEEPL_FREE_URL = "https://api-free.deepl.com/v2";
 const DEEPL_PRO_URL = "https://api.deepl.com/v2";
@@ -72,7 +73,7 @@ export const deeplAdapter: ToolAdapter = {
           );
         }
 
-        const res = await fetch(`${baseUrl}/translate`, {
+        const res = await fetchWithTimeout(`${baseUrl}/translate`, {
           method: "POST",
           headers,
           body: params.toString(),
@@ -118,7 +119,7 @@ export const deeplAdapter: ToolAdapter = {
         params.append("text", text);
         params.append("target_lang", "EN");
 
-        const res = await fetch(`${baseUrl}/translate`, {
+        const res = await fetchWithTimeout(`${baseUrl}/translate`, {
           method: "POST",
           headers,
           body: params.toString(),
@@ -165,7 +166,7 @@ export const deeplAdapter: ToolAdapter = {
 
     try {
       const baseUrl = getBaseUrl(apiKey);
-      const res = await fetch(`${baseUrl}/usage`, {
+      const res = await fetchWithTimeout(`${baseUrl}/usage`, {
         headers: { Authorization: `DeepL-Auth-Key ${apiKey}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

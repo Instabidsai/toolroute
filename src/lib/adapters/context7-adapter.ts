@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://context7.com/api/v1";
 
@@ -24,7 +25,7 @@ export const context7Adapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${BASE_URL}/search?query=${encodeURIComponent(query)}`,
           { method: "GET" }
         );
@@ -57,7 +58,7 @@ export const context7Adapter: ToolAdapter = {
         // If library is provided, search for it first to get context, then return filtered results
         const searchQuery = library ? `${library} ${query}` : query;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}`,
           { method: "GET" }
         );
@@ -89,7 +90,7 @@ export const context7Adapter: ToolAdapter = {
   async healthCheck(): Promise<{ healthy: boolean; latency_ms: number }> {
     const start = Date.now();
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${BASE_URL}/search?query=react`,
         { method: "GET" }
       );

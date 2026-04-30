@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com";
 
@@ -38,7 +39,7 @@ export const linkedinAdapter: ToolAdapter = {
 
     try {
       if (operation === "get-profile") {
-        const res = await fetch(`${LINKEDIN_API_URL}/v2/userinfo`, {
+        const res = await fetchWithTimeout(`${LINKEDIN_API_URL}/v2/userinfo`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -76,7 +77,7 @@ export const linkedinAdapter: ToolAdapter = {
         let authorUrn = input.author_urn as string | undefined;
         if (!authorUrn) {
           try {
-            const profileRes = await fetch(
+            const profileRes = await fetchWithTimeout(
               `${LINKEDIN_API_URL}/v2/userinfo`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -114,7 +115,7 @@ export const linkedinAdapter: ToolAdapter = {
           },
         };
 
-        const res = await fetch(`${LINKEDIN_API_URL}/rest/posts`, {
+        const res = await fetchWithTimeout(`${LINKEDIN_API_URL}/rest/posts`, {
           method: "POST",
           headers: baseHeaders,
           body: JSON.stringify(body),
@@ -181,7 +182,7 @@ export const linkedinAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${LINKEDIN_API_URL}/v2/userinfo`, {
+      const res = await fetchWithTimeout(`${LINKEDIN_API_URL}/v2/userinfo`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://cloud.higgsfield.ai/v1";
 
@@ -31,7 +32,7 @@ async function pollGeneration(
 ): Promise<Record<string, unknown> | null> {
   for (let i = 0; i < maxAttempts; i++) {
     await sleep(intervalMs);
-    const res = await fetch(`${BASE_URL}/generations/${generationId}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/generations/${generationId}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (!res.ok) continue;
@@ -117,7 +118,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           body.character_id = input.character_id;
         }
 
-        const res = await fetch(`${BASE_URL}/generations`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/generations`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -200,7 +201,7 @@ export const higgsFieldAdapter: ToolAdapter = {
         if (imageUrl) body.image_url = imageUrl;
         if (input.character_id) body.character_id = input.character_id;
 
-        const res = await fetch(`${BASE_URL}/generations`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/generations`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -273,7 +274,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/characters`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/characters`, {
           method: "POST",
           headers,
           body: JSON.stringify({ name, reference_images: images }),
@@ -312,7 +313,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/generations/${generationId}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/generations/${generationId}`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
 
@@ -353,7 +354,7 @@ export const higgsFieldAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/generations`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/generations`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       // 200 = authenticated, 401 = bad key, both prove API is reachable

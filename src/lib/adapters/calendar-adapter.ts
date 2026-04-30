@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const GCAL_BASE = "https://www.googleapis.com/calendar/v3";
 
@@ -50,7 +51,7 @@ export const calendarAdapter: ToolAdapter = {
           params.append("timeMax", input.time_max as string);
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${GCAL_BASE}/calendars/${calendarId}/events?${params}`,
           { headers }
         );
@@ -127,7 +128,7 @@ export const calendarAdapter: ToolAdapter = {
           }));
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${GCAL_BASE}/calendars/${calendarId}/events`,
           {
             method: "POST",
@@ -186,7 +187,7 @@ export const calendarAdapter: ToolAdapter = {
           orderBy: "startTime",
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${GCAL_BASE}/calendars/${calendarId}/events?${params}`,
           { headers }
         );

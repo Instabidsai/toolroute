@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://sentry.io/api/0";
 
@@ -49,7 +50,7 @@ export const sentryAdapter: ToolAdapter = {
 
         const url = `${BASE_URL}/projects/${encodeURIComponent(organization)}/${encodeURIComponent(project)}/issues/?query=${encodeURIComponent(query)}&limit=${limit}`;
 
-        const res = await fetch(url, { headers });
+        const res = await fetchWithTimeout(url, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -82,7 +83,7 @@ export const sentryAdapter: ToolAdapter = {
 
         const url = `${BASE_URL}/organizations/${encodeURIComponent(organization)}/issues/${encodeURIComponent(issue_id)}/`;
 
-        const res = await fetch(url, { headers });
+        const res = await fetchWithTimeout(url, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -116,7 +117,7 @@ export const sentryAdapter: ToolAdapter = {
         const limit = (input.limit as number) || 10;
         const url = `${BASE_URL}/organizations/${encodeURIComponent(organization)}/issues/${encodeURIComponent(issue_id)}/events/?limit=${limit}`;
 
-        const res = await fetch(url, { headers });
+        const res = await fetchWithTimeout(url, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -155,7 +156,7 @@ export const sentryAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

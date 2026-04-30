@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const FAL_QUEUE_URL = "https://queue.fal.run";
 
@@ -57,7 +58,7 @@ export const imageGenAdapter: ToolAdapter = {
           num_images: numImages,
         };
 
-        const res = await fetch(`${FAL_QUEUE_URL}/${model}`, {
+        const res = await fetchWithTimeout(`${FAL_QUEUE_URL}/${model}`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -107,7 +108,7 @@ export const imageGenAdapter: ToolAdapter = {
           scale,
         };
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${FAL_QUEUE_URL}/fal-ai/clarity-upscaler`,
           {
             method: "POST",
@@ -166,7 +167,7 @@ export const imageGenAdapter: ToolAdapter = {
     try {
       // Simple check — fal.ai doesn't have a dedicated health endpoint,
       // so we verify the API key is accepted by hitting the queue status
-      const res = await fetch("https://queue.fal.run/fal-ai/flux/schnell", {
+      const res = await fetchWithTimeout("https://queue.fal.run/fal-ai/flux/schnell", {
         method: "OPTIONS",
         headers: { Authorization: `Key ${apiKey}` },
       });
