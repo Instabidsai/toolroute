@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -1199,7 +1200,7 @@ export const autoAdapter: ToolAdapter = {
             execution_failed: true,
             error: isKeyError
               ? `Tool "${bestMatch.adapterSlug}" requires an API key. Set up BYOK at https://toolroute.ai/dashboard/providers or use a free alternative.`
-              : `Tool "${bestMatch.adapterSlug}" execution failed: ${execMessage}`,
+              : redactCreds(`Tool "${bestMatch.adapterSlug}" execution failed: ${execMessage}`),
             suggestions: [
               "Use toolroute/check_before_build to find alternatives",
               "Use github/search-repos (no key needed)",
@@ -1290,7 +1291,7 @@ export const autoAdapter: ToolAdapter = {
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return { success: false, error: message, provider: "auto" };
+      return { success: false, error: redactCreds(message), provider: "auto" };
     }
   },
 
