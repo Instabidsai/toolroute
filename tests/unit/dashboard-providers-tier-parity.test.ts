@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 
 // Lane 6.10 — drift guard for /dashboard/providers customer-facing copy.
 //
-// /dashboard/providers shows each provider with `type: "pool" | "byok" | "free"`.
+// /dashboard/providers shows each provider with
+// `type: "pool" | "byok" | "free" | "unavailable"`.
 // "pool" tells the customer ToolRoute covers that provider's calls.
 // Lane 6.7 verified 30 providers as BYOK_REQUIRED (master-pool routing = direct
 // ToS breach) + 1 BYOK_INSUFFICIENT (apollo). Showing those as `type: "pool"`
@@ -32,7 +33,7 @@ const LANE_6_7_PATH = resolve(
 
 interface ProviderEntry {
   slug: string;
-  type: "pool" | "byok" | "free";
+  type: "pool" | "byok" | "free" | "unavailable";
 }
 
 function parseDashboardProviders(): ProviderEntry[] {
@@ -45,7 +46,7 @@ function parseDashboardProviders(): ProviderEntry[] {
   }
   const body = arrMatch[1];
   const out: ProviderEntry[] = [];
-  const re = /slug:\s*"([a-z0-9-]+)"[^}]*?type:\s*"(pool|byok|free)"/g;
+  const re = /slug:\s*"([a-z0-9-]+)"[^}]*?type:\s*"(pool|byok|free|unavailable)"/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) {
     out.push({ slug: m[1], type: m[2] as ProviderEntry["type"] });

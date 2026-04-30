@@ -15,17 +15,33 @@ describe("adapter availability", () => {
     vi.unstubAllEnvs();
   });
 
-  it("marks adapters available only when their pooled env vars exist", () => {
+  it("marks pooled adapters available only when their pooled env vars exist", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "present");
-    vi.stubEnv("TAVILY_API_KEY", "");
+    vi.stubEnv("POSTIZ_API_KEY", "");
 
     expect(getAdapterAvailability("claude")).toEqual({
       adapter_slug: "claude",
       status: "available",
+      access_mode: "byok",
+      pool_available: true,
+      byok_required: true,
     });
-    expect(getAdapterAvailability("tavily")).toEqual({
-      adapter_slug: "tavily",
+    expect(getAdapterAvailability("postiz")).toEqual({
+      adapter_slug: "postiz",
+      status: "available",
+      access_mode: "byok",
+      pool_available: false,
+      byok_required: true,
+    });
+  });
+
+  it("marks BYOK-insufficient adapters unavailable", () => {
+    expect(getAdapterAvailability("apollo")).toEqual({
+      adapter_slug: "apollo",
       status: "coming_soon",
+      access_mode: "unavailable",
+      pool_available: false,
+      byok_required: true,
     });
   });
 
@@ -35,21 +51,27 @@ describe("adapter availability", () => {
     expect(getToolAvailability("fal-ai")).toEqual({
       adapter_slug: "image",
       status: "available",
+      access_mode: "byok",
+      pool_available: true,
+      byok_required: true,
     });
     expect(getToolAvailability("unknown-tool")).toEqual({
       adapter_slug: null,
       status: "coming_soon",
+      access_mode: "unavailable",
+      pool_available: false,
+      byok_required: false,
     });
   });
 
   it("filters schema formats to adapters that can execute", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "present");
-    vi.stubEnv("TAVILY_API_KEY", "");
+    vi.stubEnv("POSTIZ_API_KEY", "");
 
     expect(
-      listAvailableAdapters([adapter("claude"), adapter("context7"), adapter("tavily")])
+      listAvailableAdapters([adapter("claude"), adapter("context7"), adapter("postiz"), adapter("apollo")])
         .map((item) => item.slug)
         .sort()
-    ).toEqual(["claude", "context7"]);
+    ).toEqual(["claude", "context7", "postiz"]);
   });
 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import { encryptSecret } from "@/lib/secret-encryption";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +22,19 @@ export async function POST(request: NextRequest) {
     }
 
     const sb = supabaseAdmin();
+    let encryptedApiKey: string;
+    try {
+      encryptedApiKey = encryptSecret(api_key);
+    } catch (err) {
+      console.error("BYOK encryption error:", err instanceof Error ? err.message : String(err), {
+        userId,
+        tool_slug,
+      });
+      return NextResponse.json(
+        { error: { message: "Provider-key encryption is not configured", code: "encryption_not_configured" } },
+        { status: 503, headers: AUTHED_RESPONSE_HEADERS }
+      );
+    }
 
     const { data, error } = await sb
       .from("user_provider_keys")
@@ -28,7 +42,7 @@ export async function POST(request: NextRequest) {
         {
           user_id: userId,
           tool_slug,
-          api_key_encrypted: api_key, // TODO: encrypt with KMS
+          api_key_encrypted: encryptedApiKey,
           is_active: true,
           prefer_own_key: true,
           updated_at: new Date().toISOString(),
