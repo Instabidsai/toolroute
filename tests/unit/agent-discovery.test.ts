@@ -23,6 +23,20 @@ describe("agent-native discovery manifests", () => {
     }
   });
 
+  it("does not let stale public files shadow the app route handlers", () => {
+    const shadowFiles = [
+      "public/.well-known/openapi.json",
+      "public/openapi.json",
+      "public/.well-known/ai-plugin.json",
+      "public/.well-known/mcp.json",
+      "public/agents.json",
+    ];
+
+    for (const shadowFile of shadowFiles) {
+      expect(existsSync(resolve(process.cwd(), shadowFile)), shadowFile).toBe(false);
+    }
+  });
+
   it("documents the core agent onboarding and execution API in OpenAPI", () => {
     const spec = buildOpenApiSpec();
 
