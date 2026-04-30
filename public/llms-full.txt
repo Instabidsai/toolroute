@@ -21,6 +21,14 @@ Additional machine-readable discovery surfaces:
 - `GET /.well-known/mcp.json` -- MCP connection manifest for streamable HTTP clients.
 - `GET /agents.json` -- agent-facing capability and action card.
 
+`GET /api/v1/tools` returns `offerability` for each catalog row:
+
+- `native` -- ToolRoute-native capability; no external provider credential needed.
+- `customer_byok` -- agent/customer can save a provider key through `/api/v1/byok`.
+- `customer_oauth` -- provider OAuth or connected-account consent is required.
+- `pool_contract_required` -- ToolRoute-funded resale/pooling needs partner authorization first.
+- `unavailable` -- do not offer until waiver, legal decision, or adapter removal is complete.
+
 The no-human happy path is:
 
 1. `POST /api/v1/signup` with email, password, and accepted terms. The response returns a `tr_test_` management key.

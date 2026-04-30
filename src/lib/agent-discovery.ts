@@ -107,6 +107,8 @@ export function buildOpenApiSpec() {
           tags: ["Tools"],
           operationId: "listTools",
           summary: "List ToolRoute tools and export agent tool formats",
+          description:
+            "Default catalog responses include access_mode, byok_required, and offerability metadata so agents can distinguish native, BYOK, OAuth, partner-contract, and unavailable providers.",
           security: [],
           parameters: [
             {

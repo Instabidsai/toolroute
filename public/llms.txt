@@ -11,6 +11,7 @@ ToolRoute is an MCP gateway that lets AI agents execute tools through a single A
 - Prepaid credits billing with auto-top-up
 - Agent-controlled onboarding: agents can create a test management key by API, inspect balance, start Stripe checkout, set up saved-card auto top-up, save BYOK provider keys, and mint a separate live execution key after payment
 - BYOK (bring-your-own-key) — required for 30+ premium providers (Anthropic, OpenAI, Stripe, Supabase, Sentry, ElevenLabs, etc.) per provider ToS; optional zero-markup passthrough for the rest
+- Agent-readable offerability metadata: catalog entries disclose whether a provider is native, customer BYOK, customer OAuth, pool-contract-required, or unavailable
 - Free tier: test key only; live keys require paid credits or a paid plan
 
 ## Quick Start
@@ -32,7 +33,7 @@ curl -X POST https://toolroute.ai/api/v1/execute \
 - POST /api/v1/execute -- Execute any tool (tool ID format: provider/operation)
 - POST /mcp -- MCP Streamable HTTP (JSON-RPC)
 - POST /api/a2a -- A2A protocol (Google)
-- GET /api/v1/tools -- Tool catalog (no auth required, supports ?format=openai)
+- GET /api/v1/tools -- Tool catalog (no auth required, includes offerability metadata, supports ?format=openai)
 - GET /api/v1/key -- API key info + balance
 - POST /api/v1/checkout -- Add credits via Stripe (session JWT or ToolRoute management key)
 - POST /api/v1/billing/setup-payment -- Save a reusable Stripe payment method (session JWT or ToolRoute management key)
