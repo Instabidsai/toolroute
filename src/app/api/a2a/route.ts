@@ -3,11 +3,15 @@ import { randomBytes } from "crypto";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 import { GatewayError } from "@/lib/gateway-types";
 
-// In-memory task store for status lookups
+// In-memory task store for status lookups.
+// Lane 4.120 — every stored task carries `userId` so tasks/get + tasks/cancel
+// can enforce ownership (closes Lane 4.89 IDOR; the audit memo shipped Apr 28
+// but the implementation never landed and task #107 was wrongly marked complete).
 const taskStore = new Map<
   string,
   {
     id: string;
+    userId: string;
     status: { state: string };
     artifacts: { name: string; parts: { type: string; text: string }[] }[];
     created_at: string;
@@ -86,9 +90,10 @@ export async function POST(request: NextRequest) {
 
   switch (body.method) {
     case "tasks/send": {
+      // Lane 4.120 — params.id intentionally not declared on this type;
+      // the server always assigns task_id. Per Lane 4.89 fix Option A.
       const params = body.params as
         | {
-            id?: string;
             message?: {
               role?: string;
               parts?: { type?: string; text?: string }[];
@@ -96,8 +101,11 @@ export async function POST(request: NextRequest) {
           }
         | undefined;
 
-      const taskId =
-        params?.id ?? `task_${randomBytes(12).toString("hex")}`;
+      // Lane 4.120 — always server-generate task_id. Customer-supplied IDs let
+      // an attacker pre-claim predictable values ("task_1") that another
+      // customer's client SDK might collide with, then read their artifact via
+      // tasks/get. Per Lane 4.89 fix recommendation Option A.
+      const taskId = `task_${randomBytes(12).toString("hex")}`;
       const messageParts = params?.message?.parts ?? [];
       const textContent = messageParts
         .filter((p) => p.type === "text")
@@ -127,8 +135,25 @@ export async function POST(request: NextRequest) {
         await import("@/lib/gateway");
       const { GatewayError } = await import("@/lib/gateway-types");
 
+      // Lane 4.120 — validate auth BEFORE the try/catch that owns task storage,
+      // so a failed validateRequest never stores an unowned task.
+      let ctx: Awaited<ReturnType<typeof validateRequest>>;
       try {
-        const ctx = await validateRequest(authHeader);
+        ctx = await validateRequest(authHeader);
+      } catch (err) {
+        response.error = {
+          code: -32001,
+          message:
+            err instanceof GatewayError
+              ? err.message
+              : err instanceof Error
+                ? err.message
+                : "Auth failed",
+        };
+        break;
+      }
+
+      try {
         await checkRateLimit(ctx);
 
         // Use auto/route to let ToolRoute pick the best tool
@@ -196,6 +221,7 @@ export async function POST(request: NextRequest) {
 
         const task = {
           id: taskId,
+          userId: ctx.userId,
           // "completed" if routing succeeded (even if execution failed with helpful info)
           // "failed" only if routing itself failed
           status: {
@@ -221,6 +247,7 @@ export async function POST(request: NextRequest) {
 
         const task = {
           id: taskId,
+          userId: ctx.userId,
           status: { state: "failed" },
           artifacts: [
             {
@@ -249,8 +276,34 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      // Lane 4.120 — require API key + ownership match. Without this, anyone
+      // who learns or guesses a task_id can read another customer's artifacts.
+      const authHeader = request.headers.get("authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer tr_live_")) {
+        response.error = {
+          code: -32001,
+          message:
+            "API key required. Set Authorization: Bearer tr_live_xxx header. Get key at https://toolroute.ai/dashboard/keys",
+        };
+        break;
+      }
+
+      const { validateRequest } = await import("@/lib/gateway");
+      let getCtx;
+      try {
+        getCtx = await validateRequest(authHeader);
+      } catch (err) {
+        response.error = {
+          code: -32001,
+          message: err instanceof Error ? err.message : "Auth failed",
+        };
+        break;
+      }
+
       const task = taskStore.get(taskId);
-      if (!task) {
+      // Same error message for not-found and not-owned: don't give callers an
+      // enumeration oracle that distinguishes "exists, but yours" from "doesn't exist".
+      if (!task || task.userId !== getCtx.userId) {
         response.error = {
           code: -32602,
           message: `Task not found: ${taskId}`,
@@ -271,8 +324,32 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      // Lane 4.120 — same gate as tasks/get; without this, any caller can
+      // cancel any in-flight task they can name (DoS the legitimate owner).
+      const authHeader = request.headers.get("authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer tr_live_")) {
+        response.error = {
+          code: -32001,
+          message:
+            "API key required. Set Authorization: Bearer tr_live_xxx header. Get key at https://toolroute.ai/dashboard/keys",
+        };
+        break;
+      }
+
+      const { validateRequest } = await import("@/lib/gateway");
+      let cancelCtx;
+      try {
+        cancelCtx = await validateRequest(authHeader);
+      } catch (err) {
+        response.error = {
+          code: -32001,
+          message: err instanceof Error ? err.message : "Auth failed",
+        };
+        break;
+      }
+
       const task = taskStore.get(taskId);
-      if (!task) {
+      if (!task || task.userId !== cancelCtx.userId) {
         response.error = {
           code: -32602,
           message: `Task not found: ${taskId}`,
