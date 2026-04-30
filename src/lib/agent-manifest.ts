@@ -5,12 +5,16 @@ export async function buildAgentManifest() {
     import("@/lib/adapters/index"),
     import("@/lib/adapter-availability"),
   ]);
+  const { summarizeOfferability } = await import("@/lib/provider-offerability");
   const adapters = listAdapters();
   const accessModes = adapters.reduce<Record<string, number>>((acc, adapter) => {
     const mode = getAdapterAvailability(adapter.slug).access_mode;
     acc[mode] = (acc[mode] ?? 0) + 1;
     return acc;
   }, {});
+  const offerability = summarizeOfferability(
+    adapters.map((adapter) => adapter.slug)
+  );
 
   return {
     name: "ToolRoute",
@@ -161,6 +165,7 @@ export async function buildAgentManifest() {
         0
       ),
       access_modes: accessModes,
+      offerability,
       access_mode_meanings: {
         byok: "Agent/customer must save a provider key before execution.",
         pool:
@@ -168,6 +173,18 @@ export async function buildAgentManifest() {
         free: "Internal/free ToolRoute capability.",
         unavailable:
           "Not offerable until implementation, provider terms, or funding is resolved.",
+      },
+      offerability_meanings: {
+        native:
+          "ToolRoute-native capability; no external provider credential needed.",
+        customer_byok:
+          "Customer can self-serve by saving a provider API key through /api/v1/byok.",
+        customer_oauth:
+          "Provider OAuth or connected-account consent is required before reliable self-serve execution.",
+        pool_contract_required:
+          "ToolRoute-funded pooling needs provider partner/reseller authorization first.",
+        unavailable:
+          "Do not offer until waiver, legal decision, or adapter removal is complete.",
       },
     },
     openrouter_parity_targets: [

@@ -5,6 +5,7 @@ import {
   getToolAvailability,
   listAvailableAdapters,
 } from "@/lib/adapter-availability";
+import { getToolOfferability } from "@/lib/provider-offerability";
 import {
   AMBIGUOUS_DEFAULT_BYOK_SLUGS,
   BYOK_REQUIRED_SLUGS,
@@ -226,6 +227,7 @@ function withAvailability<
           ? tool.tool_slug
           : null;
   const availability = getToolAvailability(toolSlug);
+  const offerability = getToolOfferability(toolSlug);
   // Disclose BYOK requirement on the canonical slug (not tool.id, which may
   // be a per-tool ID like "brave-search" mapping to adapter "search").
   const adapterSlug = availability.adapter_slug ?? toolSlug;
@@ -245,6 +247,7 @@ function withAvailability<
     access_mode: availability.access_mode,
     pool_available: availability.pool_available,
     byok_required: isByokRequired,
+    offerability,
   };
 }
 

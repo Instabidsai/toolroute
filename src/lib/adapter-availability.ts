@@ -99,6 +99,10 @@ const TOOL_SLUG_ALIASES: Record<string, string> = {
   "youtube-api": "youtube",
 };
 
+export function listKnownAdapterSlugs() {
+  return Object.keys(REQUIRED_ENV_BY_ADAPTER);
+}
+
 function hasEnv(name: string) {
   return Boolean(process.env[name]);
 }
