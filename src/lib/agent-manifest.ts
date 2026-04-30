@@ -22,6 +22,7 @@ export async function buildAgentManifest() {
       can_discover_tools: true,
       can_create_test_key_by_api: true,
       can_manage_account_with_toolroute_key: true,
+      account_management_requires_management_key_scope: true,
       can_start_stripe_checkout_by_api: true,
       can_start_saved_payment_method_setup_by_api: true,
       can_enable_auto_topup_by_api: true,
@@ -48,8 +49,9 @@ export async function buildAgentManifest() {
           accepted_tos: true,
         },
         returns: ["user_id", "api_key", "key_prefix"],
+        key_scope: "management",
         notes:
-          "The returned tr_test key can inspect account state and begin the funding/BYOK setup flow.",
+          "The returned tr_test key is an account-management key. It can inspect account state and begin funding/BYOK setup, but it cannot execute tools.",
       },
       {
         step: "inspect_key_and_balance",
@@ -73,14 +75,24 @@ export async function buildAgentManifest() {
         method: "POST",
         path: "/api/v1/keys",
         auth: "Supabase session JWT or ToolRoute API key",
-        body: { name: "Production Agent Key" },
-        returns: ["key", "id", "prefix"],
+        body: { name: "Production Agent Key", purpose: "execute" },
+        returns: ["key", "id", "prefix", "scope"],
+      },
+      {
+        step: "optionally_create_extra_management_key",
+        method: "POST",
+        path: "/api/v1/keys",
+        auth: "Supabase session JWT or ToolRoute management key",
+        body: { name: "Automation Management Key", purpose: "management" },
+        returns: ["key", "id", "prefix", "scope"],
+        notes:
+          "Management keys can manage billing, BYOK, and key CRUD. They cannot execute tools.",
       },
       {
         step: "optionally_set_up_saved_payment_method",
         method: "POST",
         path: "/api/v1/billing/setup-payment",
-        auth: "Supabase session JWT or ToolRoute API key",
+        auth: "Supabase session JWT or ToolRoute management key",
         returns: ["checkout_url", "customer_id"],
         browser_required: true,
         notes:
@@ -90,7 +102,7 @@ export async function buildAgentManifest() {
         step: "optionally_enable_auto_topup",
         method: "PATCH",
         path: "/api/v1/settings",
-        auth: "Supabase session JWT or ToolRoute API key",
+        auth: "Supabase session JWT or ToolRoute management key",
         body: {
           auto_topup_enabled: true,
           auto_topup_threshold: 1,
@@ -101,7 +113,7 @@ export async function buildAgentManifest() {
         step: "save_provider_key_when_required",
         method: "POST",
         path: "/api/v1/byok",
-        auth: "Supabase session JWT or ToolRoute API key",
+        auth: "Supabase session JWT or ToolRoute management key",
         body: { tool_slug: "openai", api_key: "provider-secret" },
         notes:
           "Provider keys are encrypted at rest. Use /api/v1/tools access_mode/byok_required fields to decide which providers need keys.",
@@ -162,6 +174,7 @@ export async function buildAgentManifest() {
       "BYOK fee model",
       "fallback/auto-routing",
       "programmatic key management",
+      "separate management/provisioning key scope",
     ],
   };
 }

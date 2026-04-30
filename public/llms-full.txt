@@ -15,11 +15,11 @@ Agents should start at `GET /api/v1/agent/manifest`. It returns the machine-read
 
 The no-human happy path is:
 
-1. `POST /api/v1/signup` with email, password, and accepted terms. The response returns a `tr_test_` key.
+1. `POST /api/v1/signup` with email, password, and accepted terms. The response returns a `tr_test_` management key.
 2. `GET /api/v1/key` with the test key to inspect balance and limits.
 3. `POST /api/v1/checkout` with the test key to create a Stripe Checkout URL for credits or subscription.
 4. A browser/payment-capable agent opens the `checkout_url`. Stripe card entry or wallet approval is still required.
-5. After the webhook grants credits, `POST /api/v1/keys` with the ToolRoute key to mint a `tr_live_` key.
+5. After the webhook grants credits, `POST /api/v1/keys` with `{"purpose":"execute"}` to mint a `tr_live_` execution key.
 6. Optional: `POST /api/v1/billing/setup-payment`, complete the setup URL, then `PATCH /api/v1/settings` to enable auto top-up.
 7. For BYOK-required providers, `POST /api/v1/byok` with `tool_slug` and the provider secret. ToolRoute encrypts the provider key at rest.
 8. Execute via REST, MCP, A2A, or OpenAI/Anthropic tool catalogs.
@@ -40,9 +40,9 @@ Two auth schemes:
 
 1. **API Key** (for gateway calls): `Authorization: Bearer tr_live_xxx` or `Authorization: Bearer tr_test_xxx`
    - Used for: /api/v1/execute, /api/v1/key, /api/v1/usage, /api/v1/checkout, /api/v1/billing/setup-payment, /api/v1/settings, /api/v1/keys, /api/v1/byok, /mcp, /api/a2a
-   - Obtain from /api/v1/signup (test key) or /api/v1/keys (live key after payment)
+   - Obtain a management key from /api/v1/signup or /api/v1/keys with `{"purpose":"management"}`. Obtain an execution key from /api/v1/keys with `{"purpose":"execute"}` after payment.
    - Keys are SHA-256 hashed before storage. You only see the full key at creation time.
-   - Keys restricted to specific `allowed_tools` cannot manage account settings or secrets.
+   - Execution keys cannot manage account settings or secrets. Management keys can manage billing, BYOK, and key CRUD, but cannot execute tools.
 
 2. **Session JWT** (for dashboard management): `Authorization: Bearer <supabase_jwt>`
    - Used for: dashboard flows and as an alternative auth mode for /api/v1/settings, /api/v1/billing/setup-payment, /api/v1/keys, /api/v1/checkout, /api/v1/byok
@@ -102,19 +102,19 @@ Auth: Bearer API key required.
 Auth: Bearer API key or session JWT. Query params: `limit`, `offset`, `tool`, `since`.
 
 ### POST /api/v1/checkout -- Add Credits
-Auth: Session JWT or ToolRoute API key. Body: `{"type":"credits","amount":"10"}`. Returns a Stripe `checkout_url` and next-step metadata. A browser/payment-capable agent or human must complete checkout.
+Auth: Session JWT or ToolRoute management key. Body: `{"type":"credits","amount":"10"}`. Returns a Stripe `checkout_url` and next-step metadata. A browser/payment-capable agent or human must complete checkout.
 
 ### POST /api/v1/billing/setup-payment -- Save Payment Method
-Auth: Session JWT or ToolRoute API key. Returns a Stripe setup `checkout_url` for a reusable payment method. A browser/payment-capable agent or human must complete setup.
+Auth: Session JWT or ToolRoute management key. Returns a Stripe setup `checkout_url` for a reusable payment method. A browser/payment-capable agent or human must complete setup.
 
 ### PATCH /api/v1/settings -- Auto-Top-Up Settings
-Auth: Session JWT or ToolRoute API key. Body: `{"auto_topup_enabled": true, "auto_topup_amount_cents": 1000, "auto_topup_threshold": 1}`.
+Auth: Session JWT or ToolRoute management key. Body: `{"auto_topup_enabled": true, "auto_topup_amount_cents": 1000, "auto_topup_threshold": 1}`.
 
 ### POST /api/v1/keys -- Create API Key
-Auth: Session JWT or ToolRoute API key. Returns the full key once.
+Auth: Session JWT or ToolRoute management key. Body: `{"purpose":"execute","name":"Production Agent Key"}` or `{"purpose":"management","name":"Provisioning Key"}`. Returns the full key once.
 
 ### POST /api/v1/byok -- Register BYOK Key
-Auth: Session JWT or ToolRoute API key. Body: `{"tool_slug": "elevenlabs", "api_key": "your-key"}`.
+Auth: Session JWT or ToolRoute management key. Body: `{"tool_slug": "elevenlabs", "api_key": "your-key"}`.
 
 ---
 

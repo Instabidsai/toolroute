@@ -8,6 +8,60 @@ import {
 import { getAccountActor } from "@/lib/account-auth";
 import { GatewayError } from "@/lib/gateway-types";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import {
+  ACCOUNT_MANAGEMENT_SCOPE,
+  containsReservedScope,
+  keyScopeFromAllowedTools,
+  type ToolRouteKeyScope,
+} from "@/lib/key-scopes";
+
+type KeyRequestBody = {
+  name?: string;
+  allowed_tools?: unknown;
+  expires_in_days?: number;
+  purpose?: ToolRouteKeyScope;
+  scope?: ToolRouteKeyScope;
+};
+
+function keyRowWithScope<T extends { allowed_tools: string[] | null }>(row: T) {
+  return {
+    ...row,
+    scope: keyScopeFromAllowedTools(row.allowed_tools),
+  };
+}
+
+function parseAllowedTools(value: unknown): string[] | null {
+  if (value === undefined || value === null) return null;
+  if (!Array.isArray(value)) {
+    throw new GatewayError(
+      "allowed_tools must be an array of tool IDs",
+      400,
+      "invalid_allowed_tools"
+    );
+  }
+
+  const tools = value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+
+  if (tools.length !== value.length) {
+    throw new GatewayError(
+      "allowed_tools must contain only non-empty strings",
+      400,
+      "invalid_allowed_tools"
+    );
+  }
+
+  if (containsReservedScope(tools)) {
+    throw new GatewayError(
+      "reserved key scopes cannot be used as tool IDs",
+      400,
+      "reserved_key_scope"
+    );
+  }
+
+  return tools.length > 0 ? tools : null;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,14 +70,40 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const { userId } = await getAccountActor(authHeader);
 
-    let body: { name?: string; allowed_tools?: string[]; expires_in_days?: number };
+    let body: KeyRequestBody;
     try {
       body = await request.json();
     } catch {
       body = {};
     }
 
-    const keyName = body.name || "Default Key";
+    const requestedScope =
+      body.purpose === "management" || body.scope === "management"
+        ? "management"
+        : "execute";
+
+    if (requestedScope === "management" && body.allowed_tools !== undefined) {
+      return NextResponse.json(
+        {
+          error: {
+            message: "Management keys cannot be restricted to tools",
+            code: "management_key_no_allowed_tools",
+          },
+        },
+        { status: 400, headers: AUTHED_RESPONSE_HEADERS }
+      );
+    }
+
+    const allowedTools =
+      requestedScope === "management"
+        ? [ACCOUNT_MANAGEMENT_SCOPE]
+        : parseAllowedTools(body.allowed_tools);
+
+    const keyName =
+      body.name ||
+      (requestedScope === "management"
+        ? "Account Management Key"
+        : "Default Key");
 
     const sb = supabaseAdmin();
 
@@ -60,7 +140,7 @@ export async function POST(request: NextRequest) {
         name: keyName,
         key_hash: hash,
         key_prefix: prefix,
-        allowed_tools: body.allowed_tools ?? null,
+        allowed_tools: allowedTools,
         is_active: true,
         expires_at: expiresAt,
       })
@@ -81,6 +161,7 @@ export async function POST(request: NextRequest) {
         id: keyRow.id,
         name: keyRow.name,
         prefix: keyRow.key_prefix,
+        scope: keyScopeFromAllowedTools(keyRow.allowed_tools),
         allowed_tools: keyRow.allowed_tools,
         expires_at: keyRow.expires_at,
         created_at: keyRow.created_at,
@@ -126,7 +207,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ data: keys ?? [] }, { headers: AUTHED_RESPONSE_HEADERS });
+    return NextResponse.json(
+      { data: (keys ?? []).map(keyRowWithScope) },
+      { headers: AUTHED_RESPONSE_HEADERS }
+    );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(
@@ -288,7 +372,10 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ data: keyRow }, { headers: AUTHED_RESPONSE_HEADERS });
+    return NextResponse.json(
+      { data: keyRowWithScope(keyRow) },
+      { headers: AUTHED_RESPONSE_HEADERS }
+    );
   } catch (err) {
     if (err instanceof GatewayError) {
       return NextResponse.json(

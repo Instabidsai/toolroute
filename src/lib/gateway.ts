@@ -15,6 +15,7 @@ import {
 } from "./byok-required-slugs";
 import { redactCreds } from "./redact-creds";
 import { decryptSecret, decryptSecretIfEncrypted } from "./secret-encryption";
+import { keyScopeFromAllowedTools } from "./key-scopes";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -598,6 +599,7 @@ export async function getKeyInfo(authHeader: string | null) {
 
   return {
     key_name: ctx.keyName,
+    key_scope: keyScopeFromAllowedTools(ctx.allowedTools),
     plan: ctx.planSlug,
     credit_balance: ctx.creditBalance,
     rate_limit: { rpm: ctx.rateLimitRpm, rpd: ctx.rateLimitRpd },

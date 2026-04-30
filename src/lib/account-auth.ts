@@ -3,6 +3,10 @@ import {
   validateRequest,
 } from "@/lib/gateway";
 import { GatewayError } from "@/lib/gateway-types";
+import {
+  isAccountManagementScope,
+  type ToolRouteKeyScope,
+} from "@/lib/key-scopes";
 import { hasToolRouteBearerToken } from "@/lib/toolroute-key-format";
 
 export type AccountActor = {
@@ -13,6 +17,7 @@ export type AccountActor = {
   planSlug?: string;
   creditBalance?: number;
   allowedTools?: string[] | null;
+  keyScope?: ToolRouteKeyScope;
 };
 
 export async function getAccountActor(
@@ -20,11 +25,11 @@ export async function getAccountActor(
 ): Promise<AccountActor> {
   if (hasToolRouteBearerToken(authHeader)) {
     const ctx = await validateRequest(authHeader);
-    if (ctx.allowedTools && ctx.allowedTools.length > 0) {
+    if (!isAccountManagementScope(ctx.allowedTools)) {
       throw new GatewayError(
-        "Restricted ToolRoute keys cannot manage account settings",
+        "A ToolRoute management key is required for account settings",
         403,
-        "restricted_key_no_account_management"
+        "management_key_required"
       );
     }
 
@@ -36,6 +41,7 @@ export async function getAccountActor(
       planSlug: ctx.planSlug,
       creditBalance: ctx.creditBalance,
       allowedTools: ctx.allowedTools,
+      keyScope: "management",
     };
   }
 
