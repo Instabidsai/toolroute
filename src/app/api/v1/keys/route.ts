@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const { data: planRow, error: planError } = await sb
       .from("gateway_users")
-      .select("plan_slug")
+      .select("plan_slug, lifetime_credits")
       .eq("id", userId)
       .single();
 
@@ -41,8 +41,10 @@ export async function POST(request: NextRequest) {
     }
 
     const planSlug = (planRow.plan_slug as string | null) ?? "free";
-    const isPaidPlan = planSlug !== "free";
-    const { raw, hash, prefix } = isPaidPlan ? generateApiKey() : generateTestApiKey();
+    const hasPaidAccess =
+      planSlug !== "free" ||
+      Number(planRow.lifetime_credits ?? 0) > 0;
+    const { raw, hash, prefix } = hasPaidAccess ? generateApiKey() : generateTestApiKey();
 
     let expiresAt: string | null = null;
     if (body.expires_in_days && body.expires_in_days > 0) {

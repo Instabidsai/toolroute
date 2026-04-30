@@ -14,9 +14,11 @@ import {
   BYOK_REQUIRED_SLUGS,
 } from "./byok-required-slugs";
 import { redactCreds } from "./redact-creds";
+import { decryptSecret, decryptSecretIfEncrypted } from "./secret-encryption";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const BYOK_PLATFORM_FEE = Number(process.env.TOOLROUTE_BYOK_PLATFORM_FEE ?? "0.001");
 
 export function supabaseAdmin() {
   return createClient(supabaseUrl, supabaseServiceKey);
@@ -264,33 +266,6 @@ export async function executeToolRequest(
   }
 
   const { adapter, operation } = resolveAdapter(toolPath);
-  const estimatedCost = adapter.estimateCost(operation, input);
-
-  if (
-    typeof options?.max_price === "number" &&
-    options.max_price >= 0 &&
-    estimatedCost > options.max_price
-  ) {
-    throw new GatewayError(
-      "Estimated cost $" +
-        estimatedCost.toFixed(4) +
-        " exceeds requested max_price $" +
-        options.max_price.toFixed(4),
-      402,
-      "max_price_exceeded"
-    );
-  }
-
-  if (ctx.creditBalance < estimatedCost && estimatedCost > 0) {
-    throw new GatewayError(
-      "Insufficient credits. Required: $" +
-        estimatedCost.toFixed(4) +
-        ", available: $" +
-        ctx.creditBalance.toFixed(4),
-      402,
-      "insufficient_credits"
-    );
-  }
 
   // --- Key resolution: BYOK > Master > Env var ---
   let resolvedKey: string | undefined;
@@ -314,7 +289,19 @@ export async function executeToolRequest(
     .single();
 
   if (byokRow) {
-    resolvedKey = byokRow.api_key_encrypted;
+    try {
+      resolvedKey = decryptSecret(byokRow.api_key_encrypted);
+    } catch (err) {
+      console.error("BYOK key decrypt failed:", err instanceof Error ? err.message : String(err), {
+        userId: ctx.userId,
+        toolSlug: adapter.slug,
+      });
+      throw new GatewayError(
+        "Provider key is not available. Re-save your BYOK key in dashboard/providers.",
+        500,
+        "byok_key_unavailable"
+      );
+    }
     keySource = "byok";
   }
 
@@ -335,7 +322,7 @@ export async function executeToolRequest(
       .single();
 
     if (providerRow?.auth_key_encrypted) {
-      resolvedKey = providerRow.auth_key_encrypted;
+      resolvedKey = decryptSecretIfEncrypted(providerRow.auth_key_encrypted);
       keySource = "master";
       masterCostPerCall = Number(providerRow.cost_per_call) || 0;
       masterCostModel = providerRow.cost_model;
@@ -356,7 +343,19 @@ export async function executeToolRequest(
       .single();
 
     if (targetByokRow?.api_key_encrypted) {
-      return targetByokRow.api_key_encrypted;
+      try {
+        return decryptSecret(targetByokRow.api_key_encrypted);
+      } catch (err) {
+        console.error("BYOK key decrypt failed:", err instanceof Error ? err.message : String(err), {
+          userId: ctx.userId,
+          toolSlug: slug,
+        });
+        throw new GatewayError(
+          "Provider key is not available. Re-save your BYOK key in dashboard/providers.",
+          500,
+          "byok_key_unavailable"
+        );
+      }
     }
 
     const targetGateError = byokGateError(slug, false);
@@ -371,7 +370,39 @@ export async function executeToolRequest(
       .eq("is_active", true)
       .single();
 
-    return targetProviderRow?.auth_key_encrypted ?? undefined;
+    return targetProviderRow?.auth_key_encrypted
+      ? decryptSecretIfEncrypted(targetProviderRow.auth_key_encrypted)
+      : undefined;
+  }
+
+  const estimatedCost = adapter.estimateCost(operation, input);
+  const estimatedUserCost =
+    keySource === "byok" && estimatedCost > 0 ? BYOK_PLATFORM_FEE : estimatedCost;
+
+  if (
+    typeof options?.max_price === "number" &&
+    options.max_price >= 0 &&
+    estimatedUserCost > options.max_price
+  ) {
+    throw new GatewayError(
+      "Estimated cost $" +
+        estimatedUserCost.toFixed(4) +
+        " exceeds requested max_price $" +
+        options.max_price.toFixed(4),
+      402,
+      "max_price_exceeded"
+    );
+  }
+
+  if (ctx.creditBalance < estimatedUserCost && estimatedUserCost > 0) {
+    throw new GatewayError(
+      "Insufficient credits. Required: $" +
+        estimatedUserCost.toFixed(4) +
+        ", available: $" +
+        ctx.creditBalance.toFixed(4),
+      402,
+      "insufficient_credits"
+    );
   }
 
   const requestId = randomBytes(16).toString("hex");
@@ -435,7 +466,12 @@ export async function executeToolRequest(
   // Never multiply estimatedCost by units_consumed — units_consumed is a raw count
   // (tokens, characters, etc.), not a multiplier.
   const actualCost = result.actual_cost ?? estimatedCost;
-  const finalCost = result.success ? actualCost : 0;
+  const finalCost =
+    result.success
+      ? keySource === "byok" && actualCost > 0
+        ? BYOK_PLATFORM_FEE
+        : actualCost
+      : 0;
 
   // Calculate COGS when using master key
   if (keySource === "master" && result.success) {

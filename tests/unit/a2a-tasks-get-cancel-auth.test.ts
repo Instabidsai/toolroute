@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // Lane 4.120 — tasks/get and tasks/cancel in src/app/api/a2a/route.ts MUST
-// each enforce (a) API-key auth (Bearer tr_live_) and (b) ownership match
+// each enforce (a) ToolRoute API-key auth and (b) ownership match
 // (task.userId === ctx.userId) before returning or mutating a stored task.
 //
 // Lane 4.89 audited this gap (Apr 28). The implementation never landed despite
@@ -11,7 +11,7 @@ import { join } from "node:path";
 // drops either gate from either method handler.
 //
 // Detection: read route.ts as source, slice each `case "tasks/X":` block, and
-// assert both an `Authorization` / `Bearer tr_live_` substring AND a
+// assert both an `Authorization` / `hasToolRouteBearerToken` substring AND a
 // `task.userId !== <ctx>.userId` substring exist inside that block. Also
 // assert tasks/send no longer reads `params.id` (server-assigned only).
 
@@ -40,15 +40,15 @@ function sliceCase(source: string, caseLabel: string): string {
 describe("A2A tasks/get + tasks/cancel auth + ownership (Lane 4.89 + 4.120)", () => {
   const source = readFileSync(ROUTE_PATH, "utf8");
 
-  it("tasks/get requires Bearer tr_live_ AND ownership match", () => {
+  it("tasks/get requires a ToolRoute Bearer key AND ownership match", () => {
     const block = sliceCase(source, "tasks/get");
     expect(
       /authorization/i.test(block),
       "tasks/get missing Authorization header read"
     ).toBe(true);
     expect(
-      /Bearer tr_live_/.test(block),
-      "tasks/get missing Bearer tr_live_ check"
+      /hasToolRouteBearerToken\s*\(/.test(block),
+      "tasks/get missing ToolRoute key-format check"
     ).toBe(true);
     expect(
       /\.userId\s*!==\s*\w+\.userId/.test(block),
@@ -56,15 +56,15 @@ describe("A2A tasks/get + tasks/cancel auth + ownership (Lane 4.89 + 4.120)", ()
     ).toBe(true);
   });
 
-  it("tasks/cancel requires Bearer tr_live_ AND ownership match", () => {
+  it("tasks/cancel requires a ToolRoute Bearer key AND ownership match", () => {
     const block = sliceCase(source, "tasks/cancel");
     expect(
       /authorization/i.test(block),
       "tasks/cancel missing Authorization header read"
     ).toBe(true);
     expect(
-      /Bearer tr_live_/.test(block),
-      "tasks/cancel missing Bearer tr_live_ check"
+      /hasToolRouteBearerToken\s*\(/.test(block),
+      "tasks/cancel missing ToolRoute key-format check"
     ).toBe(true);
     expect(
       /\.userId\s*!==\s*\w+\.userId/.test(block),

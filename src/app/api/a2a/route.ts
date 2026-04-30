@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 import { GatewayError } from "@/lib/gateway-types";
+import {
+  hasToolRouteBearerToken,
+  TOOLROUTE_KEY_HEADER_HINT,
+} from "@/lib/toolroute-key-format";
 
 // In-memory task store for status lookups.
 // Lane 4.120 — every stored task carries `userId` so tasks/get + tasks/cancel
@@ -122,11 +126,10 @@ export async function POST(request: NextRequest) {
 
       // Check for API key
       const authHeader = request.headers.get("authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer tr_live_")) {
+      if (!hasToolRouteBearerToken(authHeader)) {
         response.error = {
           code: -32001,
-          message:
-            "API key required. Set Authorization: Bearer tr_live_xxx header. Get key at https://toolroute.ai/dashboard/keys",
+          message: TOOLROUTE_KEY_HEADER_HINT,
         };
         break;
       }
@@ -279,11 +282,10 @@ export async function POST(request: NextRequest) {
       // Lane 4.120 — require API key + ownership match. Without this, anyone
       // who learns or guesses a task_id can read another customer's artifacts.
       const authHeader = request.headers.get("authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer tr_live_")) {
+      if (!hasToolRouteBearerToken(authHeader)) {
         response.error = {
           code: -32001,
-          message:
-            "API key required. Set Authorization: Bearer tr_live_xxx header. Get key at https://toolroute.ai/dashboard/keys",
+          message: TOOLROUTE_KEY_HEADER_HINT,
         };
         break;
       }
@@ -327,11 +329,10 @@ export async function POST(request: NextRequest) {
       // Lane 4.120 — same gate as tasks/get; without this, any caller can
       // cancel any in-flight task they can name (DoS the legitimate owner).
       const authHeader = request.headers.get("authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer tr_live_")) {
+      if (!hasToolRouteBearerToken(authHeader)) {
         response.error = {
           code: -32001,
-          message:
-            "API key required. Set Authorization: Bearer tr_live_xxx header. Get key at https://toolroute.ai/dashboard/keys",
+          message: TOOLROUTE_KEY_HEADER_HINT,
         };
         break;
       }

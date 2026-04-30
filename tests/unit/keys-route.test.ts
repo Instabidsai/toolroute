@@ -118,8 +118,18 @@ function postRequest(body: unknown) {
   }) as NextRequest;
 }
 
-function buildPostSupabaseMock(plan: string | null) {
-  const planChain = queryChain({ data: { plan_slug: plan }, error: null });
+function buildPostSupabaseMock(
+  plan: string | null,
+  credits: { credit_balance?: number; lifetime_credits?: number } = {}
+) {
+  const planChain = queryChain({
+    data: {
+      plan_slug: plan,
+      credit_balance: credits.credit_balance ?? 0,
+      lifetime_credits: credits.lifetime_credits ?? 0,
+    },
+    error: null,
+  });
   const insertChain = queryChain({
     data: {
       id: "key_new",
@@ -174,6 +184,18 @@ describe("POST /api/v1/keys", () => {
 
   it("mints a tr_live_ key for paid-plan users", async () => {
     buildPostSupabaseMock("starter");
+
+    const response = await POST(postRequest({}));
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.key).toBe("tr_live_aaaa");
+    expect(mocks.generateApiKey).toHaveBeenCalled();
+    expect(mocks.generateTestApiKey).not.toHaveBeenCalled();
+  });
+
+  it("mints a tr_live_ key for free-plan users with paid credits", async () => {
+    buildPostSupabaseMock("free", { credit_balance: 5, lifetime_credits: 5 });
 
     const response = await POST(postRequest({}));
     const payload = await response.json();

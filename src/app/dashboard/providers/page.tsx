@@ -43,19 +43,16 @@ import type { LucideIcon } from "lucide-react";
 interface Provider {
   slug: string;
   name: string;
-  type: "pool" | "byok" | "free";
+  type: "pool" | "byok" | "free" | "unavailable";
   category: string;
 }
 
 // Lane 4.111-impl + Lane 6.10 — type per Lane 6.7 BYOK classification.
 // Source: .agent/lane-6.7-verified-byok-slug-list.md
-//   type:"pool" → AMBIGUOUS_DEFAULT_BYOK_SLUGS only (silent ToS / End User
-//                 carve-out / no-public-ToS — provider hasn't forbidden pool
-//                 routing). Today: openai, firecrawl, twilio, deepgram,
-//                 creatify, shippo, whisper, removebg, outscraper.
-//   type:"byok" → BYOK_REQUIRED_SLUGS (master-pool routing = direct ToS
-//                 breach) OR BYOK_INSUFFICIENT_SLUGS (BYOK alone may not
-//                 satisfy ToS — apollo pending Justin decision D4).
+//   type:"byok" → runtime requires a customer-owned provider key before
+//                 dispatch. This includes ambiguous providers until written
+//                 resale authorization exists.
+//   type:"unavailable" → BYOK alone may not satisfy ToS.
 // Drift guarded by tests/unit/dashboard-providers-tier-parity.test.ts.
 const PROVIDERS: Provider[] = [
   // BYOK required — Class-A providers (Lane 6.7 BYOK_REQUIRED)
@@ -75,22 +72,21 @@ const PROVIDERS: Provider[] = [
   { slug: "replicate", name: "Replicate", type: "byok", category: "AI" },
   { slug: "heygen", name: "HeyGen", type: "byok", category: "Video" },
 
-  // BYOK required — Class-B / Insufficient (Lane 6.7 BYOK_INSUFFICIENT)
-  // apollo §3(g)(1) bans even BYOK passthrough — listing as byok pending
+  // Not currently sellable — Class-B / Insufficient (Lane 6.7 BYOK_INSUFFICIENT)
+  // apollo §3(g)(1) bans even BYOK passthrough — listed pending
   // Justin decision D4 (remove adapter / pursue waiver / legal opinion).
-  { slug: "apollo", name: "Apollo.io", type: "byok", category: "Sales" },
+  { slug: "apollo", name: "Apollo.io", type: "unavailable", category: "Sales" },
 
-  // Pool available — AMBIGUOUS_DEFAULT_BYOK_SLUGS only (silent ToS / End User
-  // carve-out / no-public-ToS — flip to byok if provider ToS hardens).
-  { slug: "openai", name: "OpenAI", type: "pool", category: "AI" },
-  { slug: "firecrawl", name: "Firecrawl", type: "pool", category: "Scraping" },
-  { slug: "twilio", name: "Twilio", type: "pool", category: "SMS/Voice" },
-  { slug: "deepgram", name: "Deepgram", type: "pool", category: "AI" },
-  { slug: "creatify", name: "Creatify", type: "pool", category: "Ads" },
-  { slug: "shippo", name: "Shippo", type: "pool", category: "Shipping" },
-  { slug: "whisper", name: "OpenAI Whisper", type: "pool", category: "AI" },
-  { slug: "removebg", name: "Remove.bg", type: "pool", category: "Image" },
-  { slug: "outscraper", name: "Outscraper", type: "pool", category: "Scraping" },
+  // BYOK default — AMBIGUOUS_DEFAULT_BYOK_SLUGS.
+  { slug: "openai", name: "OpenAI", type: "byok", category: "AI" },
+  { slug: "firecrawl", name: "Firecrawl", type: "byok", category: "Scraping" },
+  { slug: "twilio", name: "Twilio", type: "byok", category: "SMS/Voice" },
+  { slug: "deepgram", name: "Deepgram", type: "byok", category: "AI" },
+  { slug: "creatify", name: "Creatify", type: "byok", category: "Ads" },
+  { slug: "shippo", name: "Shippo", type: "byok", category: "Shipping" },
+  { slug: "whisper", name: "OpenAI Whisper", type: "byok", category: "AI" },
+  { slug: "removebg", name: "Remove.bg", type: "byok", category: "Image" },
+  { slug: "outscraper", name: "Outscraper", type: "byok", category: "Scraping" },
 
   // Non-Lane-6.7 — historically tagged byok (kept as-is).
   // GitHub (Lane 4.104 audit shows master-pool token leaks private repos
@@ -379,6 +375,8 @@ export default function ProvidersPage() {
                         <span className="text-text-dim">Pool available</span>
                       ) : provider.type === "byok" ? (
                         <span className="text-amber">BYOK only</span>
+                      ) : provider.type === "unavailable" ? (
+                        <span className="text-red">Unavailable</span>
                       ) : (
                         <span className="text-green">Free</span>
                       )}

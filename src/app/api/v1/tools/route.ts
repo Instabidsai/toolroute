@@ -6,19 +6,25 @@ import {
   listAvailableAdapters,
 } from "@/lib/adapter-availability";
 import {
+  AMBIGUOUS_DEFAULT_BYOK_SLUGS,
   BYOK_REQUIRED_SLUGS,
   BYOK_INSUFFICIENT_SLUGS,
 } from "@/lib/byok-required-slugs";
 
 function byokSuffix(slug: string): string {
   if (BYOK_REQUIRED_SLUGS.has(slug)) return " (BYOK required)";
+  if (AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(slug)) return " (BYOK required)";
   if (BYOK_INSUFFICIENT_SLUGS.has(slug)) return " (BYOK required)";
   return "";
 }
 
 function byokRequired(slug: string | null): boolean {
   if (!slug) return false;
-  return BYOK_REQUIRED_SLUGS.has(slug) || BYOK_INSUFFICIENT_SLUGS.has(slug);
+  return (
+    BYOK_REQUIRED_SLUGS.has(slug) ||
+    AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(slug) ||
+    BYOK_INSUFFICIENT_SLUGS.has(slug)
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -236,6 +242,8 @@ function withAvailability<
     description: description ?? tool.description,
     status: availability.status,
     adapter_slug: availability.adapter_slug,
+    access_mode: availability.access_mode,
+    pool_available: availability.pool_available,
     byok_required: isByokRequired,
   };
 }

@@ -1,10 +1,20 @@
 import type { ToolAdapter } from "./gateway-types";
+import {
+  AMBIGUOUS_DEFAULT_BYOK_SLUGS,
+  BYOK_INSUFFICIENT_SLUGS,
+  BYOK_REQUIRED_SLUGS,
+  TOOLROUTE_INTERNAL_SLUGS,
+} from "./byok-required-slugs";
 
 export type AdapterCatalogStatus = "available" | "coming_soon";
+export type AdapterAccessMode = "pool" | "byok" | "free" | "unavailable";
 
 export interface AdapterAvailability {
   adapter_slug: string | null;
   status: AdapterCatalogStatus;
+  access_mode: AdapterAccessMode;
+  pool_available: boolean;
+  byok_required: boolean;
 }
 
 const REQUIRED_ENV_BY_ADAPTER: Record<string, string[]> = {
@@ -108,14 +118,61 @@ export function resolveAdapterSlug(toolSlug: string | null | undefined) {
 
 export function getAdapterAvailability(adapterSlug: string): AdapterAvailability {
   const requiredEnv = REQUIRED_ENV_BY_ADAPTER[adapterSlug];
+  const isByokRequired =
+    BYOK_REQUIRED_SLUGS.has(adapterSlug) ||
+    AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(adapterSlug);
+  const isUnavailable = BYOK_INSUFFICIENT_SLUGS.has(adapterSlug);
+  const isInternal = TOOLROUTE_INTERNAL_SLUGS.has(adapterSlug);
+
   if (!requiredEnv) {
-    return { adapter_slug: null, status: "coming_soon" };
+    return {
+      adapter_slug: null,
+      status: "coming_soon",
+      access_mode: "unavailable",
+      pool_available: false,
+      byok_required: false,
+    };
   }
 
   const missingEnv = requiredEnv.filter((name) => !hasEnv(name));
+  const poolAvailable = missingEnv.length === 0;
+
+  if (isUnavailable) {
+    return {
+      adapter_slug: adapterSlug,
+      status: "coming_soon",
+      access_mode: "unavailable",
+      pool_available: poolAvailable,
+      byok_required: true,
+    };
+  }
+
+  if (isByokRequired) {
+    return {
+      adapter_slug: adapterSlug,
+      status: "available",
+      access_mode: "byok",
+      pool_available: poolAvailable,
+      byok_required: true,
+    };
+  }
+
+  if (isInternal || requiredEnv.length === 0) {
+    return {
+      adapter_slug: adapterSlug,
+      status: "available",
+      access_mode: "free",
+      pool_available: true,
+      byok_required: false,
+    };
+  }
+
   return {
     adapter_slug: adapterSlug,
-    status: missingEnv.length === 0 ? "available" : "coming_soon",
+    status: poolAvailable ? "available" : "coming_soon",
+    access_mode: poolAvailable ? "pool" : "unavailable",
+    pool_available: poolAvailable,
+    byok_required: false,
   };
 }
 
@@ -124,7 +181,13 @@ export function getToolAvailability(
 ): AdapterAvailability {
   const adapterSlug = resolveAdapterSlug(toolSlug);
   if (!adapterSlug) {
-    return { adapter_slug: null, status: "coming_soon" };
+    return {
+      adapter_slug: null,
+      status: "coming_soon",
+      access_mode: "unavailable",
+      pool_available: false,
+      byok_required: false,
+    };
   }
 
   return getAdapterAvailability(adapterSlug);

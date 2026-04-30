@@ -3,12 +3,18 @@ import { listAdapters } from "@/lib/adapters/index";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 import { GatewayError } from "@/lib/gateway-types";
 import {
+  hasToolRouteBearerToken,
+  TOOLROUTE_KEY_HEADER_HINT,
+} from "@/lib/toolroute-key-format";
+import {
+  AMBIGUOUS_DEFAULT_BYOK_SLUGS,
   BYOK_REQUIRED_SLUGS,
   BYOK_INSUFFICIENT_SLUGS,
 } from "@/lib/byok-required-slugs";
 
 function byokSuffix(slug: string): string {
   if (BYOK_REQUIRED_SLUGS.has(slug)) return " (BYOK required)";
+  if (AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(slug)) return " (BYOK required)";
   if (BYOK_INSUFFICIENT_SLUGS.has(slug)) return " (BYOK required)";
   return "";
 }
@@ -35,7 +41,7 @@ const MCP_CORS = {
 };
 
 // Lane 4.119 — auth-gated POST responses must emit private, no-store
-// per Lane 4.48. /mcp tools/call validates Bearer tr_live_; downstream
+// per Lane 4.48. /mcp tools/call validates ToolRoute Bearer keys; downstream
 // proxies must not cache user-specific JSON-RPC payloads keyed by URL.
 // OPTIONS preflight keeps MCP_CORS-only (no body, intentionally cacheable).
 const MCP_AUTHED_HEADERS = {
@@ -130,11 +136,10 @@ export async function POST(request: NextRequest) {
       // Check for API key in Authorization header
       const authHeader = request.headers.get("authorization");
 
-      if (!authHeader || !authHeader.startsWith("Bearer tr_live_")) {
+      if (!hasToolRouteBearerToken(authHeader)) {
         response.error = {
           code: -32001,
-          message:
-            "API key required. Set Authorization: Bearer tr_live_xxx header. Get key at https://toolroute.ai/dashboard/keys",
+          message: TOOLROUTE_KEY_HEADER_HINT,
         };
         break;
       }

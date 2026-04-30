@@ -29,6 +29,7 @@ describe("tools-route BYOK disclosure (Lane 4.111 surface 10)", () => {
   it("exports a byokRequired() helper backed by BYOK_REQUIRED_SLUGS", () => {
     expect(source).toMatch(/function byokRequired\b/);
     expect(source).toMatch(/BYOK_REQUIRED_SLUGS\.has\(/);
+    expect(source).toMatch(/AMBIGUOUS_DEFAULT_BYOK_SLUGS\.has\(/);
     expect(source).toMatch(/BYOK_INSUFFICIENT_SLUGS\.has\(/);
   });
 
@@ -37,6 +38,8 @@ describe("tools-route BYOK disclosure (Lane 4.111 surface 10)", () => {
     // We assert against the source rather than runtime to avoid pulling in
     // createClient at test time (sibling pattern to drift tests).
     expect(source).toMatch(/byok_required:\s*isByokRequired/);
+    expect(source).toMatch(/access_mode:\s*availability\.access_mode/);
+    expect(source).toMatch(/pool_available:\s*availability\.pool_available/);
   });
 
   it("withAvailability() appends BYOK suffix to description for Class-A", () => {
