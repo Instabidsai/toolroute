@@ -31,6 +31,10 @@ export async function buildAgentManifest() {
     },
     discovery: {
       manifest: "/api/v1/agent/manifest",
+      openapi: "/.well-known/openapi.json",
+      ai_plugin: "/.well-known/ai-plugin.json",
+      mcp_manifest: "/.well-known/mcp.json",
+      agents_json: "/agents.json",
       llms_txt: "/llms.txt",
       llms_full_txt: "/llms-full.txt",
       tool_catalog: "/api/v1/tools",
@@ -175,6 +179,7 @@ export async function buildAgentManifest() {
       "fallback/auto-routing",
       "programmatic key management",
       "separate management/provisioning key scope",
+      "well-known OpenAPI and plugin discovery",
     ],
   };
 }

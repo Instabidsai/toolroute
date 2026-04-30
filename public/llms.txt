@@ -24,6 +24,10 @@ curl -X POST https://toolroute.ai/api/v1/execute \
 
 ## Core API Endpoints
 - GET /api/v1/agent/manifest -- Machine-readable agent onboarding and capability manifest
+- GET /.well-known/openapi.json -- OpenAPI contract for agent/tool clients
+- GET /.well-known/ai-plugin.json -- Plugin-style discovery manifest
+- GET /.well-known/mcp.json -- MCP client connection manifest
+- GET /agents.json -- Agent-facing discovery card
 - POST /api/v1/signup -- Create an account and receive a tr_test management key
 - POST /api/v1/execute -- Execute any tool (tool ID format: provider/operation)
 - POST /mcp -- MCP Streamable HTTP (JSON-RPC)
@@ -49,10 +53,13 @@ Describe your task in natural language:
 ## Links
 - Documentation: https://toolroute.ai/docs
 - Agent manifest: https://toolroute.ai/api/v1/agent/manifest
+- OpenAPI spec: https://toolroute.ai/.well-known/openapi.json
+- AI plugin manifest: https://toolroute.ai/.well-known/ai-plugin.json
+- MCP manifest: https://toolroute.ai/.well-known/mcp.json
+- Agents manifest: https://toolroute.ai/agents.json
 - Tool catalog: https://toolroute.ai/tools
 - Skills catalog: https://toolroute.ai/skills
 - Pricing: https://toolroute.ai/pricing
 - Blog: https://toolroute.ai/blog
 - Full API reference: https://toolroute.ai/llms-full.txt
-- OpenAPI spec: https://toolroute.ai/openapi.json
 - GitHub: https://github.com/Instabidsai/toolroute

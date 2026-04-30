@@ -13,6 +13,14 @@ The registry maintains living beliefs -- confidence scores that evolve from real
 
 Agents should start at `GET /api/v1/agent/manifest`. It returns the machine-readable setup graph: signup, key inspection, Stripe checkout, saved-card setup, auto top-up, live-key creation, BYOK provider-key storage, and execution endpoints.
 
+Additional machine-readable discovery surfaces:
+
+- `GET /.well-known/openapi.json` -- OpenAPI 3.1 contract.
+- `GET /openapi.json` -- compatibility alias for the same OpenAPI contract.
+- `GET /.well-known/ai-plugin.json` -- plugin-style manifest pointing agents at the OpenAPI contract.
+- `GET /.well-known/mcp.json` -- MCP connection manifest for streamable HTTP clients.
+- `GET /agents.json` -- agent-facing capability and action card.
+
 The no-human happy path is:
 
 1. `POST /api/v1/signup` with email, password, and accepted terms. The response returns a `tr_test_` management key.
