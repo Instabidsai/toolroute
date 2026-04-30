@@ -4,6 +4,7 @@ import { AUTHED_RESPONSE_HEADERS, supabaseAdmin } from "@/lib/gateway";
 import { getEmailDomain, isDisposableEmail } from "@/lib/disposable-domains";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 import { GatewayError } from "@/lib/gateway-types";
+import { ACCOUNT_MANAGEMENT_SCOPE } from "@/lib/key-scopes";
 
 type SignupBody = {
   email?: unknown;
@@ -190,9 +191,10 @@ export async function POST(request: NextRequest) {
   const apiKey = generateSignupApiKey();
   const { error: keyInsertError } = await sb.from("api_keys").insert({
     user_id: userId,
-    name: "Default Test Key",
+    name: "Default Management Key",
     key_hash: apiKey.hash,
     key_prefix: apiKey.prefix,
+    allowed_tools: [ACCOUNT_MANAGEMENT_SCOPE],
     is_active: true,
     rate_limit_rpm: 10,
   });
@@ -218,6 +220,7 @@ export async function POST(request: NextRequest) {
       user_id: userId,
       api_key: apiKey.raw,
       key_prefix: apiKey.prefix,
+      key_scope: "management",
     },
     { status: 201, headers: AUTHED_RESPONSE_HEADERS }
   );

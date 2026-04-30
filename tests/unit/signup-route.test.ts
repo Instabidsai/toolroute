@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
+import { ACCOUNT_MANAGEMENT_SCOPE } from "@/lib/key-scopes";
 
 const mocks = vi.hoisted(() => ({
   supabaseAdmin: vi.fn(),
@@ -103,6 +104,7 @@ describe("POST /api/v1/signup", () => {
     expect(payload.user_id).toBe("user_123");
     expect(payload.api_key).toMatch(/^tr_test_/);
     expect(payload.key_prefix).toBe(payload.api_key.slice(0, 12));
+    expect(payload.key_scope).toBe("management");
 
     expect(supabase.createUser).toHaveBeenCalledWith({
       email: "agent@example.com",
@@ -127,8 +129,9 @@ describe("POST /api/v1/signup", () => {
     const keyInsert = supabase.apiKeysInsert.mock.calls[0][0];
     expect(keyInsert).toMatchObject({
       user_id: "user_123",
-      name: "Default Test Key",
+      name: "Default Management Key",
       key_prefix: payload.key_prefix,
+      allowed_tools: [ACCOUNT_MANAGEMENT_SCOPE],
       is_active: true,
       rate_limit_rpm: 10,
     });

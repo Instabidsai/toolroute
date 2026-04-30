@@ -14,6 +14,7 @@ describe("agent-controlled onboarding routes", () => {
     expect(route).toMatch(/buildAgentManifest\(\)/);
     expect(manifest).toMatch(/can_create_test_key_by_api:\s*true/);
     expect(manifest).toMatch(/can_manage_account_with_toolroute_key:\s*true/);
+    expect(manifest).toMatch(/account_management_requires_management_key_scope:\s*true/);
     expect(manifest).toMatch(/can_start_stripe_checkout_by_api:\s*true/);
     expect(manifest).toMatch(/can_start_saved_payment_method_setup_by_api:\s*true/);
     expect(manifest).toMatch(/can_enable_auto_topup_by_api:\s*true/);
@@ -40,11 +41,11 @@ describe("agent-controlled onboarding routes", () => {
     }
   });
 
-  it("blocks limited execution keys from account management", () => {
+  it("requires the dedicated management key scope for account management", () => {
     const accountAuth = source("src/lib/account-auth.ts");
 
-    expect(accountAuth).toMatch(/ctx\.allowedTools\s*&&\s*ctx\.allowedTools\.length\s*>\s*0/);
-    expect(accountAuth).toMatch(/restricted_key_no_account_management/);
+    expect(accountAuth).toMatch(/isAccountManagementScope\(ctx\.allowedTools\)/);
+    expect(accountAuth).toMatch(/management_key_required/);
   });
 
   it("checkout returns machine-readable next steps for autonomous setup", () => {

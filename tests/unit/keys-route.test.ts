@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
+import { ACCOUNT_MANAGEMENT_SCOPE } from "@/lib/key-scopes";
 
 const mocks = vi.hoisted(() => ({
   getAccountActor: vi.fn(),
@@ -126,7 +127,8 @@ function postRequest(body: unknown) {
 
 function buildPostSupabaseMock(
   plan: string | null,
-  credits: { credit_balance?: number; lifetime_credits?: number } = {}
+  credits: { credit_balance?: number; lifetime_credits?: number } = {},
+  keyRow: { allowed_tools?: string[] | null; name?: string } = {}
 ) {
   const planChain = queryChain({
     data: {
@@ -139,9 +141,9 @@ function buildPostSupabaseMock(
   const insertChain = queryChain({
     data: {
       id: "key_new",
-      name: "Default Key",
+      name: keyRow.name ?? "Default Key",
       key_prefix: plan && plan !== "free" ? "tr_live_abcd1234" : "tr_test_abcd",
-      allowed_tools: null,
+      allowed_tools: keyRow.allowed_tools ?? null,
       is_active: true,
       created_at: "2026-04-27T00:00:00.000Z",
       expires_at: null,
@@ -185,6 +187,7 @@ describe("POST /api/v1/keys", () => {
 
     expect(response.status).toBe(201);
     expect(payload.key).toBe("tr_test_bbbb");
+    expect(payload.scope).toBe("execute");
     expect(mocks.generateTestApiKey).toHaveBeenCalled();
     expect(mocks.generateApiKey).not.toHaveBeenCalled();
   });
@@ -197,6 +200,7 @@ describe("POST /api/v1/keys", () => {
 
     expect(response.status).toBe(201);
     expect(payload.key).toBe("tr_live_aaaa");
+    expect(payload.scope).toBe("execute");
     expect(mocks.generateApiKey).toHaveBeenCalled();
     expect(mocks.generateTestApiKey).not.toHaveBeenCalled();
   });
@@ -209,6 +213,7 @@ describe("POST /api/v1/keys", () => {
 
     expect(response.status).toBe(201);
     expect(payload.key).toBe("tr_live_aaaa");
+    expect(payload.scope).toBe("execute");
     expect(mocks.generateApiKey).toHaveBeenCalled();
     expect(mocks.generateTestApiKey).not.toHaveBeenCalled();
   });
@@ -221,6 +226,44 @@ describe("POST /api/v1/keys", () => {
 
     expect(response.status).toBe(201);
     expect(payload.key).toBe("tr_test_bbbb");
+    expect(payload.scope).toBe("execute");
     expect(mocks.generateTestApiKey).toHaveBeenCalled();
+  });
+
+  it("creates a non-executing management key when requested", async () => {
+    const supabase = buildPostSupabaseMock(
+      "starter",
+      {},
+      { allowed_tools: [ACCOUNT_MANAGEMENT_SCOPE], name: "Automation Management Key" }
+    );
+
+    const response = await POST(
+      postRequest({ purpose: "management", name: "Automation Management Key" })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.scope).toBe("management");
+    expect(supabase.apiKeys.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Automation Management Key",
+        allowed_tools: [ACCOUNT_MANAGEMENT_SCOPE],
+      })
+    );
+  });
+
+  it("rejects reserved scope markers inside execution key allowlists", async () => {
+    const supabase = buildPostSupabaseMock("starter");
+
+    const response = await POST(
+      postRequest({
+        allowed_tools: ["firecrawl/scrape", ACCOUNT_MANAGEMENT_SCOPE],
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error.code).toBe("reserved_key_scope");
+    expect(supabase.apiKeys.insert).not.toHaveBeenCalled();
   });
 });
