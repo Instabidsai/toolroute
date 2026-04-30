@@ -1,0 +1,153 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
+
+// Lane 4.166 — drift guard: api_keys.key_prefix SELECT-projection
+// allow-list.
+//
+// `api_keys.key_prefix` is the human-visible prefix of each API key
+// (e.g. `tr_live_…` for paid plan keys, `tr_test_…` for free/test keys).
+// The prefix is the discriminator that gates which billing path a
+// request takes (Lane 4.3: only pro/scale plans may mint `tr_live_`
+// keys), so each row's `key_prefix` is, in effect, a per-key plan-tier
+// signal.
+//
+// Lane 4.123 already locks the WRITE side of `api_keys.user_id` (no
+// post-create owner reassignment), Lane 4.129 locks UPDATE/DELETE
+// shape, and Lane 4.143 locks the projection of `key_hash`. This
+// guard is the projection complement for `key_prefix`: every SELECT
+// projection that pulls `key_prefix` is a place the live-vs-test
+// signal crosses the SQL→TS boundary.
+//
+// Today's read surface is exactly 1 file with 3 callsites, all
+// owner-scoped:
+//
+//   - src/app/api/v1/keys/route.ts —
+//       POST create response (.select("id, name, key_prefix, …"),
+//         line ~65)
+//       GET list, .eq("user_id", userId) (.select("id, name,
+//         key_prefix, …"), line ~115)
+//       PATCH rename response, .eq("user_id", userId)
+//         (.select("id, name, key_prefix, …"), line ~279)
+//
+// Every other `.from('api_keys')` callsite in src/ is either an
+// idempotency probe (`.select("id")`), a TTL probe
+// (`.select("expires_at")` in gateway.ts), an INSERT, an UPDATE, or
+// a DELETE — none project `key_prefix`.
+//
+// Why guard this column even when it isn't a credential:
+//
+//   - `key_prefix` is the live-vs-test signal per-key. A new reader
+//     is a new place the live-key inventory of an account crosses
+//     the boundary — useful fingerprint for billing-abuse target
+//     selection (paid plans have credit balance to drain).
+//   - Combined with `gateway_users.plan_slug` (Lane 4.159), a leak
+//     of `key_prefix` confirms the user's plan tier from a different
+//     SQL path — defense in depth means both projections must be
+//     locked.
+//   - Cross-tenant aggregation (admin views, support tools) belongs
+//     behind admin auth + an explicit allow-list entry, not silently
+//     in a feature PR.
+//
+// Three classes of violation handled here (all SELECT-side):
+//
+//   1. `.from('api_keys').select('… key_prefix …')` outside the
+//      allow-list.
+//   2. `.returns<{ key_prefix: … }>()` generic outside the allow-list
+//      (no callsite uses this today, but lock it down anyway because
+//      TS-narrowing makes the leak invisible to readers).
+//   3. Raw SQL `SELECT … key_prefix … FROM api_keys` anywhere in src/.
+//
+// Source-file regex parser only — registry imports often pull in
+// createClient() at module load and crash without prod env (memory
+// rule #59).
+//
+// Sibling guards:
+//   - Lane 4.123 (api_keys.user_id immutable write-paths)
+//   - Lane 4.129 (api_keys UPDATE/DELETE write-paths)
+//   - Lane 4.143 (api_keys.key_hash SELECT-projection)
+//   - Lane 4.159 (gateway_users.plan_slug SELECT-projection)
+//   - Lane 4.3 (tr_live_ gating)
+
+const SRC_ROOT = resolve(process.cwd(), "src");
+
+function walk(dir: string, files: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    const st = statSync(full);
+    if (st.isDirectory()) {
+      if (entry === "node_modules" || entry === ".next") continue;
+      walk(full, files);
+    } else if (
+      st.isFile() &&
+      (full.endsWith(".ts") || full.endsWith(".tsx")) &&
+      !full.endsWith(".test.ts") &&
+      !full.endsWith(".test.tsx")
+    ) {
+      files.push(full);
+    }
+  }
+  return files;
+}
+
+// Strip /* … */ block comments and // line comments before regex
+// matching so JSDoc references to the column don't trigger false
+// positives (memory rule from prior drift-guard work).
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
+function rel(file: string): string {
+  return file.replace(SRC_ROOT, "src").replace(/\\/g, "/");
+}
+
+// Files allowed to SELECT `key_prefix` from `api_keys`.
+// Exactly one read path: owner-scoped key management endpoints.
+const PROJECTION_ALLOWLIST = new Set<string>([
+  "src/app/api/v1/keys/route.ts",
+]);
+
+describe("Lane 4.166 — api_keys.key_prefix SELECT-projection allow-list", () => {
+  const files = walk(SRC_ROOT);
+
+  it("only allow-listed files SELECT key_prefix from api_keys", () => {
+    const re =
+      /\.from\(\s*["']api_keys["']\s*\)[\s\S]{0,500}?\.select\(\s*["'`][^"'`]*\bkey_prefix\b[^"'`]*["'`]/;
+    const violators: string[] = [];
+    for (const file of files) {
+      const src = stripComments(readFileSync(file, "utf-8"));
+      if (re.test(src)) {
+        const r = rel(file);
+        if (!PROJECTION_ALLOWLIST.has(r)) violators.push(r);
+      }
+    }
+    expect(violators).toEqual([]);
+  });
+
+  it("only allow-listed files declare key_prefix in an api_keys .returns<>() generic", () => {
+    const re =
+      /\.from\(\s*["']api_keys["']\s*\)[\s\S]{0,500}?\.returns<[\s\S]*?\bkey_prefix\b/;
+    const violators: string[] = [];
+    for (const file of files) {
+      const src = stripComments(readFileSync(file, "utf-8"));
+      if (re.test(src)) {
+        const r = rel(file);
+        if (!PROJECTION_ALLOWLIST.has(r)) violators.push(r);
+      }
+    }
+    expect(violators).toEqual([]);
+  });
+
+  it("no raw SQL SELECT key_prefix FROM api_keys in src/", () => {
+    const re =
+      /SELECT\s+[\s\S]*?\bkey_prefix\b[\s\S]*?\bFROM\s+api_keys\b/i;
+    const violators: string[] = [];
+    for (const file of files) {
+      const src = stripComments(readFileSync(file, "utf-8"));
+      if (re.test(src)) violators.push(rel(file));
+    }
+    expect(violators).toEqual([]);
+  });
+});
