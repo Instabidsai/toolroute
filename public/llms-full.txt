@@ -29,6 +29,12 @@ Additional machine-readable discovery surfaces:
 - `pool_contract_required` -- ToolRoute-funded resale/pooling needs partner authorization first.
 - `unavailable` -- do not offer until waiver, legal decision, or adapter removal is complete.
 
+`GET /api/v1/provider-requirements` turns that verdict into setup steps. Use
+`?tool_slug=<catalog-slug>` or `?adapter_slug=<adapter-slug>` to ask what an
+agent must do before execution. BYOK-capable providers point to `/api/v1/byok`;
+OAuth/connected-account providers report that the provider consent flow is not
+fully agent-completable yet.
+
 The no-human happy path is:
 
 1. `POST /api/v1/signup` with email, password, and accepted terms. The response returns a `tr_test_` management key.
