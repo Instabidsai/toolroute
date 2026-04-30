@@ -114,15 +114,15 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
   },
   "src/app/api/v1/billing/setup-payment/route.ts": {
     classification: "account",
-    rationale: "Auto-top-up payment-method setup by session or unrestricted ToolRoute key.",
+    rationale: "Auto-top-up payment-method setup by session or ToolRoute management key.",
   },
   "src/app/api/v1/settings/route.ts": {
     classification: "account",
-    rationale: "User auto-top-up + plan settings by session or unrestricted ToolRoute key.",
+    rationale: "User auto-top-up + plan settings by session or ToolRoute management key.",
   },
   "src/app/api/v1/keys/route.ts": {
     classification: "account",
-    rationale: "API key CRUD by the owning user or agent through an existing ToolRoute key.",
+    rationale: "API key CRUD by the owning user or agent through an existing ToolRoute management key.",
   },
 
   // --- Admin auth ---
@@ -157,6 +157,26 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
   "src/app/llms-full.txt/route.ts": {
     classification: "public",
     rationale: "Public AI-agent discovery file (toolroute.ai/llms-full.txt). Static text serve.",
+  },
+  "src/app/.well-known/openapi.json/route.ts": {
+    classification: "public",
+    rationale: "Public OpenAPI contract for agent/tool discovery. No user data.",
+  },
+  "src/app/openapi.json/route.ts": {
+    classification: "public",
+    rationale: "Compatibility alias for the public OpenAPI contract. No user data.",
+  },
+  "src/app/.well-known/ai-plugin.json/route.ts": {
+    classification: "public",
+    rationale: "Public plugin discovery manifest pointing to OpenAPI. No user data.",
+  },
+  "src/app/.well-known/mcp.json/route.ts": {
+    classification: "public",
+    rationale: "Public MCP connection manifest. Secret value is an env placeholder only.",
+  },
+  "src/app/agents.json/route.ts": {
+    classification: "public",
+    rationale: "Public agent-facing discovery card. No user data.",
   },
 };
 
