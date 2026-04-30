@@ -34,6 +34,7 @@ curl -X POST https://toolroute.ai/api/v1/execute \
 - POST /mcp -- MCP Streamable HTTP (JSON-RPC)
 - POST /api/a2a -- A2A protocol (Google)
 - GET /api/v1/tools -- Tool catalog (no auth required, includes offerability metadata, supports ?format=openai)
+- GET /api/v1/provider-requirements -- Provider setup matrix for BYOK/OAuth/contract-gated tools
 - GET /api/v1/key -- API key info + balance
 - POST /api/v1/checkout -- Add credits via Stripe (session JWT or ToolRoute management key)
 - POST /api/v1/billing/setup-payment -- Save a reusable Stripe payment method (session JWT or ToolRoute management key)

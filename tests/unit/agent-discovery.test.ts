@@ -47,6 +47,7 @@ describe("agent-native discovery manifests", () => {
     expect(spec.paths["/api/v1/signup"].post.responses["201"].description).toContain(
       "management-scoped"
     );
+    expect(spec.paths["/api/v1/provider-requirements"].get.security).toEqual([]);
     expect(spec.paths["/api/v1/execute"].post.security).toEqual([
       { ToolRouteBearer: [] },
     ]);

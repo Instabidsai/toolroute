@@ -42,6 +42,7 @@ export async function buildAgentManifest() {
       llms_txt: "/llms.txt",
       llms_full_txt: "/llms-full.txt",
       tool_catalog: "/api/v1/tools",
+      provider_requirements: "/api/v1/provider-requirements",
       mcp_tools: "/api/v1/tools?format=mcp",
       openai_tools: "/api/v1/tools?format=openai",
     },
@@ -116,6 +117,15 @@ export async function buildAgentManifest() {
           auto_topup_threshold: 1,
           auto_topup_amount_cents: 1000,
         },
+      },
+      {
+        step: "inspect_provider_setup_requirements",
+        method: "GET",
+        path: "/api/v1/provider-requirements?tool_slug=openai",
+        auth: "none",
+        returns: ["requirement"],
+        notes:
+          "Use this before BYOK/OAuth setup to determine whether a provider is native, customer BYOK, customer OAuth, contract-gated, or unavailable.",
       },
       {
         step: "save_provider_key_when_required",

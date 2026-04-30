@@ -58,6 +58,10 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
     classification: "public",
     rationale: "Public tool catalog with format=openai support.",
   },
+  "src/app/api/v1/provider-requirements/route.ts": {
+    classification: "public",
+    rationale: "Public provider setup matrix. Describes required auth/setup steps, no user data.",
+  },
   "src/app/api/v1/health/route.ts": {
     classification: "public",
     rationale: "Health check — uptime / adapter count, no PII.",

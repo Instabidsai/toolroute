@@ -135,6 +135,44 @@ export function buildOpenApiSpec() {
           },
         },
       },
+      "/api/v1/provider-requirements": {
+        get: {
+          tags: ["Tools"],
+          operationId: "listProviderRequirements",
+          summary: "List provider setup requirements for agents",
+          description:
+            "Returns the concrete setup path for each provider: no setup, BYOK via /api/v1/byok, provider OAuth/connected account, partner-contract support, or unavailable.",
+          security: [],
+          parameters: [
+            {
+              name: "tool_slug",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+              description:
+                "Optional public catalog/tool slug such as google-drive or fal-ai.",
+            },
+            {
+              name: "adapter_slug",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+              description:
+                "Optional runtime adapter slug such as drive, openai, or slack.",
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Provider setup requirements",
+              content: {
+                "application/json": {
+                  schema: { type: "object", additionalProperties: true },
+                },
+              },
+            },
+          },
+        },
+      },
       "/api/v1/execute": {
         post: {
           tags: ["Execution"],
