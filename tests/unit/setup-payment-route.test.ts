@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({
+  getAccountActor: vi.fn(),
   getUserFromSession: vi.fn(),
   supabaseAdmin: vi.fn(),
   stripe: {
@@ -19,6 +20,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/stripe-billing", () => ({
   getStripeClient: mocks.getStripeClient,
+}));
+
+vi.mock("@/lib/account-auth", () => ({
+  getAccountActor: mocks.getAccountActor,
 }));
 
 vi.mock("@/lib/gateway", () => ({
@@ -61,9 +66,10 @@ describe("POST /api/v1/billing/setup-payment", () => {
     vi.resetAllMocks();
     process.env.STRIPE_SECRET_KEY = "sk_test_123";
     mocks.getStripeClient.mockReturnValue(mocks.stripe);
-    mocks.getUserFromSession.mockResolvedValue({
+    mocks.getAccountActor.mockResolvedValue({
       userId: "user_123",
       email: "agent@example.com",
+      authKind: "session",
     });
     mocks.stripe.customers.create.mockResolvedValue({ id: "cus_new" });
     mocks.stripe.checkout.sessions.create.mockResolvedValue({

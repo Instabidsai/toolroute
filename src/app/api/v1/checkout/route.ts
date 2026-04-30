@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getUserFromSession, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
+import { AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
+import { getAccountActor } from "@/lib/account-auth";
 import { GatewayError } from "@/lib/gateway-types";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     assertBodyUnder(request, BODY_LIMITS.checkout);
 
     const authHeader = request.headers.get("authorization");
-    const { userId, email } = await getUserFromSession(authHeader);
+    const { userId, email, authKind } = await getAccountActor(authHeader);
 
     const body = await request.json();
     const { type, amount, plan } = body as {
@@ -64,19 +65,28 @@ export async function POST(request: NextRequest) {
 
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
-        customer_email: email,
+        customer_email: email || undefined,
         line_items: [{ price: credit.priceId, quantity: 1 }],
         metadata: {
           user_id: userId,
           type: "credits",
           credit_amount: String(credit.amount),
+          initiated_by: authKind,
         },
         success_url: `${origin}/dashboard/billing?success=true&amount=${credit.amount}`,
         cancel_url: `${origin}/dashboard/billing?canceled=true`,
       });
 
       return NextResponse.json(
-        { checkout_url: session.url },
+        {
+          checkout_url: session.url,
+          next: {
+            browser_required: true,
+            after_success: "/dashboard/keys?new=1",
+            create_live_key: "/api/v1/keys",
+            check_balance: "/api/v1/key",
+          },
+        },
         { headers: AUTHED_RESPONSE_HEADERS }
       );
     }
@@ -92,19 +102,28 @@ export async function POST(request: NextRequest) {
 
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
-        customer_email: email,
+        customer_email: email || undefined,
         line_items: [{ price: priceId, quantity: 1 }],
         metadata: {
           user_id: userId,
           type: "subscription",
           plan: plan!,
+          initiated_by: authKind,
         },
         success_url: `${origin}/dashboard/billing?success=true&plan=${plan}`,
         cancel_url: `${origin}/dashboard/billing?canceled=true`,
       });
 
       return NextResponse.json(
-        { checkout_url: session.url },
+        {
+          checkout_url: session.url,
+          next: {
+            browser_required: true,
+            after_success: "/dashboard/keys?new=1",
+            create_live_key: "/api/v1/keys",
+            check_balance: "/api/v1/key",
+          },
+        },
         { headers: AUTHED_RESPONSE_HEADERS }
       );
     }

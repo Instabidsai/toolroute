@@ -9,6 +9,21 @@ ToolRoute is a unified API gateway that lets AI agents call curated tools throug
 
 The registry maintains living beliefs -- confidence scores that evolve from real usage data -- so recommendations improve over time. When you ask "what tool should I use for X?", ToolRoute answers with data from hundreds of real agent sessions, not opinions.
 
+## Agent-Controlled Setup
+
+Agents should start at `GET /api/v1/agent/manifest`. It returns the machine-readable setup graph: signup, key inspection, Stripe checkout, saved-card setup, auto top-up, live-key creation, BYOK provider-key storage, and execution endpoints.
+
+The no-human happy path is:
+
+1. `POST /api/v1/signup` with email, password, and accepted terms. The response returns a `tr_test_` key.
+2. `GET /api/v1/key` with the test key to inspect balance and limits.
+3. `POST /api/v1/checkout` with the test key to create a Stripe Checkout URL for credits or subscription.
+4. A browser/payment-capable agent opens the `checkout_url`. Stripe card entry or wallet approval is still required.
+5. After the webhook grants credits, `POST /api/v1/keys` with the ToolRoute key to mint a `tr_live_` key.
+6. Optional: `POST /api/v1/billing/setup-payment`, complete the setup URL, then `PATCH /api/v1/settings` to enable auto top-up.
+7. For BYOK-required providers, `POST /api/v1/byok` with `tool_slug` and the provider secret. ToolRoute encrypts the provider key at rest.
+8. Execute via REST, MCP, A2A, or OpenAI/Anthropic tool catalogs.
+
 ## Protocols
 
 ToolRoute supports 5 integration protocols:
@@ -23,13 +38,14 @@ ToolRoute supports 5 integration protocols:
 
 Two auth schemes:
 
-1. **API Key** (for gateway calls): `Authorization: Bearer tr_live_xxx`
-   - Used for: /api/v1/execute, /api/v1/key, /api/v1/usage, /mcp, /api/a2a
-   - Obtain at: https://toolroute.ai/dashboard/keys
+1. **API Key** (for gateway calls): `Authorization: Bearer tr_live_xxx` or `Authorization: Bearer tr_test_xxx`
+   - Used for: /api/v1/execute, /api/v1/key, /api/v1/usage, /api/v1/checkout, /api/v1/billing/setup-payment, /api/v1/settings, /api/v1/keys, /api/v1/byok, /mcp, /api/a2a
+   - Obtain from /api/v1/signup (test key) or /api/v1/keys (live key after payment)
    - Keys are SHA-256 hashed before storage. You only see the full key at creation time.
+   - Keys restricted to specific `allowed_tools` cannot manage account settings or secrets.
 
 2. **Session JWT** (for dashboard management): `Authorization: Bearer <supabase_jwt>`
-   - Used for: /api/v1/keys (CRUD), /api/v1/checkout, /api/v1/settings
+   - Used for: dashboard flows and as an alternative auth mode for /api/v1/settings, /api/v1/billing/setup-payment, /api/v1/keys, /api/v1/checkout, /api/v1/byok
 
 ## Endpoints
 
@@ -76,6 +92,9 @@ Google Agent-to-Agent protocol endpoint for agent interoperability.
 ### GET /api/v1/tools -- List Available Tools
 No auth required. Query params: `category`, `q`, `limit`, `format` (set to `openai` for OpenAI function calling format).
 
+### GET /api/v1/agent/manifest -- Agent Setup Manifest
+No auth required. Returns machine-readable onboarding, payment, BYOK, protocol, and catalog metadata for autonomous agents.
+
 ### GET /api/v1/key -- API Key Info + Balance
 Auth: Bearer API key required.
 
@@ -83,16 +102,19 @@ Auth: Bearer API key required.
 Auth: Bearer API key or session JWT. Query params: `limit`, `offset`, `tool`, `since`.
 
 ### POST /api/v1/checkout -- Add Credits
-Auth: Session JWT required. Body: `{"amount": 10}`. Minimum $5.
+Auth: Session JWT or ToolRoute API key. Body: `{"type":"credits","amount":"10"}`. Returns a Stripe `checkout_url` and next-step metadata. A browser/payment-capable agent or human must complete checkout.
 
-### POST /api/v1/keys -- Create API Key
-Auth: Session JWT required.
-
-### POST /api/v1/byok -- Register BYOK Key
-Auth: Session JWT required. Body: `{"provider": "elevenlabs", "api_key": "your-key"}`.
+### POST /api/v1/billing/setup-payment -- Save Payment Method
+Auth: Session JWT or ToolRoute API key. Returns a Stripe setup `checkout_url` for a reusable payment method. A browser/payment-capable agent or human must complete setup.
 
 ### PATCH /api/v1/settings -- Auto-Top-Up Settings
-Auth: Session JWT required. Body: `{"auto_topup_enabled": true, "auto_topup_amount": 10, "auto_topup_threshold": 2}`.
+Auth: Session JWT or ToolRoute API key. Body: `{"auto_topup_enabled": true, "auto_topup_amount_cents": 1000, "auto_topup_threshold": 1}`.
+
+### POST /api/v1/keys -- Create API Key
+Auth: Session JWT or ToolRoute API key. Returns the full key once.
+
+### POST /api/v1/byok -- Register BYOK Key
+Auth: Session JWT or ToolRoute API key. Body: `{"tool_slug": "elevenlabs", "api_key": "your-key"}`.
 
 ---
 

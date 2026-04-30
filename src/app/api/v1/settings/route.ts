@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromSession, supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
+import { supabaseAdmin, AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
+import { getAccountActor } from "@/lib/account-auth";
 import { GatewayError } from "@/lib/gateway-types";
 import { getPaymentMethodSummary, getStripeClient } from "@/lib/stripe-billing";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
@@ -7,7 +8,7 @@ import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-    const { userId } = await getUserFromSession(authHeader);
+    const { userId } = await getAccountActor(authHeader);
 
     const sb = supabaseAdmin();
     const { data, error } = await sb
@@ -74,7 +75,7 @@ export async function PATCH(request: NextRequest) {
     assertBodyUnder(request, BODY_LIMITS.settings);
 
     const authHeader = request.headers.get("authorization");
-    const { userId } = await getUserFromSession(authHeader);
+    const { userId } = await getAccountActor(authHeader);
 
     const body = await request.json();
     const updates: Record<string, unknown> = {};
