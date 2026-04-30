@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.elevenlabs.io/v1";
 const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
@@ -62,7 +63,7 @@ export const elevenlabsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `ElevenLabs text-to-speech failed: ${res.status} ${errText}`,
+            error: redactCreds(`ElevenLabs text-to-speech failed: ${res.status} ${errText}`),
             provider: "elevenlabs",
           };
         }
@@ -92,7 +93,7 @@ export const elevenlabsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `ElevenLabs voices failed: ${res.status} ${errText}`,
+            error: redactCreds(`ElevenLabs voices failed: ${res.status} ${errText}`),
             provider: "elevenlabs",
           };
         }

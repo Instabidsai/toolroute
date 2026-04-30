@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.creatomate.com/v1";
 
@@ -57,7 +58,7 @@ export const creatomateAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Creatomate render failed: ${res.status} ${errText}`,
+            error: redactCreds(`Creatomate render failed: ${res.status} ${errText}`),
             provider: "creatomate",
           };
         }
@@ -82,7 +83,7 @@ export const creatomateAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Creatomate list-templates failed: ${res.status} ${errText}`,
+            error: redactCreds(`Creatomate list-templates failed: ${res.status} ${errText}`),
             provider: "creatomate",
           };
         }
@@ -114,7 +115,7 @@ export const creatomateAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Creatomate get-render failed: ${res.status} ${errText}`,
+            error: redactCreds(`Creatomate get-render failed: ${res.status} ${errText}`),
             provider: "creatomate",
           };
         }

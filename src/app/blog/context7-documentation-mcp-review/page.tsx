@@ -377,18 +377,17 @@ export default function Article() {
           <div className="bg-bg-card border border-border rounded-lg p-4 my-6">
             <pre className="text-xs text-text-muted overflow-x-auto">
 {`POST /api/v1/execute
+// BYOK required for Context7
 {
-  "tool": "context7",
-  "operation": "resolve-library-id",
-  "params": { "libraryName": "nextjs" }
+  "tool": "context7/search",
+  "input": { "query": "nextjs" }
 }
 
 // Then:
 {
-  "tool": "context7",
-  "operation": "query-docs",
-  "params": {
-    "libraryId": "/vercel/next.js",
+  "tool": "context7/query-docs",
+  "input": {
+    "library": "next.js",
     "query": "middleware configuration"
   }
 }`}

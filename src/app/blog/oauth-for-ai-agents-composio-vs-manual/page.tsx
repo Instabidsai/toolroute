@@ -464,9 +464,9 @@ await fetch("https://toolroute.ai/api/v1/execute", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    tool: "gmail",
-    operation: "send_email",
-    user_id: "user_123", // maps to Composio connected account
+    // BYOK required for Resend; user_id maps to the connected account.
+    tool: "resend/send-email",
+    user_id: "user_123",
     input: {
       to: "customer@example.com",
       subject: "Your order",

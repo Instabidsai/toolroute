@@ -18,7 +18,7 @@ import {
 export const metadata: Metadata = {
   title: "MCP Gateway Use Cases — ToolRoute",
   description:
-    "Real-world MCP use cases for AI agents. See how teams combine tools like Tavily, Firecrawl, Supabase, Semgrep, Playwright, and more through one API.",
+    "Real-world MCP use cases for AI agents. See how teams combine tools like Tavily, Firecrawl, Supabase, GitHub, Playwright, and more through one API.",
   keywords: [
     "mcp use cases",
     "ai agents",
@@ -72,23 +72,23 @@ for (const result of research.results) {
     title: "Automated Code Review",
     description:
       "Scan every pull request for security vulnerabilities, run end-to-end tests against staging, and post structured results back to GitHub. Catches OWASP Top 10 issues, broken flows, and regressions before they hit production.",
-    tools: ["Semgrep", "Playwright", "GitHub"],
-    toolSlugs: ["semgrep", "playwright", "github"],
-    snippet: `const vulns = await toolroute.execute({
-  tool: "semgrep/scan",
-  input: { path: "./src", rules: "p/owasp-top-ten" }
+    tools: ["GitHub", "Playwright", "Claude (BYOK)"],
+    toolSlugs: ["github", "playwright", "claude"],
+    snippet: `const issues = await toolroute.execute({
+  tool: "github/list-issues",
+  input: { owner: "org", repo: "app", state: "open" }
 });
 
-const tests = await toolroute.execute({
-  tool: "playwright/run-tests",
-  input: { suite: "e2e", baseUrl: stagingUrl }
+const screenshot = await toolroute.execute({
+  tool: "playwright/screenshot",
+  input: { url: stagingUrl }
 });
 
-await toolroute.execute({
-  tool: "github/create-comment",
+const review = await toolroute.execute({
+  // BYOK required (Class-A â€” Claude)
+  tool: "claude/chat",
   input: {
-    repo: "org/app", pr: 42,
-    body: formatReview(vulns, tests)
+    messages: [{ role: "user", content: formatReview(issues, screenshot) }]
   }
 });`,
   },
@@ -97,8 +97,8 @@ await toolroute.execute({
     title: "Content Pipeline",
     description:
       "Generate written content with AI, produce video assets with code-driven rendering, and distribute across social channels automatically. Ideal for marketing teams shipping content at scale without manual handoffs.",
-    tools: ["Claude (BYOK)", "Remotion", "Postiz"],
-    toolSlugs: ["claude-api", "remotion", "postiz"],
+    tools: ["Claude (BYOK)", "Shotstack (BYOK)", "Postiz (BYOK)"],
+    toolSlugs: ["claude", "shotstack", "postiz"],
     snippet: `// BYOK required for Claude (Class-A) — see /dashboard/byok
 const article = await toolroute.execute({
   tool: "claude/chat",
@@ -109,13 +109,13 @@ const article = await toolroute.execute({
 });
 
 const video = await toolroute.execute({
-  tool: "remotion/render",
-  input: { template: "blog-summary", props: article }
+  tool: "shotstack/render",
+  input: { timeline: buildVideoTimeline(article) }
 });
 
 await toolroute.execute({
   // BYOK required (Class-A — Postiz)
-  tool: "postiz/schedule",
+  tool: "postiz/create-post",
   input: {
     platforms: ["twitter", "linkedin"],
     content: article.summary,
@@ -128,11 +128,11 @@ await toolroute.execute({
     title: "Lead Outreach",
     description:
       "Find qualified prospects from a contact database, generate personalized outreach emails using AI that references their company and pain points, then send at scale. Each email feels hand-written because it is -- by your agent.",
-    tools: ["Apollo", "Claude (BYOK)", "Resend (BYOK)"],
-    toolSlugs: ["apollo", "claude-api", "resend"],
+    tools: ["Exa (BYOK)", "Claude (BYOK)", "Resend (BYOK)"],
+    toolSlugs: ["exa", "claude", "resend"],
     snippet: `const leads = await toolroute.execute({
-  tool: "apollo/search-contacts",
-  input: { title: "CTO", industry: "SaaS", limit: 50 }
+  tool: "exa/search-people",
+  input: { query: "CTO at SaaS companies", limit: 50 }
 });
 
 for (const lead of leads.contacts) {
@@ -166,7 +166,7 @@ for (const lead of leads.contacts) {
 });
 
 const customer = await toolroute.execute({
-  tool: "supabase/query",
+  tool: "supabase/execute-sql",
   input: {
     sql: "SELECT * FROM customers WHERE email = $1",
     params: [ticket.email]
@@ -186,17 +186,17 @@ await toolroute.execute({
     title: "DevOps Automation",
     description:
       "Deploy your application, monitor for errors in real-time, and alert the right team when something breaks. Close the loop from commit to production to incident response with zero manual steps.",
-    tools: ["Vercel", "Sentry", "Twilio"],
-    toolSlugs: ["vercel", "sentry", "twilio"],
-    snippet: `const deploy = await toolroute.execute({
-  tool: "vercel/deploy",
-  input: { project: "my-app", branch: "main" }
+    tools: ["GitHub", "Sentry", "Twilio"],
+    toolSlugs: ["github", "sentry", "twilio"],
+    snippet: `const releaseIssues = await toolroute.execute({
+  tool: "github/list-issues",
+  input: { owner: "org", repo: "my-app", labels: ["release"] }
 });
 
 // Monitor for 5 minutes post-deploy
 const errors = await toolroute.execute({
   // BYOK required (Class-A — Sentry)
-  tool: "sentry/query",
+  tool: "sentry/list-issues",
   input: {
     project: "my-app",
     query: "is:unresolved firstSeen:-5m"
@@ -218,8 +218,8 @@ if (errors.issues.length > 0) {
     title: "Data Enrichment",
     description:
       "Scrape company websites for firmographic data, enrich contact records with verified emails and titles, and store everything in your CRM database. Turns a list of domains into a fully enriched sales pipeline overnight.",
-    tools: ["Firecrawl", "Apollo", "Supabase"],
-    toolSlugs: ["firecrawl", "apollo", "supabase"],
+    tools: ["Firecrawl (BYOK)", "Exa (BYOK)", "Supabase (BYOK)"],
+    toolSlugs: ["firecrawl", "exa", "supabase"],
     snippet: `const domains = ["acme.com", "initech.com", "globex.com"];
 
 for (const domain of domains) {
@@ -229,13 +229,13 @@ for (const domain of domains) {
   });
 
   const contacts = await toolroute.execute({
-    tool: "apollo/enrich-company",
-    input: { domain, fields: ["employees", "revenue", "tech_stack"] }
+    tool: "exa/search-companies",
+    input: { query: domain }
   });
 
   await toolroute.execute({
     // BYOK required (Class-A — Supabase)
-    tool: "supabase/upsert",
+    tool: "supabase/insert",
     input: {
       table: "enriched_leads",
       data: { domain, about: site.markdown, ...contacts }
@@ -249,7 +249,7 @@ for (const domain of domains) {
     description:
       "Transcribe incoming audio with speech-to-text, process the transcript through AI to understand intent and generate a response, then convert the reply back to natural speech. Build phone bots, voice assistants, and audio interfaces.",
     tools: ["Whisper STT (BYOK)", "Claude (BYOK)", "ElevenLabs TTS (BYOK)"],
-    toolSlugs: ["whisper", "claude-api", "elevenlabs"],
+    toolSlugs: ["whisper", "claude", "elevenlabs"],
     snippet: `// BYOK required for Whisper (STT) + Claude + ElevenLabs (Class-A premium providers)
 const transcript = await toolroute.execute({
   tool: "whisper/transcribe",

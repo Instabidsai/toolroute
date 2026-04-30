@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -78,7 +79,7 @@ export const claudeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Claude API error: ${res.status} ${errText}`,
+            error: redactCreds(`Claude API error: ${res.status} ${errText}`),
             provider: "claude",
           };
         }

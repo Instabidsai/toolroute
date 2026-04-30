@@ -317,28 +317,25 @@ curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer $TOOLROUTE_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "tavily",
-    "operation": "search",
+    "tool": "tavily/search",
     "input": { "query": "multi-tool AI agent architecture 2026" }
   }'
 
-# Scan code for vulnerabilities
+# Check current repository issues
 curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer $TOOLROUTE_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "semgrep",
-    "operation": "scan",
-    "input": { "code": "eval(user_input)", "language": "python" }
+    "tool": "github/list-issues",
+    "input": { "owner": "org", "repo": "app", "state": "open" }
   }'
 
-# Send an email
+# Send an email (BYOK required for Resend)
 curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer $TOOLROUTE_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "tool": "resend",
-    "operation": "send_email",
+    "tool": "resend/send-email",
     "input": {
       "to": "team@company.com",
       "subject": "Scan complete",

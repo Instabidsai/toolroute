@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const HTML2PDF_URL = "https://api.html2pdf.app/v1/generate";
 
@@ -60,7 +61,7 @@ export const pdfAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `html2pdf from-html failed: ${res.status} ${errText}`,
+            error: redactCreds(`html2pdf from-html failed: ${res.status} ${errText}`),
             provider: "html2pdf",
           };
         }
@@ -131,7 +132,7 @@ export const pdfAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `html2pdf from-url failed: ${res.status} ${errText}`,
+            error: redactCreds(`html2pdf from-url failed: ${res.status} ${errText}`),
             provider: "html2pdf",
           };
         }

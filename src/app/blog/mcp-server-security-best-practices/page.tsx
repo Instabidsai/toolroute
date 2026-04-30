@@ -184,7 +184,10 @@ export default function Article() {
               -H &quot;Content-Type: application/json&quot; \
             </p>
             <p className="text-text-dim pl-4">
-              -d {`'{"tool":"postgres","operation":"query","input":{"sql":"SELECT ..."}}'`}
+              # BYOK required for Supabase database tools
+            </p>
+            <p className="text-text-dim pl-4">
+              -d {`'{"tool":"supabase/execute-sql","input":{"sql":"SELECT ..."}}'`}
             </p>
           </div>
 

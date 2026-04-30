@@ -485,7 +485,7 @@ export default function Article() {
 
           <div className="bg-bg-card border border-border rounded-lg p-6 my-6 font-mono text-xs overflow-x-auto">
             <p className="text-text-muted mb-3">
-              # Full developer workflow: scan, test, deploy, notify
+              # Full developer workflow: inspect, verify, monitor, notify
             </p>
             <pre className="text-text-dim whitespace-pre leading-relaxed">{`const TOOLROUTE = "https://toolroute.ai/api/v1/execute";
 const headers = {
@@ -493,16 +493,15 @@ const headers = {
   "Content-Type": "application/json"
 };
 
-// Step 1: Scan code for vulnerabilities
-const scan = await fetch(TOOLROUTE, {
+// Step 1: Inspect current repository issues
+const issues = await fetch(TOOLROUTE, {
   method: "POST", headers,
   body: JSON.stringify({
-    tool: "semgrep",
-    operation: "scan",
-    input: { path: "./src", rules: "p/owasp-top-ten" }
+    tool: "github/list-issues",
+    input: { owner: "org", repo: "app", state: "open" }
   })
 });
-const findings = await scan.json();
+const findings = await issues.json();
 
 if (findings.result.issues.length > 0) {
   // Stop the pipeline — fix first
@@ -513,31 +512,28 @@ if (findings.result.issues.length > 0) {
 const test = await fetch(TOOLROUTE, {
   method: "POST", headers,
   body: JSON.stringify({
-    tool: "playwright",
-    operation: "browser_navigate",
+    tool: "playwright/screenshot",
     input: { url: "https://staging.yourapp.com/checkout" }
   })
 });
 
-// Step 3: Deploy to production
-const deploy = await fetch(TOOLROUTE, {
+// Step 3: Check production errors (BYOK required for Sentry)
+const errors = await fetch(TOOLROUTE, {
   method: "POST", headers,
   body: JSON.stringify({
-    tool: "vercel",
-    operation: "deploy",
-    input: { project: "your-project", branch: "main" }
+    tool: "sentry/list-issues",
+    input: { project: "your-project", query: "is:unresolved" }
   })
 });
 
-// Step 4: Notify the team
+// Step 4: Notify the team (BYOK required for Slack)
 const notify = await fetch(TOOLROUTE, {
   method: "POST", headers,
   body: JSON.stringify({
-    tool: "composio",
-    operation: "slack_send_message",
+    tool: "slack/send-message",
     input: {
       channel: "#deploys",
-      text: "v2.4.1 deployed. 0 Semgrep issues. Checkout verified."
+      text: "v2.4.1 deployed. Checkout verified and production errors checked."
     }
   })
 });`}</pre>

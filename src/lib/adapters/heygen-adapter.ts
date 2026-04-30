@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL_V2 = "https://api.heygen.com/v2";
 const BASE_URL_V1 = "https://api.heygen.com/v1";
@@ -81,7 +82,7 @@ export const heygenAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HeyGen create-video failed: ${res.status} ${errText}`,
+            error: redactCreds(`HeyGen create-video failed: ${res.status} ${errText}`),
             provider: "heygen",
           };
         }
@@ -107,7 +108,7 @@ export const heygenAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HeyGen list-avatars failed: ${res.status} ${errText}`,
+            error: redactCreds(`HeyGen list-avatars failed: ${res.status} ${errText}`),
             provider: "heygen",
           };
         }
@@ -158,7 +159,7 @@ export const heygenAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HeyGen get-video failed: ${res.status} ${errText}`,
+            error: redactCreds(`HeyGen get-video failed: ${res.status} ${errText}`),
             provider: "heygen",
           };
         }

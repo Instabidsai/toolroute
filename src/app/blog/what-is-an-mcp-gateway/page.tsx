@@ -250,7 +250,7 @@ export default function Article() {
           <p>
             When your agent calls{" "}
             <code className="bg-bg-card px-1.5 py-0.5 rounded text-accent text-xs">
-              {`{"tool": "tavily", "operation": "search", "input": {"query": "MCP security best practices"}}`}
+              {`{"tool": "tavily/search", "input": {"query": "MCP security best practices"}}`}
             </code>
             , the gateway resolves which adapter to use, transforms the input to
             Tavily&apos;s expected format, makes the upstream call, and normalizes

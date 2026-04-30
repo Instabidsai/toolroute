@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const API_URL = "https://api.openai.com/v1/audio/transcriptions";
 
@@ -89,7 +90,7 @@ export const whisperAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Whisper transcribe failed: ${res.status} ${errText}`,
+            error: redactCreds(`Whisper transcribe failed: ${res.status} ${errText}`),
             provider: "whisper",
           };
         }

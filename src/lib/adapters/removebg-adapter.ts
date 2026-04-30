@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.remove.bg/v1.0";
 
@@ -75,7 +76,7 @@ export const removebgAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Remove.bg failed: ${res.status} ${errText}`,
+            error: redactCreds(`Remove.bg failed: ${res.status} ${errText}`),
             provider: "removebg",
           };
         }

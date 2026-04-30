@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.goshippo.com";
 
@@ -65,7 +66,7 @@ export const shippoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shippo create-shipment failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shippo create-shipment failed: ${res.status} ${errText}`),
             provider: "shippo",
           };
         }
@@ -118,7 +119,7 @@ export const shippoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shippo get-rates failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shippo get-rates failed: ${res.status} ${errText}`),
             provider: "shippo",
           };
         }
@@ -169,7 +170,7 @@ export const shippoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shippo create-label failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shippo create-label failed: ${res.status} ${errText}`),
             provider: "shippo",
           };
         }
@@ -214,7 +215,7 @@ export const shippoAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Shippo track failed: ${res.status} ${errText}`,
+            error: redactCreds(`Shippo track failed: ${res.status} ${errText}`),
             provider: "shippo",
           };
         }

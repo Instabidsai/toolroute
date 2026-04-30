@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.firecrawl.dev/v1";
 
@@ -61,7 +62,7 @@ export const firecrawlAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Firecrawl scrape failed: ${res.status} ${errText}`,
+            error: redactCreds(`Firecrawl scrape failed: ${res.status} ${errText}`),
             provider: "firecrawl",
           };
         }
@@ -101,7 +102,7 @@ export const firecrawlAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Firecrawl crawl failed: ${res.status} ${errText}`,
+            error: redactCreds(`Firecrawl crawl failed: ${res.status} ${errText}`),
             provider: "firecrawl",
           };
         }
@@ -135,7 +136,7 @@ export const firecrawlAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Firecrawl map failed: ${res.status} ${errText}`,
+            error: redactCreds(`Firecrawl map failed: ${res.status} ${errText}`),
             provider: "firecrawl",
           };
         }

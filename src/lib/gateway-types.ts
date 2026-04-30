@@ -107,6 +107,13 @@ export interface AdapterResult {
   actual_cost?: number;
 }
 
+export interface ToolRuntimeContext {
+  userId: string;
+  keyId: string;
+  allowedTools: string[] | null;
+  resolveKeyForSlug?: (slug: string) => Promise<string | undefined>;
+}
+
 /**
  * Tool adapter interface for gateway providers.
  *
@@ -127,7 +134,8 @@ export interface ToolAdapter {
   execute(
     operation: string,
     input: Record<string, unknown>,
-    resolvedKey?: string
+    resolvedKey?: string,
+    runtime?: ToolRuntimeContext
   ): Promise<AdapterResult>;
   healthCheck(): Promise<{ healthy: boolean; latency_ms: number }>;
   estimateCost(operation: string, input: Record<string, unknown>): number;

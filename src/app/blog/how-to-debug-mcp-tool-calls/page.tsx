@@ -385,7 +385,7 @@ export default function Article() {
 {`curl -X POST https://api.toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer $TOOLROUTE_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool":"tavily","operation":"search","input":{"query":"MCP debugging"}}'`}
+  -d '{"tool":"tavily/search","input":{"query":"MCP debugging"}}'`}
           </pre>
           <p>
             If the curl call succeeds and the agent call fails, the bug is

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.vapi.ai";
 
@@ -67,7 +68,7 @@ export const vapiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Vapi create-call failed: ${res.status} ${errText}`,
+            error: redactCreds(`Vapi create-call failed: ${res.status} ${errText}`),
             provider: "vapi",
           };
         }
@@ -94,7 +95,7 @@ export const vapiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Vapi list-calls failed: ${res.status} ${errText}`,
+            error: redactCreds(`Vapi list-calls failed: ${res.status} ${errText}`),
             provider: "vapi",
           };
         }
@@ -127,7 +128,7 @@ export const vapiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Vapi get-call failed: ${res.status} ${errText}`,
+            error: redactCreds(`Vapi get-call failed: ${res.status} ${errText}`),
             provider: "vapi",
           };
         }
@@ -154,7 +155,7 @@ export const vapiAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Vapi list-assistants failed: ${res.status} ${errText}`,
+            error: redactCreds(`Vapi list-assistants failed: ${res.status} ${errText}`),
             provider: "vapi",
           };
         }

@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://api.mux.com/video/v1";
 
@@ -66,7 +67,7 @@ export const muxAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Mux create-asset failed: ${res.status} ${errText}`,
+            error: redactCreds(`Mux create-asset failed: ${res.status} ${errText}`),
             provider: "mux",
           };
         }
@@ -96,7 +97,7 @@ export const muxAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Mux get-asset failed: ${res.status} ${errText}`,
+            error: redactCreds(`Mux get-asset failed: ${res.status} ${errText}`),
             provider: "mux",
           };
         }
@@ -121,7 +122,7 @@ export const muxAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Mux list-assets failed: ${res.status} ${errText}`,
+            error: redactCreds(`Mux list-assets failed: ${res.status} ${errText}`),
             provider: "mux",
           };
         }
@@ -158,7 +159,7 @@ export const muxAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Mux create-playback failed: ${res.status} ${errText}`,
+            error: redactCreds(`Mux create-playback failed: ${res.status} ${errText}`),
             provider: "mux",
           };
         }

@@ -1,5 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
-import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { GatewayError } from "../gateway-types";
+import type { ToolAdapter, AdapterResult, ToolRuntimeContext } from "../gateway-types";
+import {
+  AMBIGUOUS_DEFAULT_BYOK_SLUGS,
+  BYOK_INSUFFICIENT_SLUGS,
+  BYOK_REQUIRED_SLUGS,
+} from "../byok-required-slugs";
+import { redactCreds } from "../redact-creds";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -1029,6 +1036,35 @@ function mapInput(
 /** Adapters known to work without any API key */
 const FREE_ADAPTERS = ["toolroute", "context7", "playwright", "github", "pexels", "unsplash"];
 
+async function resolveAutoDispatchKey(
+  adapterSlug: string,
+  runtime?: ToolRuntimeContext
+): Promise<string | undefined> {
+  const resolvedKey = await runtime?.resolveKeyForSlug?.(adapterSlug);
+
+  if (BYOK_INSUFFICIENT_SLUGS.has(adapterSlug)) {
+    throw new GatewayError(
+      `Tool "${adapterSlug}" is not available through ToolRoute until provider resale approval is resolved.`,
+      403,
+      "forbidden_resale"
+    );
+  }
+
+  if (
+    !resolvedKey &&
+    (BYOK_REQUIRED_SLUGS.has(adapterSlug) ||
+      AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(adapterSlug))
+  ) {
+    throw new GatewayError(
+      `Tool "${adapterSlug}" requires BYOK. Register your provider key before executing this tool.`,
+      402,
+      "byok_required"
+    );
+  }
+
+  return resolvedKey;
+}
+
 export const autoAdapter: ToolAdapter = {
   slug: "auto",
   name: "ToolRoute Auto",
@@ -1039,7 +1075,8 @@ export const autoAdapter: ToolAdapter = {
   async execute(
     operation: string,
     input: Record<string, unknown>,
-    byokKey?: string
+    byokKey?: string,
+    runtime?: ToolRuntimeContext
   ): Promise<AdapterResult> {
     if (operation !== "route") {
       return {
@@ -1158,18 +1195,39 @@ export const autoAdapter: ToolAdapter = {
         input
       );
 
+      const routedToolPath = `${bestMatch.adapterSlug}/${bestMatch.operation}`;
+      if (
+        runtime?.allowedTools &&
+        !runtime.allowedTools.includes(routedToolPath)
+      ) {
+        throw new GatewayError(
+          `Auto-routed tool "${routedToolPath}" is not allowed for this API key.`,
+          403,
+          "tool_not_allowed"
+        );
+      }
+
       // 6b. Execute with graceful fallback on API key / provider errors
       let result: AdapterResult;
       try {
+        const resolvedDispatchKey =
+          (await resolveAutoDispatchKey(bestMatch.adapterSlug, runtime)) ?? byokKey;
+
         result = await adapter.execute(
           bestMatch.operation,
           mappedInput,
-          byokKey
+          resolvedDispatchKey,
+          runtime
         );
       } catch (execErr) {
+        if (execErr instanceof GatewayError) {
+          throw execErr;
+        }
+
         // Execution failed (likely missing API key) -- return routing info + alternatives
-        const execMessage =
-          execErr instanceof Error ? execErr.message : String(execErr);
+        const execMessage = redactCreds(
+          execErr instanceof Error ? execErr.message : String(execErr)
+        );
         const isKeyError =
           /api.?key|unauthorized|forbidden|auth|credential|BYOK|missing.*key/i.test(
             execMessage
@@ -1289,7 +1347,11 @@ export const autoAdapter: ToolAdapter = {
         units_consumed: result.units_consumed,
       };
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      if (err instanceof GatewayError) {
+        throw err;
+      }
+
+      const message = redactCreds(err instanceof Error ? err.message : String(err));
       return { success: false, error: message, provider: "auto" };
     }
   },

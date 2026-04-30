@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3";
 
@@ -60,7 +61,7 @@ export const youtubeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `YouTube search failed: ${res.status} ${errText}`,
+            error: redactCreds(`YouTube search failed: ${res.status} ${errText}`),
             provider: "youtube",
           };
         }
@@ -98,7 +99,7 @@ export const youtubeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `YouTube list-videos failed: ${res.status} ${errText}`,
+            error: redactCreds(`YouTube list-videos failed: ${res.status} ${errText}`),
             provider: "youtube",
           };
         }
@@ -138,7 +139,7 @@ export const youtubeAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `YouTube get-comments failed: ${res.status} ${errText}`,
+            error: redactCreds(`YouTube get-comments failed: ${res.status} ${errText}`),
             provider: "youtube",
           };
         }
@@ -208,7 +209,7 @@ export const youtubeAdapter: ToolAdapter = {
             const errText = await initRes.text().catch(() => initRes.statusText);
             return {
               success: false,
-              error: `YouTube upload init failed: ${initRes.status} ${errText}`,
+              error: redactCreds(`YouTube upload init failed: ${initRes.status} ${errText}`),
               provider: "youtube",
             };
           }

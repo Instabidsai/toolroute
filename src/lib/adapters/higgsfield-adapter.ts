@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BASE_URL = "https://cloud.higgsfield.ai/v1";
 
@@ -126,7 +127,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Higgsfield generate-image failed: ${res.status} ${errText}`,
+            error: redactCreds(`Higgsfield generate-image failed: ${res.status} ${errText}`),
             provider: "higgsfield",
           };
         }
@@ -209,7 +210,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Higgsfield generate-video failed: ${res.status} ${errText}`,
+            error: redactCreds(`Higgsfield generate-video failed: ${res.status} ${errText}`),
             provider: "higgsfield",
           };
         }
@@ -282,7 +283,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Higgsfield create-character failed: ${res.status} ${errText}`,
+            error: redactCreds(`Higgsfield create-character failed: ${res.status} ${errText}`),
             provider: "higgsfield",
           };
         }
@@ -319,7 +320,7 @@ export const higgsFieldAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Higgsfield check-status failed: ${res.status} ${errText}`,
+            error: redactCreds(`Higgsfield check-status failed: ${res.status} ${errText}`),
             provider: "higgsfield",
           };
         }

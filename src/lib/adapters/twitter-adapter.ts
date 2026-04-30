@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const TWITTER_BASE_URL = "https://api.x.com/2";
 
@@ -65,7 +66,7 @@ export const twitterAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twitter post-tweet failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twitter post-tweet failed: ${res.status} ${errText}`),
             provider: "twitter",
           };
         }
@@ -105,7 +106,7 @@ export const twitterAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twitter search-tweets failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twitter search-tweets failed: ${res.status} ${errText}`),
             provider: "twitter",
           };
         }
@@ -144,7 +145,7 @@ export const twitterAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twitter get-mentions failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twitter get-mentions failed: ${res.status} ${errText}`),
             provider: "twitter",
           };
         }
@@ -182,7 +183,7 @@ export const twitterAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twitter get-user failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twitter get-user failed: ${res.status} ${errText}`),
             provider: "twitter",
           };
         }
@@ -215,7 +216,7 @@ export const twitterAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Twitter delete-tweet failed: ${res.status} ${errText}`,
+            error: redactCreds(`Twitter delete-tweet failed: ${res.status} ${errText}`),
             provider: "twitter",
           };
         }

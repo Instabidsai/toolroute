@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const MGMT_API_URL = "https://api.supabase.com/v1";
 
@@ -56,7 +57,7 @@ export const supabaseAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Supabase execute-sql failed: ${res.status} ${errText}`,
+            error: redactCreds(`Supabase execute-sql failed: ${res.status} ${errText}`),
             provider: "supabase",
           };
         }
@@ -108,7 +109,7 @@ export const supabaseAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Supabase list-tables failed: ${res.status} ${errText}`,
+            error: redactCreds(`Supabase list-tables failed: ${res.status} ${errText}`),
             provider: "supabase",
           };
         }
@@ -152,7 +153,7 @@ export const supabaseAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Supabase insert failed: ${res.status} ${errText}`,
+            error: redactCreds(`Supabase insert failed: ${res.status} ${errText}`),
             provider: "supabase",
           };
         }
@@ -205,7 +206,7 @@ export const supabaseAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Supabase select failed: ${res.status} ${errText}`,
+            error: redactCreds(`Supabase select failed: ${res.status} ${errText}`),
             provider: "supabase",
           };
         }

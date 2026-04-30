@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 function getApiKey(byokKey?: string): string | null {
   return byokKey || process.env.POSTIZ_API_KEY || null;
@@ -63,7 +64,7 @@ export const postizAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Postiz create-post failed: ${res.status} ${errText}`,
+            error: redactCreds(`Postiz create-post failed: ${res.status} ${errText}`),
             provider: "postiz",
           };
         }
@@ -88,7 +89,7 @@ export const postizAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Postiz list-posts failed: ${res.status} ${errText}`,
+            error: redactCreds(`Postiz list-posts failed: ${res.status} ${errText}`),
             provider: "postiz",
           };
         }
@@ -109,7 +110,7 @@ export const postizAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Postiz get-integrations failed: ${res.status} ${errText}`,
+            error: redactCreds(`Postiz get-integrations failed: ${res.status} ${errText}`),
             provider: "postiz",
           };
         }

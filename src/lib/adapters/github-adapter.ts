@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const API_BASE = "https://api.github.com";
 
@@ -54,7 +55,7 @@ export const githubAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `GitHub search failed: ${res.status} ${errText}`,
+            error: redactCreds(`GitHub search failed: ${res.status} ${errText}`),
             provider: "github",
           };
         }
@@ -101,7 +102,7 @@ export const githubAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `GitHub get-readme failed: ${res.status} ${errText}`,
+            error: redactCreds(`GitHub get-readme failed: ${res.status} ${errText}`),
             provider: "github",
           };
         }
@@ -159,7 +160,7 @@ export const githubAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `GitHub list-issues failed: ${res.status} ${errText}`,
+            error: redactCreds(`GitHub list-issues failed: ${res.status} ${errText}`),
             provider: "github",
           };
         }

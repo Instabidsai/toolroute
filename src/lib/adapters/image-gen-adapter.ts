@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const FAL_QUEUE_URL = "https://queue.fal.run";
 
@@ -66,7 +67,7 @@ export const imageGenAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `fal.ai generate failed: ${res.status} ${errText}`,
+            error: redactCreds(`fal.ai generate failed: ${res.status} ${errText}`),
             provider: "fal.ai",
           };
         }
@@ -119,7 +120,7 @@ export const imageGenAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `fal.ai upscale failed: ${res.status} ${errText}`,
+            error: redactCreds(`fal.ai upscale failed: ${res.status} ${errText}`),
             provider: "fal.ai",
           };
         }

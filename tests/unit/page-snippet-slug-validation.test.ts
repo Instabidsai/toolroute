@@ -55,26 +55,14 @@ const SNIPPET_REGEX = /["']?\btool["']?\s*:\s*["']([a-z0-9-]+)\/([a-z0-9-]+)["']
  *
  * Format: "<relative-path>:<line>"
  */
-const KNOWN_BROKEN_REFS: ReadonlySet<string> = new Set([
+const KNOWN_BROKEN_REFS: ReadonlySet<string> = new Set([]);
   // src/app/use-cases/page.tsx — Code Review use case (semgrep adapter
   // doesn't exist; playwright + github operations wrong)
-  "src/app/use-cases/page.tsx:77",
-  "src/app/use-cases/page.tsx:82",
-  "src/app/use-cases/page.tsx:87",
   // Content Pipeline — remotion adapter doesn't exist; postiz op wrong
-  "src/app/use-cases/page.tsx:111",
-  "src/app/use-cases/page.tsx:116",
   // Lead Outreach — apollo op wrong
-  "src/app/use-cases/page.tsx:132",
   // Customer Support Bot — supabase op wrong
-  "src/app/use-cases/page.tsx:165",
   // DevOps Automation — vercel adapter doesn't exist; sentry op wrong
-  "src/app/use-cases/page.tsx:188",
-  "src/app/use-cases/page.tsx:194",
   // Data Enrichment — apollo + supabase ops wrong
-  "src/app/use-cases/page.tsx:227",
-  "src/app/use-cases/page.tsx:232",
-]);
 
 interface SnippetReference {
   file: string;

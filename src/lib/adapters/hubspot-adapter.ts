@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { fetchWithTimeout } from "../fetch-with-timeout";
+import { redactCreds } from "../redact-creds";
 
 const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 
@@ -75,7 +76,7 @@ export const hubspotAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HubSpot create-contact failed: ${res.status} ${errText}`,
+            error: redactCreds(`HubSpot create-contact failed: ${res.status} ${errText}`),
             provider: "hubspot",
           };
         }
@@ -122,7 +123,7 @@ export const hubspotAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HubSpot search-contacts failed: ${res.status} ${errText}`,
+            error: redactCreds(`HubSpot search-contacts failed: ${res.status} ${errText}`),
             provider: "hubspot",
           };
         }
@@ -162,7 +163,7 @@ export const hubspotAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HubSpot create-deal failed: ${res.status} ${errText}`,
+            error: redactCreds(`HubSpot create-deal failed: ${res.status} ${errText}`),
             provider: "hubspot",
           };
         }
@@ -187,7 +188,7 @@ export const hubspotAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `HubSpot list-deals failed: ${res.status} ${errText}`,
+            error: redactCreds(`HubSpot list-deals failed: ${res.status} ${errText}`),
             provider: "hubspot",
           };
         }
@@ -227,7 +228,7 @@ export const hubspotAdapter: ToolAdapter = {
           const errText = await noteRes.text().catch(() => noteRes.statusText);
           return {
             success: false,
-            error: `HubSpot create-note failed: ${noteRes.status} ${errText}`,
+            error: redactCreds(`HubSpot create-note failed: ${noteRes.status} ${errText}`),
             provider: "hubspot",
           };
         }
@@ -248,7 +249,7 @@ export const hubspotAdapter: ToolAdapter = {
           const errText = await assocRes.text().catch(() => assocRes.statusText);
           return {
             success: false,
-            error: `HubSpot associate note failed: ${assocRes.status} ${errText}`,
+            error: redactCreds(`HubSpot associate note failed: ${assocRes.status} ${errText}`),
             provider: "hubspot",
             data: noteData, // Return the note even if association failed
           };

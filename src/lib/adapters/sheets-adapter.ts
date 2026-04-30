@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const SHEETS_BASE_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 
@@ -63,7 +64,7 @@ export const sheetsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sheets read-range failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sheets read-range failed: ${res.status} ${errText}`),
             provider: "sheets",
           };
         }
@@ -98,7 +99,7 @@ export const sheetsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sheets write-range failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sheets write-range failed: ${res.status} ${errText}`),
             provider: "sheets",
           };
         }
@@ -133,7 +134,7 @@ export const sheetsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sheets append-row failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sheets append-row failed: ${res.status} ${errText}`),
             provider: "sheets",
           };
         }
@@ -161,7 +162,7 @@ export const sheetsAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Sheets get-spreadsheet failed: ${res.status} ${errText}`,
+            error: redactCreds(`Sheets get-spreadsheet failed: ${res.status} ${errText}`),
             provider: "sheets",
           };
         }

@@ -1,4 +1,5 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
+import { redactCreds } from "../redact-creds";
 
 const BRAVE_WEB_URL = "https://api.search.brave.com/res/v1/web/search";
 const BRAVE_IMAGE_URL = "https://api.search.brave.com/res/v1/images/search";
@@ -59,7 +60,7 @@ export const searchAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Brave web search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Brave web search failed: ${res.status} ${errText}`),
             provider: "brave",
           };
         }
@@ -95,7 +96,7 @@ export const searchAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Brave news search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Brave news search failed: ${res.status} ${errText}`),
             provider: "brave",
           };
         }
@@ -130,7 +131,7 @@ export const searchAdapter: ToolAdapter = {
           const errText = await res.text().catch(() => res.statusText);
           return {
             success: false,
-            error: `Brave image search failed: ${res.status} ${errText}`,
+            error: redactCreds(`Brave image search failed: ${res.status} ${errText}`),
             provider: "brave",
           };
         }
