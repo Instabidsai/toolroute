@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 function getApiKey(byokKey?: string): string | null {
   return byokKey || process.env.POSTIZ_API_KEY || null;
@@ -54,7 +55,7 @@ export const postizAdapter: ToolAdapter = {
         if (input.platforms) body.platforms = input.platforms;
         if (input.media_url) body.media_url = input.media_url;
 
-        const res = await fetch(`${baseUrl}/api/posts`, {
+        const res = await fetchWithTimeout(`${baseUrl}/api/posts`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -81,7 +82,7 @@ export const postizAdapter: ToolAdapter = {
       if (operation === "list-posts") {
         const limit = (input.limit as number) || 20;
 
-        const res = await fetch(`${baseUrl}/api/posts?limit=${limit}`, {
+        const res = await fetchWithTimeout(`${baseUrl}/api/posts?limit=${limit}`, {
           headers,
         });
 
@@ -104,7 +105,7 @@ export const postizAdapter: ToolAdapter = {
       }
 
       if (operation === "get-integrations") {
-        const res = await fetch(`${baseUrl}/api/integrations`, { headers });
+        const res = await fetchWithTimeout(`${baseUrl}/api/integrations`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -144,7 +145,7 @@ export const postizAdapter: ToolAdapter = {
 
     try {
       const baseUrl = getBaseUrl();
-      const res = await fetch(`${baseUrl}/api/integrations`, {
+      const res = await fetchWithTimeout(`${baseUrl}/api/integrations`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

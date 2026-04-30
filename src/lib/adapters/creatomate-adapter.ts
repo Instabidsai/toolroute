@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.creatomate.com/v1";
 
@@ -48,7 +49,7 @@ export const creatomateAdapter: ToolAdapter = {
         const body: Record<string, unknown> = { template_id: templateId };
         if (input.modifications) body.modifications = input.modifications;
 
-        const res = await fetch(`${BASE_URL}/renders`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/renders`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -75,7 +76,7 @@ export const creatomateAdapter: ToolAdapter = {
       if (operation === "list-templates") {
         const limit = (input.limit as number) || 20;
 
-        const res = await fetch(`${BASE_URL}/templates?limit=${limit}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/templates?limit=${limit}`, {
           headers,
         });
 
@@ -107,7 +108,7 @@ export const creatomateAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/renders/${renderId}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/renders/${renderId}`, {
           headers,
         });
 
@@ -148,7 +149,7 @@ export const creatomateAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/templates?limit=1`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/templates?limit=1`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

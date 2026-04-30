@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.remove.bg/v1.0";
 
@@ -63,7 +64,7 @@ export const removebgAdapter: ToolAdapter = {
 
         const body = formParts.join("\r\n");
 
-        const res = await fetch(`${BASE_URL}/removebg`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/removebg`, {
           method: "POST",
           headers: {
             "X-Api-Key": apiKey,

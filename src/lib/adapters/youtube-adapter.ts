@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3";
 
@@ -53,7 +54,7 @@ export const youtubeAdapter: ToolAdapter = {
           type: "video",
         });
 
-        const res = await fetch(`${YOUTUBE_API_URL}/search?${params}`, {
+        const res = await fetchWithTimeout(`${YOUTUBE_API_URL}/search?${params}`, {
           headers,
         });
 
@@ -91,7 +92,7 @@ export const youtubeAdapter: ToolAdapter = {
           params.set("forMine", "true");
         }
 
-        const res = await fetch(`${YOUTUBE_API_URL}/search?${params}`, {
+        const res = await fetchWithTimeout(`${YOUTUBE_API_URL}/search?${params}`, {
           headers,
         });
 
@@ -130,7 +131,7 @@ export const youtubeAdapter: ToolAdapter = {
           maxResults: String(maxResults),
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${YOUTUBE_API_URL}/commentThreads?${params}`,
           { headers }
         );
@@ -192,7 +193,7 @@ export const youtubeAdapter: ToolAdapter = {
             part: "snippet,status",
           });
 
-          const initRes = await fetch(
+          const initRes = await fetchWithTimeout(
             `https://www.googleapis.com/upload/youtube/v3/videos?${initParams}`,
             {
               method: "POST",
@@ -272,7 +273,7 @@ export const youtubeAdapter: ToolAdapter = {
         maxResults: "1",
         type: "video",
       });
-      const res = await fetch(`${YOUTUBE_API_URL}/search?${params}`, {
+      const res = await fetchWithTimeout(`${YOUTUBE_API_URL}/search?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

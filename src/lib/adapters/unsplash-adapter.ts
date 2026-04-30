@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.unsplash.com";
 
@@ -51,7 +52,7 @@ export const unsplashAdapter: ToolAdapter = {
           per_page: String(per_page),
         });
 
-        const res = await fetch(`${BASE_URL}/search/photos?${params}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/search/photos?${params}`, {
           headers,
         });
 
@@ -92,7 +93,7 @@ export const unsplashAdapter: ToolAdapter = {
         const params = new URLSearchParams({ count: String(count) });
         if (query) params.set("query", query);
 
-        const res = await fetch(`${BASE_URL}/photos/random?${params}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/photos/random?${params}`, {
           headers,
         });
 
@@ -137,7 +138,7 @@ export const unsplashAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/photos/${id}`, { headers });
+        const res = await fetchWithTimeout(`${BASE_URL}/photos/${id}`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -189,7 +190,7 @@ export const unsplashAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/photos/random?count=1`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/photos/random?count=1`, {
         headers: { Authorization: `Client-ID ${apiKey}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

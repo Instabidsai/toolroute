@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const MGMT_API_URL = "https://api.supabase.com/v1";
 
@@ -41,7 +42,7 @@ export const supabaseAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${MGMT_API_URL}/projects/${projectRef}/database/query`,
           {
             method: "POST",
@@ -93,7 +94,7 @@ export const supabaseAdapter: ToolAdapter = {
 
         const sql = `SELECT table_schema, table_name, table_type FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema') ORDER BY table_schema, table_name`;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${MGMT_API_URL}/projects/${projectRef}/database/query`,
           {
             method: "POST",
@@ -138,7 +139,7 @@ export const supabaseAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${projectUrl}/rest/v1/${table}`, {
+        const res = await fetchWithTimeout(`${projectUrl}/rest/v1/${table}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -194,7 +195,7 @@ export const supabaseAdapter: ToolAdapter = {
           url += `&limit=${limit}`;
         }
 
-        const res = await fetch(url, {
+        const res = await fetchWithTimeout(url, {
           method: "GET",
           headers: {
             apikey: anonKey,
@@ -239,7 +240,7 @@ export const supabaseAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${MGMT_API_URL}/projects`, {
+      const res = await fetchWithTimeout(`${MGMT_API_URL}/projects`, {
         method: "GET",
         headers: { Authorization: `Bearer ${mgmtToken}` },
       });

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.app.outscraper.com";
 
@@ -48,7 +49,7 @@ export const outscraperAdapter: ToolAdapter = {
         const limit = (input.limit as number) || 20;
         const url = `${BASE_URL}/maps/search-v3?query=${encodeURIComponent(query)}&limit=${limit}`;
 
-        const res = await fetch(url, { headers });
+        const res = await fetchWithTimeout(url, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -81,7 +82,7 @@ export const outscraperAdapter: ToolAdapter = {
         const limit = (input.limit as number) || 20;
         const url = `${BASE_URL}/maps/reviews-v3?query=${encodeURIComponent(query)}&reviewsLimit=${limit}`;
 
-        const res = await fetch(url, { headers });
+        const res = await fetchWithTimeout(url, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -113,7 +114,7 @@ export const outscraperAdapter: ToolAdapter = {
 
         const url = `${BASE_URL}/emails-and-contacts?query=${encodeURIComponent(query)}`;
 
-        const res = await fetch(url, { headers });
+        const res = await fetchWithTimeout(url, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -153,7 +154,7 @@ export const outscraperAdapter: ToolAdapter = {
 
     try {
       // Use a minimal query to check the API is reachable
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${BASE_URL}/maps/search-v3?query=test&limit=1`,
         { headers: { "X-API-KEY": apiKey } }
       );

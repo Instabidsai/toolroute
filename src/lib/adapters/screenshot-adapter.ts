@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const SCREENSHOTONE_URL = "https://api.screenshotone.com/take";
 
@@ -49,7 +50,7 @@ export const screenshotAdapter: ToolAdapter = {
           const screenshotUrl = `${SCREENSHOTONE_URL}?${params}`;
 
           // Verify the URL is accessible
-          const res = await fetch(screenshotUrl, { method: "HEAD" });
+          const res = await fetchWithTimeout(screenshotUrl, { method: "HEAD" });
           if (!res.ok) {
             const errText = await res.text().catch(() => res.statusText);
             return {
@@ -102,7 +103,7 @@ export const screenshotAdapter: ToolAdapter = {
 
           const screenshotUrl = `${SCREENSHOTONE_URL}?${params}`;
 
-          const res = await fetch(screenshotUrl, { method: "HEAD" });
+          const res = await fetchWithTimeout(screenshotUrl, { method: "HEAD" });
           if (!res.ok) {
             const errText = await res.text().catch(() => res.statusText);
             return {
@@ -158,7 +159,7 @@ export const screenshotAdapter: ToolAdapter = {
 
     try {
       // Check thum.io (always available, no key needed)
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         "https://image.thum.io/get/width/100/crop/100/https://example.com",
         { method: "HEAD" }
       );

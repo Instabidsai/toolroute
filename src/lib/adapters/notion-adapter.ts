@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const NOTION_BASE_URL = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
@@ -56,7 +57,7 @@ export const notionAdapter: ToolAdapter = {
           body.filter = { property: "object", value: input.filter };
         }
 
-        const res = await fetch(`${NOTION_BASE_URL}/search`, {
+        const res = await fetchWithTimeout(`${NOTION_BASE_URL}/search`, {
           method: "POST",
           headers: hdrs,
           body: JSON.stringify(body),
@@ -85,7 +86,7 @@ export const notionAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${NOTION_BASE_URL}/pages/${pageId}`, {
+        const res = await fetchWithTimeout(`${NOTION_BASE_URL}/pages/${pageId}`, {
           method: "GET",
           headers: hdrs,
         });
@@ -137,7 +138,7 @@ export const notionAdapter: ToolAdapter = {
           ];
         }
 
-        const res = await fetch(`${NOTION_BASE_URL}/pages`, {
+        const res = await fetchWithTimeout(`${NOTION_BASE_URL}/pages`, {
           method: "POST",
           headers: hdrs,
           body: JSON.stringify(body),
@@ -170,7 +171,7 @@ export const notionAdapter: ToolAdapter = {
         if (input.filter) body.filter = input.filter;
         if (input.sorts) body.sorts = input.sorts;
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${NOTION_BASE_URL}/databases/${databaseId}/query`,
           {
             method: "POST",
@@ -211,7 +212,7 @@ export const notionAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${NOTION_BASE_URL}/search`, {
+      const res = await fetchWithTimeout(`${NOTION_BASE_URL}/search`, {
         method: "POST",
         headers: headers(apiKey),
         body: JSON.stringify({ query: "test", page_size: 1 }),

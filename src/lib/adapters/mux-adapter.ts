@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.mux.com/video/v1";
 
@@ -54,7 +55,7 @@ export const muxAdapter: ToolAdapter = {
 
         const playbackPolicy = (input.playback_policy as string) || "public";
 
-        const res = await fetch(`${BASE_URL}/assets`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/assets`, {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -91,7 +92,7 @@ export const muxAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(`${BASE_URL}/assets/${assetId}`, { headers });
+        const res = await fetchWithTimeout(`${BASE_URL}/assets/${assetId}`, { headers });
 
         if (!res.ok) {
           const errText = await res.text().catch(() => res.statusText);
@@ -114,7 +115,7 @@ export const muxAdapter: ToolAdapter = {
       if (operation === "list-assets") {
         const limit = (input.limit as number) || 20;
 
-        const res = await fetch(`${BASE_URL}/assets?limit=${limit}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/assets?limit=${limit}`, {
           headers,
         });
 
@@ -146,7 +147,7 @@ export const muxAdapter: ToolAdapter = {
           };
         }
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${BASE_URL}/assets/${assetId}/playback-ids`,
           {
             method: "POST",
@@ -192,7 +193,7 @@ export const muxAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/assets?limit=1`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/assets?limit=1`, {
         headers: { Authorization: basicAuthHeader(auth) },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };

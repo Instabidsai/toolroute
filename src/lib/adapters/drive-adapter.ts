@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const GDRIVE_BASE = "https://www.googleapis.com/drive/v3";
 const GDRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3";
@@ -53,7 +54,7 @@ export const driveAdapter: ToolAdapter = {
           params.append("q", "trashed = false");
         }
 
-        const res = await fetch(`${GDRIVE_BASE}/files?${params}`, {
+        const res = await fetchWithTimeout(`${GDRIVE_BASE}/files?${params}`, {
           headers,
         });
 
@@ -96,7 +97,7 @@ export const driveAdapter: ToolAdapter = {
             "files(id,name,mimeType,size,modifiedTime,webViewLink),nextPageToken",
         });
 
-        const res = await fetch(`${GDRIVE_BASE}/files?${params}`, {
+        const res = await fetchWithTimeout(`${GDRIVE_BASE}/files?${params}`, {
           headers,
         });
 
@@ -133,7 +134,7 @@ export const driveAdapter: ToolAdapter = {
         }
 
         // First get file metadata to determine type
-        const metaRes = await fetch(
+        const metaRes = await fetchWithTimeout(
           `${GDRIVE_BASE}/files/${fileId}?fields=id,name,mimeType,size`,
           { headers }
         );
@@ -162,12 +163,12 @@ export const driveAdapter: ToolAdapter = {
             mimeType === "application/vnd.google-apps.spreadsheet"
               ? "text/csv"
               : "text/plain";
-          contentRes = await fetch(
+          contentRes = await fetchWithTimeout(
             `${GDRIVE_BASE}/files/${fileId}/export?mimeType=${encodeURIComponent(exportMime)}`,
             { headers }
           );
         } else {
-          contentRes = await fetch(
+          contentRes = await fetchWithTimeout(
             `${GDRIVE_BASE}/files/${fileId}?alt=media`,
             { headers }
           );
@@ -259,7 +260,7 @@ export const driveAdapter: ToolAdapter = {
           `--${boundary}--`,
         ].join("\r\n");
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${GDRIVE_UPLOAD}/files?uploadType=multipart&fields=id,name,mimeType,size,webViewLink`,
           {
             method: "POST",

@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const SLACK_API_URL = "https://slack.com/api";
 
@@ -58,7 +59,7 @@ export const slackAdapter: ToolAdapter = {
           body.blocks = input.blocks;
         }
 
-        const res = await fetch(`${SLACK_API_URL}/chat.postMessage`, {
+        const res = await fetchWithTimeout(`${SLACK_API_URL}/chat.postMessage`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -123,7 +124,7 @@ export const slackAdapter: ToolAdapter = {
           thread_ts: threadTs,
         };
 
-        const res = await fetch(`${SLACK_API_URL}/chat.postMessage`, {
+        const res = await fetchWithTimeout(`${SLACK_API_URL}/chat.postMessage`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -171,7 +172,7 @@ export const slackAdapter: ToolAdapter = {
           limit: String(limit),
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${SLACK_API_URL}/conversations.history?${params}`,
           { headers }
         );
@@ -209,7 +210,7 @@ export const slackAdapter: ToolAdapter = {
           types: "public_channel",
         });
 
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${SLACK_API_URL}/conversations.list?${params}`,
           { headers }
         );
@@ -259,7 +260,7 @@ export const slackAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${SLACK_API_URL}/auth.test`, {
+      const res = await fetchWithTimeout(`${SLACK_API_URL}/auth.test`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {

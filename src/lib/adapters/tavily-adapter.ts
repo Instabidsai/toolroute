@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const TAVILY_BASE_URL = "https://api.tavily.com";
 
@@ -59,7 +60,7 @@ export const tavilyAdapter: ToolAdapter = {
           body.topic = input.topic;
         }
 
-        const res = await fetch(`${TAVILY_BASE_URL}/search`, {
+        const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/search`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -107,7 +108,7 @@ export const tavilyAdapter: ToolAdapter = {
           urls,
         };
 
-        const res = await fetch(`${TAVILY_BASE_URL}/extract`, {
+        const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/extract`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -156,7 +157,7 @@ export const tavilyAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${TAVILY_BASE_URL}/search`, {
+      const res = await fetchWithTimeout(`${TAVILY_BASE_URL}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -69,7 +69,8 @@ describe("Lane 4.31 — SSRF drift prevention across adapters", () => {
       "utf8"
     );
 
-    // The scrape-text branch must contain assertSafePublicUrl BEFORE the fetch(url, ...) call
+    // The scrape-text branch must contain assertSafePublicUrl BEFORE the
+    // network call. fetchWithTimeout wraps native fetch after Lane 4.138.
     const scrapeBlockMatch = src.match(
       /operation === "scrape-text"[\s\S]*?(?=if\s*\(\s*operation === )/
     );
@@ -77,7 +78,7 @@ describe("Lane 4.31 — SSRF drift prevention across adapters", () => {
     const scrapeBlock = scrapeBlockMatch![0];
 
     const guardIdx = scrapeBlock.search(/assertSafePublicUrl\s*\(/);
-    const fetchIdx = scrapeBlock.search(/await\s+fetch\s*\(\s*url\b/);
+    const fetchIdx = scrapeBlock.search(/await\s+(?:fetch|fetchWithTimeout)\s*\(\s*url\b/);
 
     expect(guardIdx, "assertSafePublicUrl must be called in scrape-text").toBeGreaterThan(-1);
     expect(fetchIdx, "fetch(url, ...) must exist in scrape-text").toBeGreaterThan(-1);

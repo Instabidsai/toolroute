@@ -1,5 +1,6 @@
 import type { ToolAdapter, AdapterResult } from "../gateway-types";
 import { redactCreds } from "../redact-creds";
+import { fetchWithTimeout } from "../fetch-with-timeout";
 
 const BASE_URL = "https://api.replicate.com/v1";
 
@@ -64,7 +65,7 @@ export const replicateAdapter: ToolAdapter = {
         }
 
         // Create prediction
-        const res = await fetch(`${BASE_URL}/predictions`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/predictions`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -91,7 +92,7 @@ export const replicateAdapter: ToolAdapter = {
             break;
           }
           await sleep(2000);
-          const pollRes = await fetch(
+          const pollRes = await fetchWithTimeout(
             `${BASE_URL}/predictions/${prediction.id}`,
             { headers: { Authorization: `Bearer ${apiKey}` } }
           );
@@ -128,7 +129,7 @@ export const replicateAdapter: ToolAdapter = {
           ? `${BASE_URL}/models/${owner}`
           : `${BASE_URL}/models`;
 
-        const res = await fetch(url, {
+        const res = await fetchWithTimeout(url, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
 
@@ -169,7 +170,7 @@ export const replicateAdapter: ToolAdapter = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/models`, {
+      const res = await fetchWithTimeout(`${BASE_URL}/models`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       return { healthy: res.ok, latency_ms: Date.now() - start };
