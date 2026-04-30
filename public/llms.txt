@@ -9,8 +9,9 @@ ToolRoute is an MCP gateway that lets AI agents execute tools through a single A
 - 51 API adapters with 152+ operations
 - 5 protocols: REST, MCP Streamable HTTP, A2A (Google), OpenAI Functions, SDKs
 - Prepaid credits billing with auto-top-up
+- Agent-controlled onboarding: agents can create a test account by API, inspect balance, start Stripe checkout, set up saved-card auto top-up, save BYOK provider keys, and mint a live key after payment
 - BYOK (bring-your-own-key) — required for 30+ premium providers (Anthropic, OpenAI, Stripe, Supabase, Sentry, ElevenLabs, etc.) per provider ToS; optional zero-markup passthrough for the rest
-- Free tier: 100 requests/day, $1 starter credits
+- Free tier: test key only; live keys require paid credits or a paid plan
 
 ## Quick Start
 
@@ -22,13 +23,18 @@ curl -X POST https://toolroute.ai/api/v1/execute \
 ```
 
 ## Core API Endpoints
+- GET /api/v1/agent/manifest -- Machine-readable agent onboarding and capability manifest
+- POST /api/v1/signup -- Create an account and receive a tr_test key
 - POST /api/v1/execute -- Execute any tool (tool ID format: provider/operation)
 - POST /mcp -- MCP Streamable HTTP (JSON-RPC)
 - POST /api/a2a -- A2A protocol (Google)
 - GET /api/v1/tools -- Tool catalog (no auth required, supports ?format=openai)
 - GET /api/v1/key -- API key info + balance
-- POST /api/v1/checkout -- Add credits via Stripe
-- POST /api/v1/byok -- Register your own API key for a provider
+- POST /api/v1/checkout -- Add credits via Stripe (session JWT or ToolRoute API key)
+- POST /api/v1/billing/setup-payment -- Save a reusable Stripe payment method (session JWT or ToolRoute API key)
+- PATCH /api/v1/settings -- Enable auto top-up after payment setup (session JWT or ToolRoute API key)
+- POST /api/v1/keys -- Create/manage ToolRoute API keys (session JWT or ToolRoute API key)
+- POST /api/v1/byok -- Register your own API key for a provider (session JWT or ToolRoute API key)
 
 ## Auto-Routing
 Describe your task in natural language:
@@ -42,6 +48,7 @@ Describe your task in natural language:
 
 ## Links
 - Documentation: https://toolroute.ai/docs
+- Agent manifest: https://toolroute.ai/api/v1/agent/manifest
 - Tool catalog: https://toolroute.ai/tools
 - Skills catalog: https://toolroute.ai/skills
 - Pricing: https://toolroute.ai/pricing

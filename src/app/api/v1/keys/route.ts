@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getUserFromSession,
   generateApiKey,
   generateTestApiKey,
   supabaseAdmin,
   AUTHED_RESPONSE_HEADERS,
 } from "@/lib/gateway";
+import { getAccountActor } from "@/lib/account-auth";
 import { GatewayError } from "@/lib/gateway-types";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     assertBodyUnder(request, BODY_LIMITS.keys);
 
     const authHeader = request.headers.get("authorization");
-    const { userId } = await getUserFromSession(authHeader);
+    const { userId } = await getAccountActor(authHeader);
 
     let body: { name?: string; allowed_tools?: string[]; expires_in_days?: number };
     try {
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-    const { userId } = await getUserFromSession(authHeader);
+    const { userId } = await getAccountActor(authHeader);
 
     const sb = supabaseAdmin();
 
@@ -148,7 +148,7 @@ export async function DELETE(request: NextRequest) {
     assertBodyUnder(request, BODY_LIMITS.keys);
 
     const authHeader = request.headers.get("authorization");
-    const { userId } = await getUserFromSession(authHeader);
+    const { userId } = await getAccountActor(authHeader);
 
     let body: { key_id?: string };
     try {
@@ -221,7 +221,7 @@ export async function PATCH(request: NextRequest) {
     assertBodyUnder(request, BODY_LIMITS.keys);
 
     const authHeader = request.headers.get("authorization");
-    const { userId } = await getUserFromSession(authHeader);
+    const { userId } = await getAccountActor(authHeader);
 
     let body: { key_id?: string; name?: string };
     try {

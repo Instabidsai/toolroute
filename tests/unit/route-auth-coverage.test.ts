@@ -21,6 +21,7 @@ import * as path from "path";
 //      explicitly classify it)
 
 type AuthClass =
+  | "account" // getAccountActor(): Supabase session OR ToolRoute API key
   | "public" // no auth — public-by-design (catalog, health, signup, registry knowledge query)
   | "api_key" // validateRequest() — Bearer tr_live_/tr_test_ key
   | "session" // getUserFromSession() — Supabase session cookie / Bearer JWT
@@ -65,6 +66,10 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
     classification: "public",
     rationale: "Account creation. Rate-limited at app layer; disposable-domain blocklist.",
   },
+  "src/app/api/v1/agent/manifest/route.ts": {
+    classification: "public",
+    rationale: "Machine-readable agent onboarding manifest, no PII.",
+  },
 
   // --- API-key auth ---
   "src/app/api/v1/execute/route.ts": {
@@ -100,24 +105,24 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
 
   // --- Session auth ---
   "src/app/api/v1/byok/route.ts": {
-    classification: "session",
-    rationale: "BYOK key registration — session-only (security-sensitive credentials).",
+    classification: "account",
+    rationale: "BYOK key registration by session or ToolRoute key; credentials are encrypted.",
   },
   "src/app/api/v1/checkout/route.ts": {
-    classification: "session",
-    rationale: "Stripe checkout session creation — session-only (anti-CSRF).",
+    classification: "account",
+    rationale: "Stripe checkout creation by session or ToolRoute key; Bearer auth avoids CSRF.",
   },
   "src/app/api/v1/billing/setup-payment/route.ts": {
-    classification: "session",
-    rationale: "Auto-top-up payment-method setup — session-only.",
+    classification: "account",
+    rationale: "Auto-top-up payment-method setup by session or unrestricted ToolRoute key.",
   },
   "src/app/api/v1/settings/route.ts": {
-    classification: "session",
-    rationale: "User auto-top-up + plan settings — session-only.",
+    classification: "account",
+    rationale: "User auto-top-up + plan settings by session or unrestricted ToolRoute key.",
   },
   "src/app/api/v1/keys/route.ts": {
-    classification: "session",
-    rationale: "API key CRUD by the owning user — session-only.",
+    classification: "account",
+    rationale: "API key CRUD by the owning user or agent through an existing ToolRoute key.",
   },
 
   // --- Admin auth ---
@@ -157,6 +162,7 @@ const ROUTE_MAP: Record<string, RouteSpec> = {
 
 const AUTH_MARKERS: Record<AuthClass, RegExp[]> = {
   public: [], // no markers required
+  account: [/\bgetAccountActor\s*\(/],
   api_key: [/\bvalidateRequest\s*\(/],
   session: [/\bgetUserFromSession\s*\(/],
   admin: [/\bvalidateAdmin\s*\(/],
@@ -168,6 +174,7 @@ const AUTH_MARKERS: Record<AuthClass, RegExp[]> = {
 // For "public" classification we ASSERT NEGATIVE: no auth marker is present.
 // (If a public route accidentally gains an auth check, that's worth surfacing.)
 const ALL_AUTH_MARKERS: RegExp[] = [
+  /\bgetAccountActor\s*\(/,
   /\bvalidateRequest\s*\(/,
   /\bgetUserFromSession\s*\(/,
   /\bvalidateAdmin\s*\(/,

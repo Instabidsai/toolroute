@@ -90,15 +90,15 @@ describe("Lane 4.30 — IDOR shape across session-authed mutation routes", () =>
     expect(violations, `IDOR-vulnerable: ${violations.join(", ")}`).toEqual([]);
   });
 
-  it("F-4: every session-authed mutation handler calls getUserFromSession", () => {
+  it("F-4: every session/account-authed mutation handler resolves the owner server-side", () => {
     const violations: string[] = [];
     for (const file of sessionRouteFiles) {
       const src = readFileSync(file, "utf8");
       const handlers = extractHandlerBlocks(src);
       for (const h of handlers) {
         if (h.method === "OPTIONS" || h.method === "GET") continue;
-        if (!/await\s+getUserFromSession\s*\(/.test(h.body)) {
-          violations.push(`${file}: ${h.method} missing getUserFromSession`);
+        if (!/await\s+(getUserFromSession|getAccountActor)\s*\(/.test(h.body)) {
+          violations.push(`${file}: ${h.method} missing server-side owner resolver`);
         }
       }
     }

@@ -119,7 +119,7 @@ describe("Lane 4.127 — user_provider_keys writes are allow-listed and user_id-
     const src = readFileSync(fullPath, "utf-8");
 
     // Must contain getUserFromSession() — the auth boundary
-    expect(src).toMatch(/getUserFromSession\s*\(/);
+    expect(src).toMatch(/(getAccountActor|getUserFromSession)\s*\(/);
     // Must contain user_id: userId in the upsert (not user_id: body.user_id)
     expect(src).toMatch(/user_id:\s*userId\b/);
     // Must NOT contain user_id: body, user_id: req.body, etc.

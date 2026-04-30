@@ -2,10 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({
+  getAccountActor: vi.fn(),
   getUserFromSession: vi.fn(),
   generateApiKey: vi.fn(),
   generateTestApiKey: vi.fn(),
   supabaseAdmin: vi.fn(),
+}));
+
+vi.mock("@/lib/account-auth", () => ({
+  getAccountActor: mocks.getAccountActor,
 }));
 
 vi.mock("@/lib/gateway", () => ({
@@ -71,9 +76,10 @@ function buildSupabaseMock(options?: { existing?: unknown; updateError?: unknown
 describe("PATCH /api/v1/keys", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mocks.getUserFromSession.mockResolvedValue({
+    mocks.getAccountActor.mockResolvedValue({
       userId: "user_123",
       email: "agent@example.com",
+      authKind: "session",
     });
   });
 
@@ -87,7 +93,7 @@ describe("PATCH /api/v1/keys", () => {
 
     expect(response.status).toBe(200);
     expect(payload.data.name).toBe("Production");
-    expect(mocks.getUserFromSession).toHaveBeenCalledWith("Bearer user-token");
+    expect(mocks.getAccountActor).toHaveBeenCalledWith("Bearer user-token");
     expect(supabase.apiKeys.update).toHaveBeenCalledWith({ name: "Production" });
     expect(supabase.existingChain.eq).toHaveBeenCalledWith("id", "key_123");
     expect(supabase.existingChain.eq).toHaveBeenCalledWith("user_id", "user_123");
@@ -154,9 +160,10 @@ function buildPostSupabaseMock(
 describe("POST /api/v1/keys", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mocks.getUserFromSession.mockResolvedValue({
+    mocks.getAccountActor.mockResolvedValue({
       userId: "user_123",
       email: "agent@example.com",
+      authKind: "session",
     });
     mocks.generateApiKey.mockReturnValue({
       raw: "tr_live_aaaa",
