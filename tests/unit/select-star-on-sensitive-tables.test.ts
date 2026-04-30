@@ -14,33 +14,45 @@ import { join, relative } from "node:path";
 // that spreads the row.
 //
 // Detection rule: any `.from("<sensitive>").select("*")` is a
-// violation. Sensitive table list below is curated from
-// supabase-schema.sql + Lane 4.10/4.12/4.27/4.36 audits.
+// violation. Sensitive table list below is curated from real
+// production schema (gateway.ts callsites + Lane 4.106/4.127/4.131
+// audits).
+//
+// Lane 4.141 fix:
+//   The original Lane 4.49 list was authored against an aspirational
+//   schema (gateway_api_keys / byok_keys / user_byok_preferences /
+//   providers / provider_master_keys / billing_customers /
+//   stripe_events / auth_users / auth_sessions) — none of those tables
+//   exist in the live `isbratmfnnzipzyoefbo` Supabase project. The
+//   real tables are `api_keys` / `user_provider_keys` /
+//   `tool_providers`. Result: the original guard was vacuous on the
+//   live schema (matched zero callsites, allowed any `.select("*")`
+//   regression to slip through). The sanity assertion below freezes
+//   this finding so every entry must actually appear via `.from(...)`
+//   in src/ — a future renamed table that isn't updated here trips
+//   the test.
 
 const SOURCE_ROOTS = ["src/app", "src/lib"];
 
-// Tables that contain COGS, PII, credentials, or billing state. Curated
-// from supabase-schema.sql + Lane 4.10/4.12/4.27/4.36 audits.
+// Tables that contain COGS, PII, credentials, or billing state.
+// Curated from REAL production schema (verified by .from() callsite
+// scan in src/, Lane 4.141).
 //
 // Excluded on purpose:
-//   - `usage_events` / `inventory` (registry analytics, not COGS/PII —
-//     and existing app code uses `.select("*")` against them with a
-//     stale TS type; locking them down is a separate refactor).
-//   - `tools`, `category_beliefs`, `composites`, `skills` (public
-//     catalog).
+//   - `usage_events` / `inventory` (registry analytics — and existing
+//     `src/lib/api-server.ts` uses `.select("*")` against them with a
+//     stale TS type; usage_events is locked at the DB layer via Lane
+//     0.1, inventory is a public catalog table).
+//   - `tools`, `tool_categories`, `category_beliefs`, `composites`,
+//     `skills` (public catalog).
+//   - `plans` (public pricing — no credentials/PII).
 const SENSITIVE_TABLES = [
-  "gateway_usage_log",
-  "gateway_users",
-  "gateway_api_keys",
-  "byok_keys",
-  "user_byok_preferences",
-  "credit_transactions",
-  "billing_customers",
-  "stripe_events",
-  "auth_users",
-  "providers", // master pool API keys live here
-  "provider_master_keys",
-  "auth_sessions",
+  "gateway_usage_log",   // user_id, error_message, cost_to_us, cost_to_user, key_source
+  "gateway_users",       // email, stripe_customer_id, credit_balance, plan_slug, settings
+  "api_keys",            // key_hash, user_id, plan-scoped tr_live_/tr_test_ keys
+  "credit_transactions", // amount, balance_after, stripe_payment_id, type, metadata (ledger)
+  "user_provider_keys",  // user_id, provider_slug, encrypted_key (Class-A BYOK plaintext today, Lane 4.106)
+  "tool_providers",      // master pool auth_key_encrypted (plaintext today, Lane 4.106)
 ];
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -62,7 +74,36 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-describe("`.select(\"*\")` on sensitive tables (Lane 4.49)", () => {
+describe("`.select(\"*\")` on sensitive tables (Lane 4.49 + Lane 4.141)", () => {
+  it("Lane 4.141 sanity: every SENSITIVE_TABLES entry actually appears via `.from(...)` in src/", () => {
+    // Without this assertion, a renamed/dropped table silently makes
+    // the column-projection guard below vacuous for that name (the
+    // original Lane 4.49 list had 9 fake/aspirational table names that
+    // never matched any production callsite). Catches future drift
+    // where a real table is renamed without updating this list.
+    const dead: string[] = [];
+    const allSrc: string[] = [];
+    for (const root of SOURCE_ROOTS) {
+      for (const file of walk(join(process.cwd(), root))) {
+        allSrc.push(readFileSync(file, "utf8"));
+      }
+    }
+    const haystack = allSrc.join("\n");
+    for (const t of SENSITIVE_TABLES) {
+      const re = new RegExp(`\\.from\\(\\s*['"\`]${t}['"\`]\\s*\\)`);
+      if (!re.test(haystack)) {
+        dead.push(t);
+      }
+    }
+    expect(
+      dead,
+      `\nDEAD ENTRIES in SENSITIVE_TABLES — these tables are listed but never read in src/.\n` +
+        `If the table was renamed, update this list. If it was dropped, remove it.\n` +
+        `If it's aspirational future-state, that's a footgun: the guard is vacuous today.\n\n` +
+        `Dead names: ${dead.join(", ")}`
+    ).toEqual([]);
+  });
+
   it("no source file calls `.select(\"*\")` against any COGS/PII/credential table", () => {
     const violations: { file: string; table: string; line: number }[] = [];
     for (const root of SOURCE_ROOTS) {
