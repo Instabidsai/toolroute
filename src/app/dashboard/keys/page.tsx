@@ -119,6 +119,15 @@ export default function KeysPage() {
     fetchKeys();
   }, [fetchKeys]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1") {
+      setShowCreate(true);
+      setCreateName("Production Agent Key");
+      setNewKey(null);
+    }
+  }, []);
+
   async function handleCreate() {
     setCreating(true);
     setError(null);
