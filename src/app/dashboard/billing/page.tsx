@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   CreditCard,
   Wallet,
@@ -10,6 +11,7 @@ import {
   Zap,
   Check,
   RefreshCw,
+  Key,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -138,6 +140,10 @@ export default function BillingPage() {
   const [setupLoading, setSetupLoading] = useState(false);
   const [topupSaving, setTopupSaving] = useState(false);
   const [topupSuccess, setTopupSuccess] = useState(false);
+  const [checkoutNotice, setCheckoutNotice] = useState<{
+    amount: string | null;
+    plan: string | null;
+  } | null>(null);
 
   const handlePurchaseCredits = async (amount: number) => {
     setCheckoutLoading(true);
@@ -313,6 +319,16 @@ export default function BillingPage() {
     fetchBilling();
   }, [fetchBilling]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true") {
+      setCheckoutNotice({
+        amount: params.get("amount"),
+        plan: params.get("plan"),
+      });
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -342,6 +358,26 @@ export default function BillingPage() {
         <div className="border border-red/20 rounded-lg bg-red/5 px-4 py-3 text-xs text-red flex items-center gap-2">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
           {error}
+        </div>
+      )}
+
+      {checkoutNotice && (
+        <div className="border border-green/25 rounded-lg bg-green/5 px-4 py-3 text-xs text-green flex flex-wrap items-center gap-3">
+          <span className="flex items-center gap-2">
+            <Check className="w-3.5 h-3.5 shrink-0" />
+            {checkoutNotice.amount
+              ? `$${checkoutNotice.amount} credits added.`
+              : checkoutNotice.plan
+                ? `${checkoutNotice.plan} plan checkout completed.`
+                : "Checkout completed."}
+          </span>
+          <Link
+            href="/dashboard/keys?new=1"
+            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-green/15 text-green border border-green/30 hover:bg-green/20 transition-colors"
+          >
+            <Key className="w-3.5 h-3.5" />
+            Create live key
+          </Link>
         </div>
       )}
 
