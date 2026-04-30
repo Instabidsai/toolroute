@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { createHash, randomBytes } from "crypto";
-import Stripe from "stripe";
 import {
   GatewayError,
   GatewayContext,
@@ -16,6 +15,7 @@ import {
 import { redactCreds } from "./redact-creds";
 import { decryptSecret, decryptSecretIfEncrypted } from "./secret-encryption";
 import { keyScopeFromAllowedTools } from "./key-scopes";
+import { getStripeClient } from "./stripe-billing";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -198,8 +198,8 @@ async function triggerAutoTopup(
   stripeCustomerId: string,
   amountCents: number
 ): Promise<void> {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeKey || stripeKey.startsWith("placeholder")) return;
+  const stripe = getStripeClient();
+  if (!stripe) return;
 
   // Check if there's already a pending top-up in the last 5 minutes (prevent spam)
   const sb = supabaseAdmin();
@@ -212,9 +212,6 @@ async function triggerAutoTopup(
     .limit(1);
 
   if (recent && recent.length > 0) return; // Already topped up recently
-
-  // Create a Stripe PaymentIntent for the auto-top-up amount
-  const stripe = new Stripe(stripeKey);
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,

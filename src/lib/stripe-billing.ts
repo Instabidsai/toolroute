@@ -7,9 +7,25 @@ export interface PaymentMethodSummary {
   exp_year: number;
 }
 
+export function cleanStripeEnvValue(value: string | undefined) {
+  const cleaned = value?.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
+  if (!cleaned || cleaned.startsWith("placeholder")) {
+    return null;
+  }
+  return cleaned;
+}
+
+export function getStripeEnvValue(name: string) {
+  return cleanStripeEnvValue(process.env[name]);
+}
+
+export function getStripeSecretKey() {
+  return cleanStripeEnvValue(process.env.STRIPE_SECRET_KEY);
+}
+
 export function getStripeClient() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key || key.startsWith("placeholder")) {
+  const key = getStripeSecretKey();
+  if (!key) {
     return null;
   }
   return new Stripe(key);
