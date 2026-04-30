@@ -79,9 +79,7 @@ function rel(file: string): string {
 // Each entry has a real reason — see lane comment above.
 const ENV_READ_ALLOWLIST = new Set<string>([
   "src/lib/stripe-billing.ts",
-  "src/lib/gateway.ts",
   "src/app/api/webhooks/stripe/route.ts",
-  "src/app/api/v1/checkout/route.ts",
 ]);
 
 describe("Lane 4.153 — STRIPE_SECRET_KEY env-var direct-read allow-list", () => {

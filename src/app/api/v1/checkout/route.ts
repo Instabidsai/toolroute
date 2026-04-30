@@ -1,33 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { AUTHED_RESPONSE_HEADERS } from "@/lib/gateway";
 import { getAccountActor } from "@/lib/account-auth";
 import { GatewayError } from "@/lib/gateway-types";
 import { assertBodyUnder, BODY_LIMITS } from "@/lib/body-limit";
+import { getStripeClient, getStripeEnvValue } from "@/lib/stripe-billing";
 
-const CREDIT_PRICES: Record<string, { amount: number; priceId: string }> = {
-  "5": { amount: 5, priceId: process.env.STRIPE_PRICE_CREDITS_5 ?? "" },
-  "10": { amount: 10, priceId: process.env.STRIPE_PRICE_CREDITS_10 ?? "" },
-  "25": { amount: 25, priceId: process.env.STRIPE_PRICE_CREDITS_25 ?? "" },
-  "50": { amount: 50, priceId: process.env.STRIPE_PRICE_CREDITS_50 ?? "" },
-  "100": { amount: 100, priceId: process.env.STRIPE_PRICE_CREDITS_100 ?? "" },
+const CREDIT_PRICE_ENV: Record<string, { amount: number; env: string }> = {
+  "5": { amount: 5, env: "STRIPE_PRICE_CREDITS_5" },
+  "10": { amount: 10, env: "STRIPE_PRICE_CREDITS_10" },
+  "25": { amount: 25, env: "STRIPE_PRICE_CREDITS_25" },
+  "50": { amount: 50, env: "STRIPE_PRICE_CREDITS_50" },
+  "100": { amount: 100, env: "STRIPE_PRICE_CREDITS_100" },
 };
 
-const PLAN_PRICES: Record<string, string> = {
-  pro: process.env.STRIPE_PRICE_PRO ?? "",
-  enterprise: process.env.STRIPE_PRICE_ENTERPRISE ?? "",
+const PLAN_PRICE_ENV: Record<string, string> = {
+  pro: "STRIPE_PRICE_PRO",
+  enterprise: "STRIPE_PRICE_ENTERPRISE",
 };
 
 function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key || key.startsWith("placeholder")) {
+  const stripe = getStripeClient();
+  if (!stripe) {
     throw new GatewayError(
       "Stripe is not configured yet. Contact support.",
       503,
       "stripe_not_configured"
     );
   }
-  return new Stripe(key);
+  return stripe;
+}
+
+function getCreditPrice(amount: string | undefined) {
+  const credit = CREDIT_PRICE_ENV[amount ?? ""];
+  if (!credit) return null;
+  const priceId = getStripeEnvValue(credit.env);
+  if (!priceId) {
+    throw new GatewayError(
+      "Stripe credit price is not configured yet. Contact support.",
+      503,
+      "stripe_price_not_configured"
+    );
+  }
+  return { amount: credit.amount, priceId };
+}
+
+function getPlanPrice(plan: string | undefined) {
+  const envName = PLAN_PRICE_ENV[plan ?? ""];
+  if (!envName) return null;
+  const priceId = getStripeEnvValue(envName);
+  if (!priceId) {
+    throw new GatewayError(
+      "Stripe subscription price is not configured yet. Contact support.",
+      503,
+      "stripe_price_not_configured"
+    );
+  }
+  return priceId;
 }
 
 export async function POST(request: NextRequest) {
@@ -55,7 +83,7 @@ export async function POST(request: NextRequest) {
     const origin = "https://toolroute.ai"; // Always use production URL for Stripe redirects
 
     if (type === "credits") {
-      const credit = CREDIT_PRICES[amount ?? ""];
+      const credit = getCreditPrice(amount);
       if (!credit) {
         return NextResponse.json(
           { error: { message: "Invalid amount. Choose: 5, 10, 25, 50, or 100", code: "invalid_amount" } },
@@ -92,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "subscription") {
-      const priceId = PLAN_PRICES[plan ?? ""];
+      const priceId = getPlanPrice(plan);
       if (!priceId) {
         return NextResponse.json(
           { error: { message: "Invalid plan. Choose: pro or enterprise", code: "invalid_plan" } },
