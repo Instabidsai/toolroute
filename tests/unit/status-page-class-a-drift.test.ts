@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  AMBIGUOUS_DEFAULT_BYOK_SLUGS,
   BYOK_REQUIRED_SLUGS,
   BYOK_INSUFFICIENT_SLUGS,
 } from "@/lib/byok-required-slugs";
@@ -65,6 +66,15 @@ describe("Lane 4.111-impl — /status page Class-A drift guard", () => {
       (e) =>
         (e.keyType === "pool" || e.keyType === "free") &&
         (BYOK_REQUIRED_SLUGS.has(e.slug) || BYOK_INSUFFICIENT_SLUGS.has(e.slug))
+    );
+    expect(violations).toEqual([]);
+  });
+
+  it("no ambiguous/default-BYOK slug is shown as keyType=pool or keyType=free", () => {
+    const violations = entries.filter(
+      (e) =>
+        (e.keyType === "pool" || e.keyType === "free") &&
+        AMBIGUOUS_DEFAULT_BYOK_SLUGS.has(e.slug)
     );
     expect(violations).toEqual([]);
   });

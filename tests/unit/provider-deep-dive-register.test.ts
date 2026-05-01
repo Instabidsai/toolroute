@@ -54,6 +54,7 @@ describe("provider deep-dive register", () => {
   it("defines the ToolRoute one-key isolation model and definition of good", () => {
     expect(markdown).toContain("## Agent Isolation Model");
     expect(markdown).toContain("## Definition Of Good");
+    expect(markdown).toContain("## Agent Equipment Priority Stack");
     expect(markdown).toContain("gateway_users.id");
     expect(markdown).toContain("api_keys.user_id");
     expect(markdown).toContain("user_provider_keys.user_id + tool_slug");
@@ -116,5 +117,25 @@ describe("provider deep-dive register", () => {
     expect(openaiSection).toContain("/v1/responses");
     expect(openaiSection).toContain("https://openai.com/policies/services-agreement/");
     expect(openaiSection).toContain("https://platform.openai.com/docs/guides/migrate-to-responses");
+  });
+
+  it("keeps the Firecrawl equipment contract explicit", () => {
+    const firecrawlRow = rows.find((row) => row.adapter === "firecrawl");
+
+    expect(firecrawlRow).toMatchObject({
+      launchClass: "customer_byok",
+      setupPath: "`/api/v1/byok`",
+      isolationDesign: "key per user/provider",
+    });
+
+    const firecrawlSection = markdown.match(/### firecrawl[\s\S]*?(?=\n### |\n## |$)/)?.[0] ?? "";
+
+    expect(firecrawlSection).toContain("Launch verdict: `customer_byok`");
+    expect(firecrawlSection).toContain("POST /api/v1/byok");
+    expect(firecrawlSection).toContain("user_provider_keys.user_id + tool_slug = firecrawl");
+    expect(firecrawlSection).toContain("contract-approved ToolRoute pool");
+    expect(firecrawlSection).toContain("api.firecrawl.dev/v2/scrape");
+    expect(firecrawlSection).toContain("https://www.firecrawl.dev/terms-of-service");
+    expect(firecrawlSection).toContain("https://docs.firecrawl.dev/rate-limits");
   });
 });

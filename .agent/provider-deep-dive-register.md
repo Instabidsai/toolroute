@@ -77,6 +77,39 @@ A provider is "production-good" only when every item below is true:
 9. Verification: at least one smoke or unit guard proves the setup verdict and
    execution path cannot silently drift.
 
+## Agent Equipment Priority Stack
+
+ToolRoute's wedge is not model resale. The highest-value providers are gated
+agent equipment: things agents need to act in the world, but that are hard to
+provision, isolate, scale, or keep compliant one account at a time.
+
+Priority order:
+
+1. Live web retrieval and browser access: `firecrawl`, `search`, `tavily`,
+   `exa`, `playwright`, `screenshot`, `pdf`. These unlock research, site
+   extraction, competitor monitoring, docs ingestion, and hard dynamic pages.
+2. Messaging, identity, and human contact: `resend`, `sendgrid`, `twilio`,
+   `textbelt`, `vapi`, `deepgram`, `elevenlabs`. These are high-value because
+   sender reputation, phone numbers, 10DLC, opt-out rules, and voice minutes are
+   operationally painful.
+3. Creative production: `image`, `replicate`, `higgsfield`, `heygen`,
+   `shotstack`, `creatomate`, `removebg`, `pexels`, `unsplash`. Agents need
+   media outputs, but model/provider rights and per-generation costs vary a lot.
+4. Lead and market data: `apollo`, `outscraper`, `dataforseo`, `exa`. This is
+   valuable, but riskier: Apollo is currently unavailable, and any contact-data
+   path needs privacy, consent, anti-spam, and no-FCRA guardrails.
+5. Authenticated work systems: `slack`, `github`, `notion`, `hubspot`,
+   `linear`, `drive`, `calendar`, `sheets`, `stripe`. These are essential but
+   usually need OAuth or connected-account consent, not a pooled key.
+6. Infrastructure and operational APIs: `supabase`, `sentry`, `shippo`, `mux`,
+   `translate`, `context7`, `postiz`. These become useful once agents are doing
+   real work and need deployment, monitoring, shipping, translation, or posting.
+
+For each priority provider, "good" means: agent-discoverable setup, isolated
+credential ownership, clear compliance limits, per-call billing attribution,
+concurrency/rate-limit handling, and a live smoke path when a real test key or
+OAuth consent is available.
+
 ## Deep-Dive Template
 
 Use this block when refreshing a provider:
@@ -117,7 +150,7 @@ Use this block when refreshing a provider:
 | `drive` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design OAuth connection API |
 | `elevenlabs` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify OEM path |
 | `exa` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | refresh terms |
-| `firecrawl` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | confirm paid resale option |
+| `firecrawl` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | official terms reviewed 2026-05-01 | modernize adapter to Firecrawl v2 |
 | `github` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design GitHub App flow |
 | `heygen` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify API-interface limits |
 | `higgsfield` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | refresh terms |
@@ -158,6 +191,82 @@ Use this block when refreshing a provider:
 | `youtube` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design Google OAuth flow |
 
 ## Provider Deep Dives
+
+### firecrawl
+
+- Launch verdict: `customer_byok`. Firecrawl is a top-priority agent equipment
+  provider for web search, scrape, crawl, extraction, and interact workflows.
+  ToolRoute can launch it as BYOK now. ToolRoute-funded pooled access should
+  stay contract-gated until Firecrawl explicitly authorizes commercial pooling
+  and resale.
+- What this provider does: converts web pages and sites into agent-usable
+  markdown, HTML, screenshots, links, metadata, and structured JSON; supports
+  scrape, crawl, map/search-style discovery, and browser interaction workflows.
+  The current ToolRoute adapter exposes `scrape`, `crawl`, and `map`.
+- ToolRoute value: one ToolRoute key lets an agent route web extraction through
+  a stable API, keep Firecrawl credentials isolated, meter per page/job, redact
+  upstream errors, and combine Firecrawl with search, Playwright, PDF, and
+  downstream summarization without the agent managing provider accounts in every
+  runtime.
+- Agent setup path: create or use a ToolRoute management key, fund the ToolRoute
+  account, save the agent/customer Firecrawl key through `POST /api/v1/byok`
+  with `tool_slug: "firecrawl"`, mint or use an execution key, then call
+  `firecrawl/scrape`, `firecrawl/crawl`, or `firecrawl/map`.
+- Credential owner: the customer or agent's Firecrawl team owns the upstream
+  API key, plan, credits, concurrency limits, and upstream bill. ToolRoute owns
+  only the ToolRoute key, routing policy, usage ledger, and platform/routing
+  fee.
+- Isolation design: every request must resolve the caller's ToolRoute
+  `GatewayContext.userId`; BYOK lookup must be scoped to
+  `user_provider_keys.user_id + tool_slug = firecrawl`; usage must log
+  `user_id`, `api_key_id`, `provider_used`, `key_source`, operation, request id,
+  and unit count. A missing Firecrawl BYOK key should fail closed unless a
+  contract-approved ToolRoute pool is explicitly enabled.
+- Billing model: Firecrawl charges against the customer's Firecrawl plan in
+  BYOK mode. ToolRoute charges credits for routing, metering, reliability,
+  logs, and any agreed platform markup. For future pooled access, ToolRoute
+  needs per-page/job cost controls, concurrency throttles, cache policy, and a
+  provider-approved resale or partner agreement.
+- Rate/quota model: Firecrawl plan limits include request rate, concurrent
+  browser limits, queued-job limits, and credits. ToolRoute should pre-check
+  ToolRoute balance/rate limits, pass upstream 429s through as redacted
+  machine-readable errors, and eventually expose queue/backoff guidance to
+  agents.
+- Data handling: URLs, prompts, extraction schemas, page content, screenshots,
+  and interaction instructions can contain customer or third-party data.
+  ToolRoute must avoid logging secrets or full page payloads by default, respect
+  customer retention settings, and keep scraping use cases away from prohibited
+  contact-data, background-check, eligibility, law-enforcement, privacy-law, or
+  FCRA-covered workflows.
+- Failure modes: missing BYOK key, invalid Firecrawl key, exhausted Firecrawl
+  credits, upstream 429/concurrency queue timeout, blocked target site, timeout,
+  invalid URL/SSRF rejection, payload too large, and unsupported v1/v2 endpoint
+  drift. All errors must redact provider and ToolRoute credentials.
+- Provider terms evidence: Firecrawl's terms say the service is an API for
+  converting websites into LLM-friendly data, require credentials to remain
+  confidential, restrict unauthorized commercial use, and prohibit modifying,
+  renting, leasing, selling, distributing, or creating derivative works from the
+  service without permission. Source:
+  https://www.firecrawl.dev/terms-of-service. Firecrawl's current docs show v2
+  scrape at `https://api.firecrawl.dev/v2/scrape`, plus crawl, agent, extract,
+  account usage, queue status, and interact surfaces. Source:
+  https://docs.firecrawl.dev/api-reference/endpoint/scrape. Firecrawl rate
+  limits are plan-based and include concurrent browser limits and API requests
+  per minute. Source: https://docs.firecrawl.dev/rate-limits.
+- Contract/OAuth/partner work needed: no OAuth is needed for BYOK. Pooled access
+  needs a Firecrawl commercial agreement, plus explicit rules for caching,
+  resale, prohibited scraping categories, and customer responsibility for target
+  site rights.
+- Production smoke: no live Firecrawl BYOK scrape was run in this pass because
+  no customer Firecrawl test key was provided. Production provider requirements
+  should continue to expose `customer_byok`, `/api/v1/byok`, and
+  `pool_contract_required: true`.
+- Remaining blocker: update the adapter from Firecrawl v1 endpoints to current
+  v2 endpoints, add `extract`/`interact` only after cost and abuse controls are
+  defined, contract-gate the shared `FIRECRAWL_API_KEY` fallback, and run a live
+  BYOK smoke against a benign URL once a test key exists.
+- Next review date: 2026-06-01, or immediately if Firecrawl terms, v2 endpoint
+  behavior, pricing, concurrency, or ToolRoute pooling strategy changes.
 
 ### openai
 
