@@ -97,4 +97,24 @@ describe("provider deep-dive register", () => {
 
     expect(errors).toEqual([]);
   });
+
+  it("keeps the OpenAI launch contract explicit", () => {
+    const openaiRow = rows.find((row) => row.adapter === "openai");
+
+    expect(openaiRow).toMatchObject({
+      launchClass: "customer_byok",
+      setupPath: "`/api/v1/byok`",
+      isolationDesign: "key per user/provider",
+    });
+
+    const openaiSection = markdown.match(/### openai[\s\S]*?(?=\n### |\n## |$)/)?.[0] ?? "";
+
+    expect(openaiSection).toContain("Launch verdict: `customer_byok`");
+    expect(openaiSection).toContain("POST /api/v1/byok");
+    expect(openaiSection).toContain("user_provider_keys.user_id + tool_slug = openai");
+    expect(openaiSection).toContain("pooled OpenAI execution is contract-blocked");
+    expect(openaiSection).toContain("/v1/responses");
+    expect(openaiSection).toContain("https://openai.com/policies/services-agreement/");
+    expect(openaiSection).toContain("https://platform.openai.com/docs/guides/migrate-to-responses");
+  });
 });

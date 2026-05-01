@@ -127,7 +127,7 @@ Use this block when refreshing a provider:
 | `linkedin` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | decide if launchable |
 | `mux` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify anti-resale terms |
 | `notion` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design Notion OAuth flow |
-| `openai` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | refresh OpenAI sharing terms |
+| `openai` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | official terms reviewed 2026-05-01 | modernize chat path to Responses API |
 | `outscraper` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | source current ToS |
 | `pdf` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify Html2PDF terms |
 | `pexels` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify media redistribution |
@@ -156,3 +156,69 @@ Use this block when refreshing a provider:
 | `vapi` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify commercial-exploit terms |
 | `whisper` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | inherits OpenAI review |
 | `youtube` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design Google OAuth flow |
+
+## Provider Deep Dives
+
+### openai
+
+- Launch verdict: `customer_byok`. ToolRoute can launch OpenAI as a customer-key
+  provider, but ToolRoute-funded pooled OpenAI execution is contract-blocked
+  until OpenAI gives written enterprise, partner, reseller, or marketplace
+  approval.
+- What this provider does: text/chat generation, image generation, embeddings,
+  and moderation. The current adapter exposes `chat`, `image`, `embeddings`,
+  and `moderation`.
+- ToolRoute value: one ToolRoute key for the agent, normalized tool discovery,
+  setup guidance, per-agent credential isolation, credits/rate limits, request
+  logging, redacted upstream errors, and a stable MCP/REST surface over OpenAI.
+- Agent setup path: create or use a ToolRoute management key, fund the ToolRoute
+  account, save the agent/customer OpenAI key through `POST /api/v1/byok` with
+  `tool_slug: "openai"`, mint an execution key, then call `openai/chat`,
+  `openai/image`, `openai/embeddings`, or `openai/moderation`.
+- Credential owner: the customer or agent's own OpenAI organization owns the
+  upstream API key and upstream OpenAI bill. ToolRoute owns only the ToolRoute
+  key, usage ledger, routing policy, and platform/routing fee.
+- Isolation design: every call must resolve `GatewayContext.userId` from the
+  caller's ToolRoute key; BYOK lookup must be scoped to
+  `user_provider_keys.user_id + tool_slug = openai`; usage must be logged with
+  the caller's `user_id`, `api_key_id`, `provider_used`, `key_source`, and
+  request id. A missing BYOK key must fail closed instead of falling back to a
+  shared pool unless that pool has explicit approval.
+- Billing model: OpenAI charges the customer-owned OpenAI account for upstream
+  usage in BYOK mode. ToolRoute charges credits for routing, metering, support,
+  convenience, and any agreed platform markup. Future ToolRoute-funded pooling
+  needs a contract plus per-model cost and margin controls before launch.
+- Rate/quota model: upstream model access, spend limits, and rate limits belong
+  to the customer's OpenAI key; ToolRoute still enforces ToolRoute API-key rate
+  limits and credit checks before dispatch. Upstream 401/403/429/insufficient
+  quota errors should return machine-readable, redacted errors to the agent.
+- Data handling: prompts, images, embedding inputs, and moderation inputs are
+  sent to OpenAI under the customer's key. ToolRoute must not log provider
+  secrets and should minimize stored prompt/output content unless a customer
+  explicitly asks for retention. OpenAI's platform data controls page says API
+  inputs and outputs are not used to train by default, with default abuse
+  monitoring retention depending on endpoint and account settings.
+- Failure modes: missing BYOK key, invalid OpenAI key, upstream rate limit,
+  upstream insufficient quota, unsupported model, insufficient ToolRoute credits,
+  adapter timeout, and model/API deprecation. All must avoid leaking the full
+  OpenAI key or ToolRoute key in `gateway_usage_log.error_message`.
+- Provider terms evidence: OpenAI's Services Agreement effective 2026-01-01
+  allows customers to integrate the API into customer applications for end
+  users, but also prohibits buying, selling, or transferring API keys with a
+  third party. Source: https://openai.com/policies/services-agreement/.
+  OpenAI's Responses API migration guide says Responses is the future direction
+  for building agents and recommends migration. Source:
+  https://platform.openai.com/docs/guides/migrate-to-responses.
+- Contract/OAuth/partner work needed: no OAuth is needed for BYOK. A pooled
+  ToolRoute master key for all agents requires an OpenAI contract or written
+  approval before it is represented in the catalog as ToolRoute-funded access.
+- Production smoke: no live OpenAI BYOK execution smoke was run in this pass
+  because no customer OpenAI key was provided to this session. Source review
+  confirms the adapter can execute only after BYOK setup because catalog/runtime
+  offerability classifies OpenAI as `customer_byok`.
+- Remaining blocker: modernize the `chat` operation from `/v1/chat/completions`
+  to `/v1/responses`, decide whether the `OPENAI_API_KEY` fallback should be
+  removed or contract-gated, and add a redacted BYOK smoke once a test OpenAI
+  key is available.
+- Next review date: 2026-06-01, or immediately if OpenAI terms, model access,
+  Responses API requirements, or ToolRoute pooling strategy changes.
