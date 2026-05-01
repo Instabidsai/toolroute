@@ -35,19 +35,21 @@ interface AdapterInfo {
 // Lane 4.112: slugs match adapter exports (deepl-adapter exports "translate",
 // image-gen-adapter exports "image"). Drift guarded by
 // tests/unit/status-page-class-a-drift.test.ts.
+// Current launch posture: no public provider is pool-ready unless provider
+// approval exists; ambiguous providers stay BYOK on the status page too.
 const ADAPTERS: AdapterInfo[] = [
   // Free — internal aggregators + no-auth public endpoints
   { slug: "toolroute", name: "ToolRoute", category: "Meta", keyType: "free", status: "available" },
   { slug: "auto", name: "Auto Router", category: "Meta", keyType: "free", status: "available" },
-  { slug: "playwright", name: "Playwright", category: "Code & DevOps", keyType: "free", status: "available" },
-  { slug: "pexels", name: "Pexels", category: "Image & Media", keyType: "free", status: "available" },
-  { slug: "github", name: "GitHub", category: "Code & DevOps", keyType: "free", status: "available" },
+  { slug: "playwright", name: "Playwright", category: "Code & DevOps", keyType: "byok", status: "needs_key" },
+  { slug: "pexels", name: "Pexels", category: "Image & Media", keyType: "byok", status: "needs_key" },
+  { slug: "github", name: "GitHub", category: "Code & DevOps", keyType: "byok", status: "needs_key" },
 
-  // Pool ready — provider ToS permits master-pool routing (ambiguous/permissive tier)
-  { slug: "openai", name: "OpenAI", category: "AI & LLM", keyType: "pool", status: "pool_ready" },
-  { slug: "firecrawl", name: "Firecrawl", category: "Search & Web", keyType: "pool", status: "pool_ready" },
-  { slug: "twilio", name: "Twilio", category: "SMS", keyType: "pool", status: "pool_ready" },
-  { slug: "deepgram", name: "Deepgram", category: "Voice & Audio", keyType: "pool", status: "pool_ready" },
+  // Contract-gated providers — BYOK until written provider approval exists
+  { slug: "openai", name: "OpenAI", category: "AI & LLM", keyType: "byok", status: "needs_key" },
+  { slug: "firecrawl", name: "Firecrawl", category: "Search & Web", keyType: "byok", status: "needs_key" },
+  { slug: "twilio", name: "Twilio", category: "SMS", keyType: "byok", status: "needs_key" },
+  { slug: "deepgram", name: "Deepgram", category: "Voice & Audio", keyType: "byok", status: "needs_key" },
 
   // BYOK required — Class-A providers (provider ToS forbids master-pool resale)
   { slug: "claude", name: "Claude", category: "AI & LLM", keyType: "byok", status: "needs_key" },
