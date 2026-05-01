@@ -1050,11 +1050,13 @@ const toolsByCategory = [
         primaryParams: [
           { name: "phone", type: "string", required: true, desc: "Recipient phone number." },
           { name: "message", type: "string", required: true, desc: "SMS message text." },
+          { name: "sender", type: "string", required: true, desc: "Business or organization name shown in the message." },
+          { name: "consent_confirmed", type: "boolean", required: true, desc: "Must be true after confirming recipient opt-in." },
         ],
         curlExample: `curl -X POST https://toolroute.ai/api/v1/execute \\
   -H "Authorization: Bearer tr_live_xxx" \\
   -H "Content-Type: application/json" \\
-  -d '{"tool": "textbelt/send-sms", "input": {"phone": "+1234567890", "message": "Your order shipped!"}}'`,
+  -d '{"tool": "textbelt/send-sms", "input": {"phone": "+1234567890", "message": "Your order shipped!", "sender": "Acme", "consent_confirmed": true, "test_mode": true}}'`,
       },
     ],
   },

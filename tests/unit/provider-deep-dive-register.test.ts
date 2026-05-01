@@ -138,4 +138,23 @@ describe("provider deep-dive register", () => {
     expect(firecrawlSection).toContain("https://www.firecrawl.dev/terms-of-service");
     expect(firecrawlSection).toContain("https://docs.firecrawl.dev/rate-limits");
   });
+
+  it("keeps the Textbelt simple-SMS contract explicit", () => {
+    const textbeltRow = rows.find((row) => row.adapter === "textbelt");
+
+    expect(textbeltRow).toMatchObject({
+      launchClass: "customer_byok",
+      setupPath: "`/api/v1/byok`",
+      isolationDesign: "key per user/provider",
+    });
+
+    const textbeltSection = markdown.match(/### textbelt[\s\S]*?(?=\n### |\n## |$)/)?.[0] ?? "";
+
+    expect(textbeltSection).toContain("Launch verdict: `customer_byok`");
+    expect(textbeltSection).toContain("consent_confirmed: true");
+    expect(textbeltSection).toContain("replyWebhookUrl");
+    expect(textbeltSection).toContain("X-textbelt-signature");
+    expect(textbeltSection).toContain("https://docs.textbelt.com/");
+    expect(textbeltSection).toContain("https://textbelt.com/tos/");
+  });
 });

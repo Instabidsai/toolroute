@@ -180,7 +180,7 @@ Use this block when refreshing a provider:
 | `stripe` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design Stripe Connect flow |
 | `supabase` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify management-token scope |
 | `tavily` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | confirm paid resale option |
-| `textbelt` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify 10DLC obligations |
+| `textbelt` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | official terms reviewed 2026-05-01 | add inbound reply webhook route |
 | `toolroute` | native | ToolRoute internal | none | caller context only | source grep and internal adapter | verify usage logging |
 | `translate` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify DeepL terms |
 | `twilio` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify end-user carveout |
@@ -331,3 +331,64 @@ Use this block when refreshing a provider:
   key is available.
 - Next review date: 2026-06-01, or immediately if OpenAI terms, model access,
   Responses API requirements, or ToolRoute pooling strategy changes.
+
+### textbelt
+
+- Launch verdict: `customer_byok`. Textbelt is a strong first simple-SMS
+  provider because setup is lightweight: a customer buys quota, gets a key, and
+  saves it in ToolRoute. It should launch as BYOK, not as a shared ToolRoute SMS
+  pool for arbitrary agents.
+- What this provider does: sends SMS, checks delivery status, and can receive
+  replies for paid U.S. keys through `replyWebhookUrl`. The current ToolRoute
+  adapter exposes `send-sms` and `check-status`.
+- ToolRoute value: one ToolRoute key lets an agent send simple SMS through an
+  isolated customer Textbelt key while ToolRoute enforces consent attestation,
+  sender identity, STOP opt-out language, redacted errors, billing attribution,
+  and eventually inbound-reply routing.
+- Agent setup path: create or use a ToolRoute management key, fund the ToolRoute
+  account, save the agent/customer Textbelt key through `POST /api/v1/byok` with
+  `tool_slug: "textbelt"`, then call `textbelt/send-sms` with `phone`,
+  `message`, `sender`, and `consent_confirmed: true`.
+- Credential owner: the customer or agent owns the Textbelt key, quota, and
+  recipient consent records. ToolRoute owns the ToolRoute key, routing policy,
+  usage ledger, and platform/routing fee.
+- Isolation design: every send resolves `GatewayContext.userId`; BYOK lookup is
+  scoped to `user_provider_keys.user_id + tool_slug = textbelt`; usage logs must
+  include user id, API key id, provider, operation, key source, request id, and
+  unit count. No agent may send with another agent's Textbelt quota.
+- Billing model: Textbelt charges the customer-owned key quota in BYOK mode.
+  ToolRoute charges credits for routing, compliance guardrails, logs, and
+  optional reply handling. Pooled SMS requires provider approval plus ToolRoute
+  sender reputation, opt-out, abuse, and carrier-compliance controls.
+- Rate/quota model: Textbelt quota is per key; sends can fail for exhausted
+  quota, invalid keys, prohibited content, URL activation, or filtering. ToolRoute
+  should pre-check ToolRoute credits and expose Textbelt quota remaining when
+  returned.
+- Data handling: phone numbers and SMS content are sensitive. ToolRoute should
+  not store full phone/message payloads by default, must redact credentials, and
+  should support inbound reply verification before storing or routing replies.
+- Failure modes: missing BYOK key, missing `sender`, missing
+  `consent_confirmed: true`, invalid phone, Textbelt quota exhausted, prohibited
+  content, unactivated URL sending, webhook URL rejection, and downstream
+  delivery failure.
+- Provider terms evidence: Textbelt documents simple SMS sending without account
+  configuration or recurring billing, supports `_test` keys, `sender`,
+  `replyWebhookUrl`, and `webhookData`, and says business identity plus STOP
+  opt-out language are required where applicable. Source:
+  https://docs.textbelt.com/. Textbelt terms require recipients to opt in,
+  sender identification, opt-out instructions for recurring SMS, no
+  impersonation, no spam/bulk advertising, and no drug/cannabis, gambling,
+  phishing, fraud, or other prohibited content. Source:
+  https://textbelt.com/tos/.
+- Contract/OAuth/partner work needed: no OAuth is needed for BYOK. ToolRoute
+  pooled SMS requires a business/compliance decision, Textbelt approval if
+  needed, abuse controls, sender-domain/brand rules, opt-out suppression, and
+  clear customer responsibility for consent records.
+- Production smoke: no live SMS was sent in this pass. The adapter now supports
+  `test_mode: true`, which appends `_test` to the Textbelt key so a future smoke
+  can validate send shape without spending quota.
+- Remaining blocker: build a `replyWebhookUrl` receiver that verifies
+  `X-textbelt-signature` and `X-textbelt-timestamp`, persists inbound replies
+  owner-scoped to the original user/request, and enforces STOP suppression.
+- Next review date: 2026-06-01, or immediately if Textbelt terms, webhook
+  signature rules, SMS compliance posture, or ToolRoute pooling strategy changes.
