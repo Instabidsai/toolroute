@@ -81,15 +81,15 @@ describe("Lane 6.8.1 — BYOK slug data module parity with Lane 6.7 source-of-tr
     expect(codeSlugs).toEqual([...docSlugs].sort());
   });
 
-  it("Lane 6.7 verified count = 49 gated slugs (30 required + 1 insufficient + 18 ambiguous)", () => {
+  it("Lane 6.7 verified count = 50 gated slugs (30 required + 1 insufficient + 19 ambiguous)", () => {
     expect(BYOK_REQUIRED_SLUGS.size).toBe(30);
     expect(BYOK_INSUFFICIENT_SLUGS.size).toBe(1);
-    expect(AMBIGUOUS_DEFAULT_BYOK_SLUGS.size).toBe(18);
+    expect(AMBIGUOUS_DEFAULT_BYOK_SLUGS.size).toBe(19);
     expect(
       BYOK_REQUIRED_SLUGS.size +
         BYOK_INSUFFICIENT_SLUGS.size +
         AMBIGUOUS_DEFAULT_BYOK_SLUGS.size
-    ).toBe(49);
+    ).toBe(50);
   });
 
   it("no slug appears in more than one tier", () => {

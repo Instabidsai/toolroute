@@ -35,6 +35,7 @@ Notes:
 | linkedin | `LINKEDIN_ACCESS_TOKEN` | None |
 | mux | `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET` | None |
 | notion | `NOTION_API_KEY` | None |
+| novita | `NOVITA_API_KEY` | None |
 | openai | `OPENAI_API_KEY` | None |
 | outscraper | `OUTSCRAPER_API_KEY` | None |
 | pdf | `HTML2PDF_API_KEY` | None |

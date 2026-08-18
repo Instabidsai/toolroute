@@ -115,6 +115,9 @@ export const AMBIGUOUS_DEFAULT_BYOK_SLUGS: ReadonlySet<string> = new Set([
   "playwright",   // Thum.io — NO PUBLIC TOS FOUND. Slug misleads.
   "dataforseo",   // §7.1 anti-search-engine-competition only
   "shippo",       // 4×404 unfetchable + Software Providers partner program
+
+  // Lane 6.9 — new adapter, no ToS resale audit yet
+  "novita",       // AI/ML inference, silent ToS — same default posture as openai
 ]);
 
 /**

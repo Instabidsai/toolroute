@@ -67,16 +67,16 @@ describe("provider setup requirements", () => {
     const requirements = listProviderSetupRequirements();
     const summary = summarizeSetupRequirements(requirements);
 
-    expect(requirements).toHaveLength(51);
+    expect(requirements).toHaveLength(52);
     expect(summary).toEqual({
-      total: 51,
-      setup_required: 49,
-      agent_can_complete_now: 38,
+      total: 52,
+      setup_required: 50,
+      agent_can_complete_now: 39,
       oauth_required: 12,
-      pool_contract_required: 49,
+      pool_contract_required: 50,
       by_status: {
         native: 2,
-        customer_byok: 36,
+        customer_byok: 37,
         customer_oauth: 12,
         unavailable: 1,
       },
