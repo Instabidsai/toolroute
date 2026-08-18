@@ -40,6 +40,7 @@ const REQUIRED_ENV_BY_ADAPTER: Record<string, string[]> = {
   linkedin: ["LINKEDIN_ACCESS_TOKEN"],
   mux: ["MUX_TOKEN_ID", "MUX_TOKEN_SECRET"],
   notion: ["NOTION_API_KEY"],
+  novita: ["NOVITA_API_KEY"],
   openai: ["OPENAI_API_KEY"],
   outscraper: ["OUTSCRAPER_API_KEY"],
   pdf: ["HTML2PDF_API_KEY"],

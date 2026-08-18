@@ -160,6 +160,7 @@ Use this block when refreshing a provider:
 | `linkedin` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | decide if launchable |
 | `mux` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify anti-resale terms |
 | `notion` | customer_oauth | customer/provider OAuth | OAuth consent required | token per user/provider | lane-6.7 verified BYOK list | design Notion OAuth flow |
+| `novita` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.9 ambiguous default (no ToS resale audit yet, same default posture as openai) | full ToS resale audit before considering pooling |
 | `openai` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | official terms reviewed 2026-05-01 | modernize chat path to Responses API |
 | `outscraper` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | source current ToS |
 | `pdf` | customer_byok | customer BYOK | `/api/v1/byok` | key per user/provider | lane-6.7 verified BYOK list | verify Html2PDF terms |

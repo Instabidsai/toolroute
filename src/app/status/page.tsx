@@ -6,13 +6,13 @@ export const revalidate = 30;
 export const metadata: Metadata = {
   title: "MCP Tool Status — Live Adapter Health & Availability | ToolRoute",
   description:
-    "Check MCP tool status for all 40 ToolRoute adapters in real time. View adapter health, availability, and key configuration.",
+    "Check MCP tool status for all 41 ToolRoute adapters in real time. View adapter health, availability, and key configuration.",
   alternates: {
     canonical: "/status",
   },
   openGraph: {
     title: "MCP Tool Status — Live Adapter Health & Availability | ToolRoute",
-    description: "Check MCP tool status for all 40 ToolRoute adapters. Real-time health and availability.",
+    description: "Check MCP tool status for all 41 ToolRoute adapters. Real-time health and availability.",
     url: "https://toolroute.ai/status",
   },
 };
@@ -47,6 +47,7 @@ const ADAPTERS: AdapterInfo[] = [
 
   // Contract-gated providers — BYOK until written provider approval exists
   { slug: "openai", name: "OpenAI", category: "AI & LLM", keyType: "byok", status: "needs_key" },
+  { slug: "novita", name: "Novita AI", category: "AI & LLM", keyType: "byok", status: "needs_key" },
   { slug: "firecrawl", name: "Firecrawl", category: "Search & Web", keyType: "byok", status: "needs_key" },
   { slug: "twilio", name: "Twilio", category: "SMS", keyType: "byok", status: "needs_key" },
   { slug: "deepgram", name: "Deepgram", category: "Voice & Audio", keyType: "byok", status: "needs_key" },

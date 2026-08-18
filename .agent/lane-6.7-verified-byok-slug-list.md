@@ -125,6 +125,9 @@ const AMBIGUOUS_DEFAULT_BYOK_SLUGS = new Set([
   "dataforseo",   // §7.1 anti-search-engine-competition only
   "shippo",       // 4×404 unfetchable + Software Providers partner program
                   //   exists (Tier 8 implicit signal — defensive byok_only)
+
+  // ───── Lane 6.9 — new adapter, no ToS resale audit yet ─────
+  "novita",       // AI/ML inference, silent ToS — same default posture as openai
 ]);
 
 // Internal aggregators (not third-party) — passthrough only.

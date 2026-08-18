@@ -76,6 +76,7 @@ Method:
 | `linkedin` | $0.002-$0.005 | OAuth/API access, no public per-call COGS found | unpriced | BYOK/social API fee only. |
 | `mux` | $0.02 create asset, low read fees | Mux prices by video minutes/storage/delivery | flagged | Needs duration/resolution-aware pricing. |
 | `notion` | $0.002 | SaaS/API included with Notion account | unpriced | Platform fee only. |
+| `novita` | $0.003 chat | Novita AI prices by token, model-dependent | flagged | Needs model/token-aware pricing, same class as openai/claude. |
 | `openai` | $0.005 chat, $0.04 image, $0.0001 embeddings | Token/image-model pricing | flagged | Needs model/token/image-size-aware pricing. |
 | `outscraper` | $0.01 maps/reviews, $0.005 emails | Google Maps API by Outscraper starts $3 / 1k places after free tier | flagged | Maps estimate high vs $0.003/place if one returned place; may be ok if multi-place result. |
 | `pdf` | $0.005 | html2pdf.app public price not confirmed in static crawl | needs-dashboard | Verify account plan/API unit price. |

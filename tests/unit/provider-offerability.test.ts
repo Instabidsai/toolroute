@@ -84,7 +84,7 @@ describe("provider offerability metadata", () => {
 
     expect(summary).toEqual({
       native: 2,
-      customer_byok: 36,
+      customer_byok: 37,
       customer_oauth: 12,
       pool_contract_required: 0,
       unavailable: 1,

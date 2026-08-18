@@ -49,6 +49,7 @@ import { notionAdapter } from "./notion-adapter";
 import { hubspotAdapter } from "./hubspot-adapter";
 import { sheetsAdapter } from "./sheets-adapter";
 import { linearAdapter } from "./linear-adapter";
+import { novitaAdapter } from "./novita-adapter";
 import { autoAdapter } from "./auto-adapter";
 
 const registry = new Map<string, ToolAdapter>();
@@ -122,6 +123,7 @@ registerAdapter(notionAdapter);
 registerAdapter(hubspotAdapter);
 registerAdapter(sheetsAdapter);
 registerAdapter(linearAdapter);
+registerAdapter(novitaAdapter);
 
 // Auto adapter MUST be registered last so it can discover all other adapters
 registerAdapter(autoAdapter);
